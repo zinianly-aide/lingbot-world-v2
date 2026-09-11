@@ -16,6 +16,13 @@ from PIL import Image
 import wan
 from wan.configs import MAX_AREA_CONFIGS, SIZE_CONFIGS, SUPPORTED_SIZES, WAN_CONFIGS
 from wan.distributed.util import init_distributed_group
+from wan.utils.device import (
+    device_empty_cache,
+    device_synchronize,
+    is_cuda,
+    is_mps,
+    resolve_device,
+)
 from wan.utils.utils import save_video, str2bool
 from world_condition import (
     MiniCPMVPerceiver,
@@ -63,6 +70,28 @@ def _validate_args(args):
             )
 
     cfg = WAN_CONFIGS[args.task]
+
+    # Device resolution and MPS mode enforcement
+    args._device = resolve_device(args.device)
+    if is_mps(args._device):
+        # MPS mode: force single-GPU, no distributed, no FSDP, no Ulysses
+        world_size = int(os.getenv("WORLD_SIZE", "1"))
+        assert world_size == 1, (
+            f"MPS mode requires WORLD_SIZE=1, got {world_size}. "
+            "MPS does not support NCCL/distributed inference."
+        )
+        assert args.ulysses_size == 1, (
+            f"MPS mode requires ulysses_size=1, got {args.ulysses_size}."
+        )
+        assert not args.t5_fsdp, "MPS mode does not support t5_fsdp."
+        assert not args.dit_fsdp, "MPS mode does not support dit_fsdp."
+        logging.info(
+            "MPS mode enabled: single device, no NCCL, ulysses_size=1, FSDP disabled."
+        )
+    elif is_cuda(args._device):
+        logging.info(f"CUDA mode: device={args._device}")
+    else:
+        logging.info(f"CPU mode: device={args._device} (slow, for debugging only)")
 
     if args.sample_shift is None:
         args.sample_shift = cfg.sample_shift
@@ -206,6 +235,13 @@ def _parse_args():
         default='output',
         help="The path to the checkpoint directory.")
     parser.add_argument(
+        "--device",
+        type=str,
+        default="auto",
+        choices=["auto", "cuda", "mps", "cpu"],
+        help="Device for inference. 'auto' prioritizes CUDA > MPS > CPU. "
+             "MPS enables Apple Silicon single-GPU path (forces WORLD_SIZE=1, ulysses_size=1, no FSDP/NCCL).")
+    parser.add_argument(
         "--vlm_world_prompt",
         action="store_true",
         default=False,
@@ -347,7 +383,11 @@ def generate(args):
     rank = int(os.getenv("RANK", 0))
     world_size = int(os.getenv("WORLD_SIZE", 1))
     local_rank = int(os.getenv("LOCAL_RANK", 0))
-    device = local_rank
+    # Use resolved device from _validate_args; for multi-GPU CUDA, use local_rank index
+    if is_cuda(args._device) and world_size > 1:
+        device = local_rank
+    else:
+        device = args._device
     _init_logging(rank)
 
     if args.offload_model is None:
@@ -357,6 +397,7 @@ def generate(args):
     cfg = WAN_CONFIGS[args.task]
 
     if world_size > 1:
+        assert is_cuda(args._device), "Distributed inference requires CUDA (NCCL)."
         torch.cuda.set_device(local_rank)
         dist.init_process_group(
             backend="nccl",
@@ -425,7 +466,7 @@ def generate(args):
 
     del video
 
-    torch.cuda.synchronize()
+    device_synchronize(args._device)
     if dist.is_initialized():
         dist.barrier()
         dist.destroy_process_group()
