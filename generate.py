@@ -17,6 +17,14 @@ import wan
 from wan.configs import MAX_AREA_CONFIGS, SIZE_CONFIGS, SUPPORTED_SIZES, WAN_CONFIGS
 from wan.distributed.util import init_distributed_group
 from wan.utils.utils import save_video, str2bool
+from world_condition import (
+    MiniCPMVPerceiver,
+    WorldDescription,
+    compose_world_prompt,
+    load_world_condition,
+    save_world_condition,
+    save_world_prompt,
+)
 
 
 _I2V_EXAMPLE = {
@@ -45,6 +53,14 @@ def _validate_args(args):
 
     if args.task.startswith("i2v"):
         assert args.image is not None, "Please specify the image path for i2v."
+
+    if args.vlm_world_prompt or args.world_condition_file:
+        if args.vlm_image is None:
+            args.vlm_image = args.image
+        if args.world_condition_file is None:
+            assert args.vlm_image is not None, (
+                "VLM world prompting requires --vlm_image (or the i2v --image)."
+            )
 
     cfg = WAN_CONFIGS[args.task]
 
@@ -189,11 +205,82 @@ def _parse_args():
         type=str,
         default='output',
         help="The path to the checkpoint directory.")
+    parser.add_argument(
+        "--vlm_world_prompt",
+        action="store_true",
+        default=False,
+        help="Use MiniCPM-V to build an observation-only world prompt before UMT5.")
+    parser.add_argument(
+        "--vlm_model",
+        type=str,
+        default="openbmb/MiniCPM-V-4.6",
+        help="MiniCPM-V checkpoint used only during world-prompt construction.")
+    parser.add_argument(
+        "--vlm_device",
+        type=str,
+        default="auto",
+        help="VLM device ('auto', 'cpu', or a CUDA device); default is auto.")
+    parser.add_argument(
+        "--vlm_image",
+        type=str,
+        default=None,
+        help="Image for VLM perception; defaults to --image.")
+    parser.add_argument(
+        "--world_condition_file",
+        type=str,
+        default=None,
+        help="Cached world_condition.json; skips VLM loading when supplied.")
+    parser.add_argument(
+        "--dump_world_prompt",
+        action="store_true",
+        default=False,
+        help="Save world_condition.json and world_prompt.txt under --save_dir.")
 
     args = parser.parse_args()
     _validate_args(args)
 
     return args
+
+
+def _prepare_world_prompt(args, original_prompt):
+    """Best-effort VLM stage.  Any failure returns the original prompt."""
+    if not (args.vlm_world_prompt or args.world_condition_file):
+        return original_prompt, None
+
+    world = WorldDescription()
+    error = None
+    if args.world_condition_file:
+        try:
+            world = load_world_condition(args.world_condition_file)
+            logging.info("Loaded cached world condition: %s", args.world_condition_file)
+        except Exception as exc:
+            error = f"cache load failed: {type(exc).__name__}: {exc}"
+    else:
+        perceiver = MiniCPMVPerceiver(model_name=args.vlm_model, device=args.vlm_device)
+        try:
+            image = Image.open(args.vlm_image).convert("RGB")
+            result = perceiver.analyze(image, user_prompt=original_prompt)
+            world, error = result.world, result.error
+            if result.raw_text:
+                logging.info("MiniCPM-V world observation received (%d chars).", len(result.raw_text))
+        except Exception as exc:
+            error = f"VLM stage failed: {type(exc).__name__}: {exc}"
+        finally:
+            perceiver.release()
+
+    if error:
+        logging.warning("World prompt conditioning unavailable (%s); using original prompt.", error)
+        if args.dump_world_prompt:
+            save_world_condition(world, os.path.join(args.save_dir, "world_condition.json"))
+            save_world_prompt(original_prompt, os.path.join(args.save_dir, "world_prompt.txt"))
+        return original_prompt, world
+
+    composed = compose_world_prompt(world, original_prompt)
+    if args.dump_world_prompt:
+        save_world_condition(world, os.path.join(args.save_dir, "world_condition.json"))
+        save_world_prompt(composed, os.path.join(args.save_dir, "world_prompt.txt"))
+        logging.info("Saved world condition and prompt under %s.", args.save_dir)
+    return composed, world
 
 
 def _init_logging(rank):
@@ -280,6 +367,19 @@ def generate(args):
         base_seed = [args.base_seed] if rank == 0 else [None]
         dist.broadcast_object_list(base_seed, src=0)
         args.base_seed = base_seed[0]
+
+    # Only rank zero loads MiniCPM-V. Broadcast the resulting text so all
+    # workers feed exactly the same string into the unchanged UMT5 interface.
+    original_prompt = args.prompt
+    if args.vlm_world_prompt or args.world_condition_file:
+        if dist.is_initialized():
+            payload = [None]
+            if rank == 0:
+                payload[0] = _prepare_world_prompt(args, original_prompt)[0]
+            dist.broadcast_object_list(payload, src=0)
+            args.prompt = payload[0]
+        else:
+            args.prompt = _prepare_world_prompt(args, original_prompt)[0]
 
     logging.info(f"Input prompt: {args.prompt}")
     img = None

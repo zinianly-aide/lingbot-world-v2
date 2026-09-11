@@ -47,10 +47,11 @@ repository = "https://github.com/robbyant/lingbot-world-v2"
 huggingface = "https://huggingface.co/robbyant/lingbot-world-v2-base-cam"
 
 [tool.setuptools]
-packages = ["wan"]
+packages = ["wan", "world_condition"]
 
 [tool.setuptools.package-data]
 "wan" = ["**/*.py"]
+"world_condition" = ["**/*.py"]
 
 [tool.black]
 line-length = 88
@@ -60,5 +61,4 @@ profile = "black"
 
 [tool.mypy]
 strict = true
-
 
