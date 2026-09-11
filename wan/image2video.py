@@ -256,6 +256,7 @@ class WanI2VCausal:
         infer_mode="causal_fast",
         assets_dir=None,
         prompt_embeds_file=None,
+        sequential_load=None,
     ):
         r"""
         Initializes the image-to-video generation model components.
@@ -317,8 +318,54 @@ class WanI2VCausal:
         if t5_fsdp or dit_fsdp or use_sp:
             self.init_on_cpu = False
 
-        shard_fn = partial(shard_model, device_id=device_id)
+        # Resolve sequential_load: MPS→True, CUDA→False, CPU→True
+        if sequential_load is None:
+            self.sequential_load = self.device.type in ("mps", "cpu")
+        else:
+            self.sequential_load = sequential_load
+
+        # Save construction config for lazy loading
+        self._checkpoint_dir = checkpoint_dir
+        self._assets_dir = assets_dir
+        self._t5_fsdp = t5_fsdp
+        self._dit_fsdp = dit_fsdp
+        self._use_sp = use_sp
+        self._convert_model_dtype = convert_model_dtype
+        self._shard_fn = partial(shard_model, device_id=device_id)
         self.prompt_embeds_file = prompt_embeds_file
+
+        # Scheduler and other non-model state can be initialized immediately
+        self.scheduler = FlowUniPCMultistepScheduler(
+            num_train_timesteps=self.num_train_timesteps,
+            shift=1,
+            use_dynamic_shifting=False)
+
+        if use_sp:
+            self.sp_size = get_world_size()
+        else:
+            self.sp_size = 1
+
+        self.sample_neg_prompt = config.sample_neg_prompt
+
+        # T5 prompt-embedding cache
+        self._t5_cache: dict[str, list] = {}
+
+        # Reset per generate()
+        self._cross_attn_initialized: bool = False
+
+        if self.sequential_load:
+            # Lazy mode: don't load any models yet
+            logging.info(
+                f"Sequential/lazy load mode enabled (device={self.device}). "
+                f"Models will be loaded on demand via load_text_encoder/load_vae/load_dit."
+            )
+            self.text_encoder = None
+            self.vae = None
+            self.model = None
+            return
+
+        # Eager mode: load all models immediately (original behavior)
+        shard_fn = self._shard_fn
         if prompt_embeds_file is not None:
             # Skip T5 encoder entirely — context will be loaded from
             # the pre-computed prompt_embeds.safetensors file.
@@ -391,46 +438,45 @@ class WanI2VCausal:
         if not is_mps:
             self.model = self.model.to(self.device)
 
-        # Verify device placement for MPS streaming load
+        # Verify device placement for MPS streaming load — FAIL FAST
+        # Any wrong-device or meta tensor means the load was incomplete and
+        # inference would crash or silently produce garbage.
         if is_mps:
-            wrong_device = [
+            wrong_param_device = [
                 n for n, p in self.model.named_parameters()
                 if p.device != self.device
             ]
-            if wrong_device:
-                logging.warning(
-                    f"MPS DiT: {len(wrong_device)} params not on {self.device}; "
-                    f"first 3: {wrong_device[:3]}"
+            wrong_buffer_device = [
+                n for n, b in self.model.named_buffers()
+                if b.device != self.device
+            ]
+            meta_params = sum(1 for p in self.model.parameters() if p.is_meta)
+            meta_buffers = sum(1 for b in self.model.buffers() if b.is_meta)
+
+            issues = []
+            if wrong_param_device:
+                issues.append(
+                    f"{len(wrong_param_device)} params not on {self.device} "
+                    f"(first: {wrong_param_device[:3]})"
                 )
-            meta_remaining = sum(1 for p in self.model.parameters() if p.is_meta)
-            if meta_remaining:
+            if wrong_buffer_device:
+                issues.append(
+                    f"{len(wrong_buffer_device)} buffers not on {self.device} "
+                    f"(first: {wrong_buffer_device[:3]})"
+                )
+            if meta_params:
+                issues.append(f"{meta_params} meta parameters remain")
+            if meta_buffers:
+                issues.append(f"{meta_buffers} meta buffers remain")
+
+            if issues:
                 raise RuntimeError(
-                    f"MPS DiT load incomplete: {meta_remaining} meta parameters remain"
+                    "MPS DiT load verification failed:\n  - "
+                    + "\n  - ".join(issues)
                 )
-
-        self.scheduler = FlowUniPCMultistepScheduler(
-            num_train_timesteps=self.num_train_timesteps,
-            shift=1,
-            use_dynamic_shifting=False)
-
-        if use_sp:
-            self.sp_size = get_world_size()
-        else:
-            self.sp_size = 1
-
-        self.sample_neg_prompt = config.sample_neg_prompt
-
-        # T5 prompt-embedding cache. Same-prompt re-encodes hit this dict
-        # instead of re-running the umt5-xxl encoder (~360 ms/call).
-        # Keyed by sha256(prompt.utf8); value is the list returned by
-        # T5EncoderModel.__call__ (already device-resident). Unbounded;
-        # callers can clear via `pipe.clear_text_cache()` if needed.
-        self._t5_cache: dict[str, list] = {}
-
-        # Reset per generate() and flipped True after the first DiT forward.
-        # Passed into model.forward as `cross_attn_first_call` to skip the
-        # crossattn_cache["is_init"].item() sync inside WanCrossAttention.
-        self._cross_attn_initialized: bool = False
+            logging.info(
+                f"MPS DiT load verified: all params/buffers on {self.device}, no meta tensors"
+            )
 
     def clear_text_cache(self):
         """Drop all cached T5 prompt embeddings. Frees ~4 MB per entry."""
@@ -461,6 +507,120 @@ class WanI2VCausal:
         """
         from wan.utils.memory import release_model_and_setattr
         return release_model_and_setattr(self, "model", self.device)
+
+    def load_text_encoder(self):
+        """Load the T5 text encoder (idempotent).
+
+        No-op if already loaded or if prompt_embeds_file is provided.
+        """
+        if self.text_encoder is not None:
+            return
+        if self.prompt_embeds_file is not None:
+            logging.info("prompt_embeds_file provided; skipping text encoder load.")
+            return
+
+        logging.info("Loading T5 text encoder...")
+        self.text_encoder = T5EncoderModel(
+            text_len=self.config.text_len,
+            dtype=self.config.t5_dtype,
+            device=torch.device('cpu'),
+            checkpoint_path=_resolve_asset_path(
+                self.config.t5_checkpoint, self._checkpoint_dir, self._assets_dir),
+            tokenizer_path=_resolve_asset_path(
+                self.config.t5_tokenizer, self._checkpoint_dir, self._assets_dir),
+            shard_fn=self._shard_fn if self._t5_fsdp else None,
+        )
+        logging.info("T5 text encoder loaded.")
+
+    def load_vae(self):
+        """Load the VAE (idempotent)."""
+        if self.vae is not None:
+            return
+
+        logging.info("Loading VAE...")
+        self.vae = Wan2_1_VAE(
+            vae_pth=_resolve_asset_path(
+                self.config.vae_checkpoint, self._checkpoint_dir, self._assets_dir),
+            device=self.device)
+        logging.info("VAE loaded.")
+
+    def load_dit(self):
+        """Load the DiT model (idempotent).
+
+        For MPS, uses streaming loader with direct device placement and
+        fail-fast verification. For CUDA/CPU, uses standard loading with
+        legacy fallback.
+        """
+        if self.model is not None:
+            return
+
+        is_mps = self.device.type == "mps"
+        dit_target_device = self.device if is_mps else None
+        dit_allow_fallback = not is_mps
+        dit_dtype = torch.float16 if is_mps else torch.bfloat16
+
+        logging.info(f"Loading DiT model (infer_mode={self.infer_mode})...")
+
+        if self.infer_mode == "causal_fast":
+            self.model = load_dit_model(
+                WanModelFast,
+                self._checkpoint_dir,
+                self.config.fast_checkpoint,
+                self.config,
+                dit_dtype,
+                extra=dict(
+                    local_attn_size=self.local_attn_size,
+                    sink_size=self.sink_size),
+                target_device=dit_target_device,
+                allow_legacy_fallback=dit_allow_fallback,
+            )
+        else:
+            self.model = load_dit_model(
+                WanModelCausal,
+                self._checkpoint_dir,
+                self.config.causal_checkpoint,
+                self.config,
+                dit_dtype,
+                target_device=dit_target_device,
+                allow_legacy_fallback=dit_allow_fallback,
+            )
+
+        # Configure model
+        self.model = self._configure_model(
+            model=self.model,
+            use_sp=self._use_sp,
+            dit_fsdp=self._dit_fsdp,
+            shard_fn=self._shard_fn,
+            convert_model_dtype=self._convert_model_dtype)
+        if not is_mps:
+            self.model = self.model.to(self.device)
+
+        # MPS fail-fast verification
+        if is_mps:
+            wrong_param_device = [
+                n for n, p in self.model.named_parameters()
+                if p.device != self.device
+            ]
+            wrong_buffer_device = [
+                n for n, b in self.model.named_buffers()
+                if b.device != self.device
+            ]
+            meta_params = sum(1 for p in self.model.parameters() if p.is_meta)
+            meta_buffers = sum(1 for b in self.model.buffers() if b.is_meta)
+
+            issues = []
+            if wrong_param_device:
+                issues.append(f"{len(wrong_param_device)} params not on {self.device}")
+            if wrong_buffer_device:
+                issues.append(f"{len(wrong_buffer_device)} buffers not on {self.device}")
+            if meta_params:
+                issues.append(f"{meta_params} meta parameters remain")
+            if meta_buffers:
+                issues.append(f"{meta_buffers} meta buffers remain")
+            if issues:
+                raise RuntimeError("MPS DiT load verification failed: " + "; ".join(issues))
+
+        logging.info("DiT model loaded.")
 
     def memory_summary(self) -> dict:
         """Return current memory usage summary."""
@@ -694,7 +854,12 @@ class WanI2VCausal:
                  seed=-1,
                  offload_model=True,
                  max_sequence_length=512,
-                 max_attention_size=None,):
+                 max_attention_size=None,
+                 stage="full",
+                 image_condition_file=None,
+                 dump_image_condition=None,
+                 latents_file=None,
+                 output_latents_file=None,):
         r"""
         Generates video frames from input image and text prompt.
 
@@ -706,6 +871,15 @@ class WanI2VCausal:
         gen_fn = (self._generate_causal_fast
                   if self.infer_mode == "causal_fast"
                   else self._generate_causal_pretrain)
+
+        # M3.5: In sequential mode, ensure required models are loaded before
+        # generation. T5 is loaded lazily inside _get_text_context if needed.
+        if self.sequential_load:
+            if self.vae is None:
+                self.load_vae()
+            if self.model is None:
+                self.load_dit()
+
         return gen_fn(
             input_prompt,
             img,
@@ -718,7 +892,12 @@ class WanI2VCausal:
             seed=seed,
             offload_model=offload_model,
             max_sequence_length=max_sequence_length,
-            max_attention_size=max_attention_size)
+            max_attention_size=max_attention_size,
+            stage=stage,
+            image_condition_file=image_condition_file,
+            dump_image_condition=dump_image_condition,
+            latents_file=latents_file,
+            output_latents_file=output_latents_file)
 
     def _generate_causal_fast(self,
                               input_prompt,
@@ -732,7 +911,12 @@ class WanI2VCausal:
                               seed=-1,
                               offload_model=True,
                               max_sequence_length=512,
-                              max_attention_size=None,):
+                              max_attention_size=None,
+                              stage="full",
+                              image_condition_file=None,
+                              dump_image_condition=None,
+                              latents_file=None,
+                              output_latents_file=None,):
         r"""
         Generates video frames from input image and text prompt using diffusion process.
 
@@ -848,6 +1032,9 @@ class WanI2VCausal:
             context = [context_tensor.to(self.device)]
             self._t5_cache[cache_key] = context
         else:
+            # M3.4: In sequential mode, load T5 on demand if not already loaded
+            if self.sequential_load and self.text_encoder is None:
+                self.load_text_encoder()
             if not self.t5_cpu:
                 self.text_encoder.model.to(self.device)
                 context = self.text_encoder([input_prompt], self.device)
@@ -916,6 +1103,12 @@ class WanI2VCausal:
                          dim=1).to(self.device)
         ])[0]
         y = torch.concat([msk, y])
+
+        # M3.5: In sequential mode, unload VAE after image encode to free
+        # ~0.5GB before DiT generation. VAE will be reloaded before decode.
+        if self.sequential_load:
+            logging.info("Sequential mode: unloading VAE after image encode")
+            self.unload_vae()
 
         @contextmanager
         def noop_no_sync():
@@ -1020,11 +1213,24 @@ class WanI2VCausal:
 
             pred_latent_chunks = torch.cat(pred_latent_chunks, dim=1)
 
-            if offload_model:
+            if self.sequential_load:
+                # M3.5: Fully unload DiT (not just .cpu()) to free ~3.4GB
+                # before VAE decode. Also release KV caches.
+                logging.info("Sequential mode: fully unloading DiT before VAE decode")
+                if hasattr(self.model, 'selfattn_cache'):
+                    del self.model.selfattn_cache
+                if hasattr(self.model, 'crossattn_cache'):
+                    del self.model.crossattn_cache
+                self.unload_dit()
+            elif offload_model:
                 self.model.cpu()
                 device_empty_cache(self.device)
 
             if self.rank == 0:
+                # M3.5: Reload VAE if it was unloaded in sequential mode
+                if self.sequential_load and self.vae is None:
+                    logging.info("Sequential mode: reloading VAE for decode")
+                    self.load_vae()
                 videos = self.vae.decode([pred_latent_chunks])
 
         # del noise, latent, x0

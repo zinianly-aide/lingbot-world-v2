@@ -257,6 +257,39 @@ def _parse_args():
              "(e.g. M4 16GB) where UMT5 + DiT + VAE cannot coexist. "
              "Create with: python scripts/encode_prompt.py --prompt '...' --output embeds.safetensors")
     parser.add_argument(
+        "--stage",
+        type=str,
+        default="full",
+        choices=["full", "encode-image", "generate-latents", "decode"],
+        help="Inference stage for low-memory pipeline. "
+             "'full' runs all stages; 'encode-image' only VAE-encodes the input image; "
+             "'generate-latents' runs DiT generation from cached image condition; "
+             "'decode' only VAE-decodes cached latents to video.")
+    parser.add_argument(
+        "--image_condition_file",
+        type=str,
+        default=None,
+        help="Path to a cached image condition .safetensors file (from --stage encode-image). "
+             "When provided with --stage generate-latents or full, VAE image encoding is skipped.")
+    parser.add_argument(
+        "--dump_image_condition",
+        type=str,
+        default=None,
+        help="Path to save the VAE image condition .safetensors file after encoding. "
+             "Useful for debugging or reusing across runs.")
+    parser.add_argument(
+        "--latents_file",
+        type=str,
+        default=None,
+        help="Path to a cached generated latents .safetensors file (from --stage generate-latents). "
+             "When provided with --stage decode, DiT generation is skipped.")
+    parser.add_argument(
+        "--output_latents_file",
+        type=str,
+        default=None,
+        help="Path to save the generated latents .safetensors file after DiT generation. "
+             "Allows decode-only runs without re-running DiT.")
+    parser.add_argument(
         "--vlm_world_prompt",
         action="store_true",
         default=False,

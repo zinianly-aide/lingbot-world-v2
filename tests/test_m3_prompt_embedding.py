@@ -274,6 +274,7 @@ class TestUnloadMethods(unittest.TestCase):
                 checkpoint_dir=tmpdir,
                 device_id=torch.device("cpu"),
                 infer_mode="causal_fast",
+                sequential_load=False,
             )
         return pipe
 
