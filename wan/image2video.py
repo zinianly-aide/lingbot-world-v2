@@ -130,7 +130,8 @@ def _dit_kwargs_from_config(config, extra=None):
 
 
 def load_dit_model(model_cls, checkpoint_dir, subfolder, config, torch_dtype,
-                   extra=None, use_streaming=True):
+                   extra=None, use_streaming=True, target_device=None,
+                   allow_legacy_fallback=True):
     """Load a DiT from ``transformers/`` or the checkpoint root.
 
     Uses ``from_pretrained`` when ``config.json`` is present. Otherwise builds
@@ -143,7 +144,16 @@ def load_dit_model(model_cls, checkpoint_dir, subfolder, config, torch_dtype,
     - Casts F32 -> target dtype and assigns directly into the meta model
     - Avoids constructing a full state dict and a second ``model.to(dtype)`` copy
 
-    Falls back to the legacy full-state loader if streaming fails.
+    Args:
+        target_device: If set, streaming loader assigns tensors directly to this
+            device (e.g. torch.device("mps")). Avoids a full CPU->device copy.
+            If None, tensors are loaded to CPU and the caller may move the model.
+        allow_legacy_fallback: If True (default), streaming failure falls back to
+            the legacy full-state loader. Set False for MPS to fail fast and
+            avoid memory explosion from the legacy loader.
+
+    Falls back to the legacy full-state loader if streaming fails (only when
+    allow_legacy_fallback=True).
     """
     extra = extra or {}
     dit_dir = _resolve_dit_dir(checkpoint_dir, subfolder)
@@ -159,34 +169,60 @@ def load_dit_model(model_cls, checkpoint_dir, subfolder, config, torch_dtype,
 
     if use_streaming:
         try:
-            logging.info("Using low-memory streaming safetensors loader")
+            logging.info(
+                f"Using low-memory streaming safetensors loader "
+                f"(target_device={target_device}, allow_legacy_fallback={allow_legacy_fallback})"
+            )
             kwargs = _dit_kwargs_from_config(config, extra)
             model = create_meta_model(model_cls, **kwargs)
             stats = load_sharded_safetensors_streaming(
                 model,
                 dit_dir,
                 target_dtype=torch_dtype,
-                target_device=None,  # loader will use CPU then model can be moved
+                target_device=target_device,
             )
             if stats.success:
+                rss_str = f", RSS peak {stats.rss_peak_mb:.0f} MB" if stats.rss_peak_mb else ""
                 logging.info(
                     f"Streaming load complete: {stats.tensor_count} tensors, "
-                    f"{stats.load_duration_sec:.1f}s, "
-                    f"RSS peak {stats.rss_peak_mb:.0f} MB" if stats.rss_peak_mb else
-                    f"Streaming load complete: {stats.tensor_count} tensors, "
-                    f"{stats.load_duration_sec:.1f}s"
+                    f"{stats.load_duration_sec:.1f}s{rss_str}"
                 )
+                # Verify all tensors are on target device (if specified)
+                if target_device is not None:
+                    wrong_device = [
+                        n for n, p in model.named_parameters()
+                        if p.device != target_device
+                    ]
+                    if wrong_device:
+                        logging.warning(
+                            f"{len(wrong_device)} params not on target device {target_device}; "
+                            f"first: {wrong_device[:3]}"
+                        )
                 return model
             else:
-                logging.warning(
-                    "Streaming load had issues; falling back to legacy loader.\n"
-                    + stats.summary()
-                )
+                msg = "Streaming load had issues.\n" + stats.summary()
+                if allow_legacy_fallback:
+                    logging.warning(msg + "\nFalling back to legacy loader.")
+                else:
+                    logging.error(msg + "\nLegacy fallback disabled; failing fast.")
+                    del model
+                    gc.collect()
+                    raise RuntimeError(
+                        f"Streaming DiT load failed and legacy fallback is disabled. "
+                        f"Missing={len(stats.missing_keys)}, unexpected={len(stats.unexpected_keys)}, "
+                        f"shape_mismatch={len(stats.shape_mismatch)}, "
+                        f"meta_remaining={stats.meta_params_remaining}"
+                    )
                 del model
                 gc.collect()
         except Exception as e:
-            logging.warning(f"Streaming loader failed ({e}); falling back to legacy loader")
-            gc.collect()
+            if allow_legacy_fallback:
+                logging.warning(f"Streaming loader failed ({e}); falling back to legacy loader")
+                gc.collect()
+            else:
+                logging.error(f"Streaming loader failed ({e}); legacy fallback disabled; re-raising")
+                gc.collect()
+                raise
 
     # Legacy full-state loader (fallback)
     logging.info("Using legacy full-state safetensors loader")
@@ -219,6 +255,7 @@ class WanI2VCausal:
         sink_size=0,
         infer_mode="causal_fast",
         assets_dir=None,
+        prompt_embeds_file=None,
     ):
         r"""
         Initializes the image-to-video generation model components.
@@ -281,16 +318,26 @@ class WanI2VCausal:
             self.init_on_cpu = False
 
         shard_fn = partial(shard_model, device_id=device_id)
-        self.text_encoder = T5EncoderModel(
-            text_len=config.text_len,
-            dtype=config.t5_dtype,
-            device=torch.device('cpu'),
-            checkpoint_path=_resolve_asset_path(
-                config.t5_checkpoint, checkpoint_dir, assets_dir),
-            tokenizer_path=_resolve_asset_path(
-                config.t5_tokenizer, checkpoint_dir, assets_dir),
-            shard_fn=shard_fn if t5_fsdp else None,
-        )
+        self.prompt_embeds_file = prompt_embeds_file
+        if prompt_embeds_file is not None:
+            # Skip T5 encoder entirely — context will be loaded from
+            # the pre-computed prompt_embeds.safetensors file.
+            logging.info(
+                f"prompt_embeds_file provided; skipping T5 encoder init. "
+                f"Will load context from {prompt_embeds_file}"
+            )
+            self.text_encoder = None
+        else:
+            self.text_encoder = T5EncoderModel(
+                text_len=config.text_len,
+                dtype=config.t5_dtype,
+                device=torch.device('cpu'),
+                checkpoint_path=_resolve_asset_path(
+                    config.t5_checkpoint, checkpoint_dir, assets_dir),
+                tokenizer_path=_resolve_asset_path(
+                    config.t5_tokenizer, checkpoint_dir, assets_dir),
+                shard_fn=shard_fn if t5_fsdp else None,
+            )
 
         self.vae_stride = config.vae_stride
         self.patch_size = config.patch_size
@@ -299,16 +346,26 @@ class WanI2VCausal:
                 config.vae_checkpoint, checkpoint_dir, assets_dir),
             device=self.device)
 
+        # MPS mode: stream weights directly to MPS, no legacy fallback, no
+        # second full-model CPU->MPS copy. MPS uses float16 (bf16 support
+        # is limited on Apple GPU).
+        is_mps = self.device.type == "mps"
+        dit_target_device = self.device if is_mps else None
+        dit_allow_fallback = not is_mps
+        dit_dtype = torch.float16 if is_mps else torch.bfloat16
+
         if self.infer_mode == "causal_fast":
             self.model = load_dit_model(
                 WanModelFast,
                 checkpoint_dir,
                 config.fast_checkpoint,
                 config,
-                torch.bfloat16,
+                dit_dtype,
                 extra=dict(
                     local_attn_size=self.local_attn_size,
                     sink_size=self.sink_size),
+                target_device=dit_target_device,
+                allow_legacy_fallback=dit_allow_fallback,
             )
         else:
             self.model = load_dit_model(
@@ -316,15 +373,40 @@ class WanI2VCausal:
                 checkpoint_dir,
                 config.causal_checkpoint,
                 config,
-                torch.bfloat16,
+                dit_dtype,
+                target_device=dit_target_device,
+                allow_legacy_fallback=dit_allow_fallback,
             )
 
+        # Configure model (eval, requires_grad, SP, FSDP, dtype).
+        # For MPS with streaming load, weights are already on target device
+        # and correct dtype — skip the external .to(self.device) to avoid a
+        # full-model temporary copy.
         self.model = self._configure_model(
             model=self.model,
             use_sp=use_sp,
             dit_fsdp=dit_fsdp,
             shard_fn=shard_fn,
-            convert_model_dtype=convert_model_dtype).to(self.device)
+            convert_model_dtype=convert_model_dtype)
+        if not is_mps:
+            self.model = self.model.to(self.device)
+
+        # Verify device placement for MPS streaming load
+        if is_mps:
+            wrong_device = [
+                n for n, p in self.model.named_parameters()
+                if p.device != self.device
+            ]
+            if wrong_device:
+                logging.warning(
+                    f"MPS DiT: {len(wrong_device)} params not on {self.device}; "
+                    f"first 3: {wrong_device[:3]}"
+                )
+            meta_remaining = sum(1 for p in self.model.parameters() if p.is_meta)
+            if meta_remaining:
+                raise RuntimeError(
+                    f"MPS DiT load incomplete: {meta_remaining} meta parameters remain"
+                )
 
         self.scheduler = FlowUniPCMultistepScheduler(
             num_train_timesteps=self.num_train_timesteps,
@@ -353,6 +435,41 @@ class WanI2VCausal:
     def clear_text_cache(self):
         """Drop all cached T5 prompt embeddings. Frees ~4 MB per entry."""
         self._t5_cache.clear()
+
+    def unload_text_encoder(self):
+        """Release the T5 text encoder to free memory (~11GB for umt5-xxl).
+
+        After calling this, generate() will fail unless prompt_embeds_file
+        was provided or the text encoder is reloaded.
+        """
+        from wan.utils.memory import release_model_and_setattr
+        return release_model_and_setattr(self, "text_encoder", self.device)
+
+    def unload_vae(self):
+        """Release the VAE to free memory (~0.5GB).
+
+        After calling this, image encoding/decoding will fail unless the VAE
+        is reloaded.
+        """
+        from wan.utils.memory import release_model_and_setattr
+        return release_model_and_setattr(self, "vae", self.device)
+
+    def unload_dit(self):
+        """Release the DiT model to free memory (~3.4GB for 1.3B FP16).
+
+        After calling this, generation will fail unless the DiT is reloaded.
+        """
+        from wan.utils.memory import release_model_and_setattr
+        return release_model_and_setattr(self, "model", self.device)
+
+    def memory_summary(self) -> dict:
+        """Return current memory usage summary."""
+        from wan.utils.memory import get_memory_stats
+        stats = get_memory_stats(self.device)
+        stats["text_encoder_loaded"] = self.text_encoder is not None
+        stats["vae_loaded"] = getattr(self, "vae", None) is not None
+        stats["dit_loaded"] = getattr(self, "model", None) is not None
+        return stats
 
     def prewarm(
         self,
@@ -719,6 +836,17 @@ class WanI2VCausal:
         cache_key = hashlib.sha256(input_prompt.encode('utf-8')).hexdigest()
         if cache_key in self._t5_cache:
             context = self._t5_cache[cache_key]
+        elif self.text_encoder is None and self.prompt_embeds_file is not None:
+            # Load pre-computed prompt embedding, skip T5 entirely
+            from wan.utils.prompt_embedding import load_prompt_embedding
+            context_tensor, _ = load_prompt_embedding(
+                self.prompt_embeds_file,
+                expected_prompt=input_prompt,
+                expected_hidden_dim=getattr(self.config, 'text_dim', 4096),
+                max_text_len=getattr(self.config, 'text_len', 512),
+            )
+            context = [context_tensor.to(self.device)]
+            self._t5_cache[cache_key] = context
         else:
             if not self.t5_cpu:
                 self.text_encoder.model.to(self.device)

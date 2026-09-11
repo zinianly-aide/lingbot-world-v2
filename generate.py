@@ -248,6 +248,15 @@ def _parse_args():
         help="Device for inference. 'auto' prioritizes CUDA > MPS > CPU. "
              "MPS enables Apple Silicon single-GPU path (forces WORLD_SIZE=1, ulysses_size=1, no FSDP/NCCL).")
     parser.add_argument(
+        "--prompt_embeds_file",
+        type=str,
+        default=None,
+        help="Path to a pre-computed prompt embedding .safetensors file. "
+             "When provided, the UMT5 text encoder is skipped entirely and the "
+             "embedding is loaded directly. Critical for low-memory environments "
+             "(e.g. M4 16GB) where UMT5 + DiT + VAE cannot coexist. "
+             "Create with: python scripts/encode_prompt.py --prompt '...' --output embeds.safetensors")
+    parser.add_argument(
         "--vlm_world_prompt",
         action="store_true",
         default=False,
@@ -370,6 +379,7 @@ def run_causal(args, cfg, img, device, rank, mode="causal_fast"):
         sink_size=args.sink_size,
         infer_mode=mode,
         assets_dir=args.assets_dir,
+        prompt_embeds_file=args.prompt_embeds_file,
     )
     logging.info("Generating video ...")
     return wan_i2v.generate(
