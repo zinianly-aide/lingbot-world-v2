@@ -19,6 +19,10 @@ import torchvision.transforms.functional as TF
 from tqdm import tqdm
 
 from wan.utils.device import device_autocast, device_empty_cache, device_synchronize
+from wan.utils.streaming_loader import (
+    create_meta_model,
+    load_sharded_safetensors_streaming,
+)
 
 from .distributed.fsdp import shard_model
 from .distributed.sequence_parallel import sp_attn_forward_causal, sp_dit_forward_causal
@@ -126,12 +130,20 @@ def _dit_kwargs_from_config(config, extra=None):
 
 
 def load_dit_model(model_cls, checkpoint_dir, subfolder, config, torch_dtype,
-                   extra=None):
+                   extra=None, use_streaming=True):
     """Load a DiT from ``transformers/`` or the checkpoint root.
 
     Uses ``from_pretrained`` when ``config.json`` is present. Otherwise builds
     the module from the task EasyDict and loads sharded safetensors — the
     layout of the current 1.3B Hugging Face upload.
+
+    When ``use_streaming=True`` (default), uses a low-memory streaming loader:
+    - Creates the model on the ``meta`` device (no real parameter allocation)
+    - Loads tensors one at a time via ``safetensors.safe_open``
+    - Casts F32 -> target dtype and assigns directly into the meta model
+    - Avoids constructing a full state dict and a second ``model.to(dtype)`` copy
+
+    Falls back to the legacy full-state loader if streaming fails.
     """
     extra = extra or {}
     dit_dir = _resolve_dit_dir(checkpoint_dir, subfolder)
@@ -144,6 +156,40 @@ def load_dit_model(model_cls, checkpoint_dir, subfolder, config, torch_dtype,
         f"config.json not found in {dit_dir}; building {model_cls.__name__} "
         "from the task config and loading safetensors weights."
     )
+
+    if use_streaming:
+        try:
+            logging.info("Using low-memory streaming safetensors loader")
+            kwargs = _dit_kwargs_from_config(config, extra)
+            model = create_meta_model(model_cls, **kwargs)
+            stats = load_sharded_safetensors_streaming(
+                model,
+                dit_dir,
+                target_dtype=torch_dtype,
+                target_device=None,  # loader will use CPU then model can be moved
+            )
+            if stats.success:
+                logging.info(
+                    f"Streaming load complete: {stats.tensor_count} tensors, "
+                    f"{stats.load_duration_sec:.1f}s, "
+                    f"RSS peak {stats.rss_peak_mb:.0f} MB" if stats.rss_peak_mb else
+                    f"Streaming load complete: {stats.tensor_count} tensors, "
+                    f"{stats.load_duration_sec:.1f}s"
+                )
+                return model
+            else:
+                logging.warning(
+                    "Streaming load had issues; falling back to legacy loader.\n"
+                    + stats.summary()
+                )
+                del model
+                gc.collect()
+        except Exception as e:
+            logging.warning(f"Streaming loader failed ({e}); falling back to legacy loader")
+            gc.collect()
+
+    # Legacy full-state loader (fallback)
+    logging.info("Using legacy full-state safetensors loader")
     model = model_cls(**_dit_kwargs_from_config(config, extra))
     state = _load_safetensors_state_dict(dit_dir)
     missing, unexpected = model.load_state_dict(state, strict=False)
