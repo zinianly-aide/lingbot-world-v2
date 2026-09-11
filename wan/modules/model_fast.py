@@ -17,37 +17,17 @@ from wan.modules.model import (
 )
 
 from .attention import flash_attention
+from wan.utils.device import autocast_ctx
+from wan.utils.rope import rope_apply_real
 
 
 def causal_rope_apply(x, grid_sizes, freqs, start_frame=0):
-    n, c = x.size(2), x.size(3) // 2
+    """FP32 real-valued RoPE (MPS-compatible; numerically equivalent to complex version).
 
-    # split freqs
-    freqs = freqs.split([c - 2 * (c // 3), c // 3, c // 3], dim=1)
-
-    # loop over samples
-    output = []
-
-    for i, (f, h, w) in enumerate(grid_sizes.tolist()):
-        seq_len = f * h * w
-
-        # precompute multipliers
-        x_i = torch.view_as_complex(x[i, :seq_len].to(torch.float64).reshape(
-            seq_len, n, -1, 2))
-        freqs_i = torch.cat([
-            freqs[0][start_frame:start_frame + f].view(f, 1, 1, -1).expand(f, h, w, -1),
-            freqs[1][:h].view(1, h, 1, -1).expand(f, h, w, -1),
-            freqs[2][:w].view(1, 1, w, -1).expand(f, h, w, -1)
-        ],
-            dim=-1).reshape(seq_len, 1, -1)
-
-        # apply rotary embedding
-        x_i = torch.view_as_real(x_i * freqs_i).flatten(2)
-        x_i = torch.cat([x_i, x[i, seq_len:]])
-
-        # append to collection
-        output.append(x_i)
-    return torch.stack(output).type_as(x)
+    Delegates to wan.utils.rope.rope_apply_real to avoid float64/complex128
+    (unsupported on Apple MPS).
+    """
+    return rope_apply_real(x, grid_sizes, freqs, start_frame=start_frame)
 
 
 class CausalWanSelfAttention(nn.Module):
@@ -284,7 +264,7 @@ class CausalWanAttentionBlock(nn.Module):
             freqs(Tensor): Rope freqs, shape [1024, C / num_heads / 2]
         """
         assert e.dtype == torch.float32
-        with torch.amp.autocast('cuda', dtype=torch.float32):
+        with autocast_ctx(dtype=torch.float32):
             e = (self.modulation.unsqueeze(0) + e).chunk(6, dim=2)
         assert e[0].dtype == torch.float32
         # self-attention
@@ -292,7 +272,7 @@ class CausalWanAttentionBlock(nn.Module):
             self.norm1(x).float() * (1 + e[1].squeeze(2)) + e[0].squeeze(2),
             seq_lens, grid_sizes, freqs, kv_cache, current_start, max_attention_size,
             frame_seqlen=frame_seqlen, seq_lens_int=seq_lens_int)
-        with torch.amp.autocast('cuda', dtype=torch.float32):
+        with autocast_ctx(dtype=torch.float32):
             x = x + y * e[2].squeeze(2)
 
         # cam injection (only if dit_cond_dict is provided and contains c2ws_plucker_emb)
@@ -312,7 +292,7 @@ class CausalWanAttentionBlock(nn.Module):
                                     cross_attn_first_call=cross_attn_first_call)
             y = self.ffn(
                 self.norm2(x).float() * (1 + e[4].squeeze(2)) + e[3].squeeze(2))
-            with torch.amp.autocast('cuda', dtype=torch.float32):
+            with autocast_ctx(dtype=torch.float32):
                 x = x + y * e[5].squeeze(2)
             return x
 
@@ -345,7 +325,7 @@ class CausalHead(nn.Module):
             e(Tensor): Shape [B, L1, C]
         """
         assert e.dtype == torch.float32
-        with torch.amp.autocast('cuda', dtype=torch.float32):
+        with autocast_ctx(dtype=torch.float32):
             e = (self.modulation.unsqueeze(0) + e.unsqueeze(2)).chunk(2, dim=2)
             x = (
                 self.head(
@@ -559,7 +539,7 @@ class WanModelFast(ModelMixin, ConfigMixin):
         # time embeddings
         if t.dim() == 1:
             t = t.expand(t.size(0), seq_lens)
-        with torch.amp.autocast('cuda', dtype=torch.float32):
+        with autocast_ctx(dtype=torch.float32):
             bt = t.size(0)
             t = t.flatten()
             e = self.time_embedding(

@@ -19,9 +19,11 @@ from wan.distributed.util import init_distributed_group
 from wan.utils.device import (
     device_empty_cache,
     device_synchronize,
+    get_autocast_device_type,
     is_cuda,
     is_mps,
     resolve_device,
+    set_autocast_device_type,
 )
 from wan.utils.utils import save_video, str2bool
 from world_condition import (
@@ -92,6 +94,10 @@ def _validate_args(args):
         logging.info(f"CUDA mode: device={args._device}")
     else:
         logging.info(f"CPU mode: device={args._device} (slow, for debugging only)")
+
+    # Set global autocast device type for all modules
+    set_autocast_device_type(args._device.type)
+    logging.info(f"Global autocast device type set to: {get_autocast_device_type()}")
 
     if args.sample_shift is None:
         args.sample_shift = cfg.sample_shift

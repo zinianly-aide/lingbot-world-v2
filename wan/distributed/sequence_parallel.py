@@ -7,6 +7,7 @@ from ..modules.attention import flash_attention
 from ..modules.model import sinusoidal_embedding_1d
 from .ulysses import distributed_attention
 from .util import all_to_all, gather_forward, get_rank, get_world_size
+from wan.utils.device import autocast_ctx
 
 
 def pad_freqs(original_tensor, target_len):
@@ -22,7 +23,7 @@ def pad_freqs(original_tensor, target_len):
     return padded_tensor
 
 
-@torch.amp.autocast('cuda', enabled=False)
+@autocast_ctx(enabled=False)
 def rope_apply(x, grid_sizes, freqs):
     """
     x:          [B, L, N, C].
@@ -63,7 +64,7 @@ def rope_apply(x, grid_sizes, freqs):
     return torch.stack(output).float()
 
 
-@torch.amp.autocast('cuda', enabled=False)
+@autocast_ctx(enabled=False)
 def causal_rope_apply(x, grid_sizes, freqs, start_frame=0):
     n, c = x.size(2), x.size(3) // 2
 
@@ -134,7 +135,7 @@ def sp_dit_forward(
     # time embeddings
     if t.dim() == 1:
         t = t.expand(t.size(0), seq_len)
-    with torch.amp.autocast('cuda', dtype=torch.float32):
+    with autocast_ctx(dtype=torch.float32):
         bt = t.size(0)
         t = t.flatten()
         e = self.time_embedding(
@@ -320,7 +321,7 @@ def sp_dit_forward_causal(
     # time embeddings
     if t.dim() == 1:
         t = t.expand(t.size(0), padded_seq_lens)
-    with torch.amp.autocast('cuda', dtype=torch.float32):
+    with autocast_ctx(dtype=torch.float32):
         bt = t.size(0)
         t = t.flatten()
         e = self.time_embedding(

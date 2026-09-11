@@ -190,3 +190,35 @@ def get_device_memory(device: DeviceLike) -> Optional[int]:
     # MPS and CPU don't have a straightforward "total memory" query
     # (unified memory / system RAM). Return None.
     return None
+
+
+# ---------------------------------------------------------------------------
+# Global autocast device type management
+# ---------------------------------------------------------------------------
+# Many modules use torch.amp.autocast('cuda', ...) hardcoded. For MPS/CPU
+# inference we need the autocast device_type to match the actual device.
+# This global lets generate.py set the device once, and all modules read it.
+
+_AUTOCAST_DEVICE_TYPE = "cuda"
+
+
+def set_autocast_device_type(device_type: str) -> None:
+    """Set the global autocast device type ('cuda', 'mps', or 'cpu')."""
+    global _AUTOCAST_DEVICE_TYPE
+    _AUTOCAST_DEVICE_TYPE = device_type
+
+
+def get_autocast_device_type() -> str:
+    """Get the global autocast device type."""
+    return _AUTOCAST_DEVICE_TYPE
+
+
+def autocast_ctx(dtype=None, enabled=True):
+    """Return a torch.amp.autocast context using the global device type.
+
+    Usage:  with autocast_ctx(dtype=torch.float32): ...
+    """
+    dt = get_autocast_device_type()
+    if dtype is None:
+        dtype = torch.float16 if dt in ("cuda", "mps") else torch.bfloat16
+    return torch.amp.autocast(device_type=dt, dtype=dtype, enabled=enabled)

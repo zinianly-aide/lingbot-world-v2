@@ -18,6 +18,8 @@ import torch.distributed as dist
 import torchvision.transforms.functional as TF
 from tqdm import tqdm
 
+from wan.utils.device import device_autocast, device_empty_cache, device_synchronize
+
 from .distributed.fsdp import shard_model
 from .distributed.sequence_parallel import sp_attn_forward_causal, sp_dit_forward_causal
 from .distributed.util import get_world_size
@@ -186,8 +188,8 @@ class WanI2VCausal:
                 Object containing model parameters initialized from config.py
             checkpoint_dir (`str`):
                 Path to directory containing model checkpoints
-            device_id (`int`,  *optional*, defaults to 0):
-                Id of target GPU device
+            device_id (`int` or `torch.device`, *optional*, defaults to 0):
+                Id of target GPU device, or a torch.device (e.g. torch.device('mps')).
             rank (`int`,  *optional*, defaults to 0):
                 Process rank for distributed training
             t5_fsdp (`bool`, *optional*, defaults to False):
@@ -212,7 +214,11 @@ class WanI2VCausal:
             f"Unsupported infer_mode: {infer_mode}"
         self.infer_mode = infer_mode
 
-        self.device = torch.device(f"cuda:{device_id}")
+        # Resolve device: accept int (CUDA index) or torch.device
+        if isinstance(device_id, torch.device):
+            self.device = device_id
+        else:
+            self.device = torch.device(f"cuda:{device_id}")
         self.config = config
         self.rank = rank
         self.t5_cpu = t5_cpu
@@ -412,11 +418,11 @@ class WanI2VCausal:
         no_sync_model = getattr(self.model, 'no_sync', _noop_no_sync)
 
         if dist.is_initialized():
-            torch.cuda.synchronize()
+            device_synchronize(self.device)
             dist.barrier()
         t0 = time.perf_counter()
 
-        with torch.amp.autocast('cuda', dtype=self.param_dtype), \
+        with device_autocast(self.device, dtype=self.param_dtype), \
              torch.no_grad(), \
              no_sync_model():
             _ = self.model(
@@ -434,7 +440,7 @@ class WanI2VCausal:
             )
 
         if dist.is_initialized():
-            torch.cuda.synchronize()
+            device_synchronize(self.device)
             dist.barrier()
 
         if (not dist.is_initialized()) or dist.get_rank() == 0:
@@ -443,7 +449,7 @@ class WanI2VCausal:
 
         del (warmup_self_kv, warmup_cross_kv, dummy_latent, dummy_y,
              dummy_c2ws, dummy_context, dummy_t)
-        torch.cuda.empty_cache()
+        device_empty_cache(self.device)
         self._warmed = True
 
     def _configure_model(self, model, use_sp, dit_fsdp, shard_fn,
@@ -765,7 +771,7 @@ class WanI2VCausal:
                                                           device=self.device)
         # evaluation mode
         with (
-                torch.amp.autocast('cuda', dtype=self.param_dtype),
+                device_autocast(self.device, dtype=self.param_dtype),
                 torch.no_grad(),
                 no_sync_model(),
         ):
@@ -798,7 +804,7 @@ class WanI2VCausal:
                 }
 
                 if offload_model:
-                    torch.cuda.empty_cache()
+                    device_empty_cache(self.device)
 
                 for timestep_idx in range(len(timesteps)):
                     latent_model_input = [current_latent.to(self.device)]
@@ -813,7 +819,7 @@ class WanI2VCausal:
                     self._cross_attn_initialized = True
 
                     if offload_model:
-                        torch.cuda.empty_cache()
+                        device_empty_cache(self.device)
 
                     x0 = self._convert_flow_pred_to_x0(
                         flow_pred=noise_pred,
@@ -842,7 +848,7 @@ class WanI2VCausal:
 
             if offload_model:
                 self.model.cpu()
-                torch.cuda.empty_cache()
+                device_empty_cache(self.device)
 
             if self.rank == 0:
                 videos = self.vae.decode([pred_latent_chunks])
@@ -851,7 +857,7 @@ class WanI2VCausal:
         # del sample_scheduler
         if offload_model:
             gc.collect()
-            torch.cuda.synchronize()
+            device_synchronize(self.device)
         if dist.is_initialized():
             dist.barrier()
 
@@ -1026,7 +1032,7 @@ class WanI2VCausal:
             device=self.device)
 
         with (
-                torch.amp.autocast('cuda', dtype=self.param_dtype),
+                device_autocast(self.device, dtype=self.param_dtype),
                 torch.no_grad(),
                 no_sync_model(),
         ):
@@ -1070,7 +1076,7 @@ class WanI2VCausal:
                 }
 
                 if offload_model:
-                    torch.cuda.empty_cache()
+                    device_empty_cache(self.device)
 
                 for timestep_idx in tqdm(range(len(timesteps)), desc=f"infer chunk {chunk_id}"):
                     latent_model_input = [current_latent.to(self.device)]
@@ -1085,7 +1091,7 @@ class WanI2VCausal:
                         noise_pred_cond - noise_pred_uncond)
 
                     if offload_model:
-                        torch.cuda.empty_cache()
+                        device_empty_cache(self.device)
 
                     temp_x0 = sample_scheduler.step(
                         noise_pred.unsqueeze(0), t,
@@ -1106,14 +1112,14 @@ class WanI2VCausal:
 
             if offload_model:
                 self.model.cpu()
-                torch.cuda.empty_cache()
+                device_empty_cache(self.device)
 
             if self.rank == 0:
                 videos = self.vae.decode([pred_latent_chunks])
 
         if offload_model:
             gc.collect()
-            torch.cuda.synchronize()
+            device_synchronize(self.device)
         if dist.is_initialized():
             dist.barrier()
 
