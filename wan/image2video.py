@@ -359,6 +359,8 @@ class WanI2VCausal:
                 f"Sequential/lazy load mode enabled (device={self.device}). "
                 f"Models will be loaded on demand via load_text_encoder/load_vae/load_dit."
             )
+            self.vae_stride = config.vae_stride
+            self.patch_size = config.patch_size
             self.text_encoder = None
             self.vae = None
             self.model = None
@@ -958,6 +960,20 @@ class WanI2VCausal:
             batch_size = 1
         
         assert action_path is not None, "action_path is required"
+
+        # M3.6: Stage validation. In generate-latents stage, VAE must not
+        # be loaded; in decode stage, DiT must not be loaded.
+        if stage == "generate-latents":
+            assert image_condition_file is not None, \
+                "--stage generate-latents requires --image_condition_file"
+            if self.sequential_load:
+                assert self.vae is None, "VAE must not be loaded in generate-latents stage"
+        elif stage == "decode":
+            assert latents_file is not None, \
+                "--stage decode requires --latents_file"
+            if self.sequential_load:
+                assert self.model is None, "DiT must not be loaded in decode stage"
+
         c2ws = np.load(os.path.join(action_path, "poses.npy")) # opencv coordinate
         len_c2ws = ((len(c2ws) - 1) // 4) * 4 + 1
         frame_num = ((frame_num - 1) // 4) * 4 + 1
@@ -1032,17 +1048,21 @@ class WanI2VCausal:
             context = [context_tensor.to(self.device)]
             self._t5_cache[cache_key] = context
         else:
-            # M3.4: In sequential mode, load T5 on demand if not already loaded
-            if self.sequential_load and self.text_encoder is None:
-                self.load_text_encoder()
-            if not self.t5_cpu:
-                self.text_encoder.model.to(self.device)
-                context = self.text_encoder([input_prompt], self.device)
-                if offload_model:
-                    self.text_encoder.model.cpu()
+            # M3.6: encode-image and decode stages don't need T5
+            if stage in ("encode-image", "decode"):
+                context = [torch.zeros(1, 1, 4096, device=self.device)]
             else:
-                context = self.text_encoder([input_prompt], torch.device('cpu'))
-                context = [t.to(self.device) for t in context]
+                # M3.4: In sequential mode, load T5 on demand if not already loaded
+                if self.sequential_load and self.text_encoder is None:
+                    self.load_text_encoder()
+                if not self.t5_cpu:
+                    self.text_encoder.model.to(self.device)
+                    context = self.text_encoder([input_prompt], self.device)
+                    if offload_model:
+                        self.text_encoder.model.cpu()
+                else:
+                    context = self.text_encoder([input_prompt], torch.device('cpu'))
+                    context = [t.to(self.device) for t in context]
             self._t5_cache[cache_key] = context
 
         Ks = torch.from_numpy(np.load(os.path.join(action_path, "intrinsics.npy"))).float()
@@ -1093,22 +1113,84 @@ class WanI2VCausal:
             wasd_action_tensor = rearrange(wasd_action_tensor, 'b (f h w) c -> b c f h w', f=lat_f, h=lat_h, w=lat_w).to(self.param_dtype)
             c2ws_plucker_emb = torch.cat([c2ws_plucker_emb, wasd_action_tensor], dim=1)
 
-        y = self.vae.encode([
-            torch.concat([
-                torch.nn.functional.interpolate(
-                    img[None].cpu(), size=(h, w), mode='bicubic').transpose(
-                        0, 1),
-                torch.zeros(3, F - 1, h, w)
-            ],
-                         dim=1).to(self.device)
-        ])[0]
-        y = torch.concat([msk, y])
+        # M3.6: In generate-latents stage, load image condition from cache
+        # and skip VAE encode entirely.
+        if stage == "generate-latents" and image_condition_file is not None:
+            from wan.utils.staged_cache import load_image_condition, ImageConditionMetadata
+            logging.info(f"Loading image condition from cache: {image_condition_file}")
+            expected_meta = ImageConditionMetadata(
+                aligned_frame_num=F,
+                chunk_size=chunk_size,
+                h=h, w=w,
+                lat_f=lat_f, lat_h=lat_h, lat_w=lat_w,
+                vae_stride=tuple(self.vae_stride),
+                patch_size=tuple(self.patch_size),
+            )
+            y, loaded_meta = load_image_condition(image_condition_file, expected_meta)
+            y = y.to(self.device)
+            logging.info(f"Image condition loaded: shape={y.shape}, dtype={y.dtype}")
+        else:
+            y = self.vae.encode([
+                torch.concat([
+                    torch.nn.functional.interpolate(
+                        img[None].cpu(), size=(h, w), mode='bicubic').transpose(
+                            0, 1),
+                    torch.zeros(3, F - 1, h, w)
+                ],
+                             dim=1).to(self.device)
+            ])[0]
+            y = torch.concat([msk, y])
+
+            # M3.6: In encode-image stage, save image condition and return
+            if stage == "encode-image":
+                if dump_image_condition:
+                    from wan.utils.staged_cache import save_image_condition, ImageConditionMetadata, sha256_file
+                    meta = ImageConditionMetadata(
+                        source_image_sha256="",  # img is tensor, not file
+                        requested_frame_num=frame_num,
+                        aligned_frame_num=F,
+                        chunk_size=chunk_size,
+                        h=h, w=w,
+                        lat_f=lat_f, lat_h=lat_h, lat_w=lat_w,
+                        vae_stride=tuple(self.vae_stride),
+                        patch_size=tuple(self.patch_size),
+                        dtype=str(y.dtype),
+                    )
+                    save_image_condition(dump_image_condition, y, meta)
+                    logging.info(f"Image condition saved to: {dump_image_condition}")
+
+                # Unload VAE and return
+                if self.sequential_load:
+                    self.unload_vae()
+                logging.info("encode-image stage complete")
+                return None
 
         # M3.5: In sequential mode, unload VAE after image encode to free
         # ~0.5GB before DiT generation. VAE will be reloaded before decode.
-        if self.sequential_load:
+        if self.sequential_load and stage != "generate-latents":
             logging.info("Sequential mode: unloading VAE after image encode")
             self.unload_vae()
+
+        # M3.6: In decode stage, load latents from cache and skip DiT entirely
+        if stage == "decode" and latents_file is not None:
+            from wan.utils.staged_cache import load_generated_latents, GeneratedLatentsMetadata
+            logging.info(f"Loading generated latents from cache: {latents_file}")
+            expected_meta = GeneratedLatentsMetadata(
+                aligned_frame_num=F,
+                lat_f=lat_f, lat_h=lat_h, lat_w=lat_w,
+            )
+            pred_latent_chunks, loaded_meta = load_generated_latents(latents_file, expected_meta)
+            pred_latent_chunks = pred_latent_chunks.to(self.device)
+            logging.info(f"Latents loaded: shape={pred_latent_chunks.shape}, dtype={pred_latent_chunks.dtype}")
+
+            # Decode stage: load VAE, decode, unload VAE, return
+            if self.sequential_load and self.vae is None:
+                self.load_vae()
+            videos = self.vae.decode([pred_latent_chunks])
+            if self.sequential_load:
+                self.unload_vae()
+            logging.info("decode stage complete")
+            return videos[0] if self.rank == 0 else None
 
         @contextmanager
         def noop_no_sync():
@@ -1212,6 +1294,33 @@ class WanI2VCausal:
                            **kwargs)
 
             pred_latent_chunks = torch.cat(pred_latent_chunks, dim=1)
+
+            # M3.6: In generate-latents stage, save latents and return
+            if stage == "generate-latents":
+                if output_latents_file:
+                    from wan.utils.staged_cache import save_generated_latents, GeneratedLatentsMetadata
+                    meta = GeneratedLatentsMetadata(
+                        checkpoint_id=str(getattr(self.config, 'fast_checkpoint', '')),
+                        seed=seed,
+                        requested_frame_num=frame_num,
+                        aligned_frame_num=F,
+                        chunk_size=chunk_size,
+                        h=h, w=w,
+                        lat_f=lat_f, lat_h=lat_h, lat_w=lat_w,
+                        dtype=str(pred_latent_chunks.dtype),
+                    )
+                    save_generated_latents(output_latents_file, pred_latent_chunks, meta)
+                    logging.info(f"Generated latents saved to: {output_latents_file}")
+
+                # Unload DiT and return
+                if hasattr(self.model, 'selfattn_cache'):
+                    del self.model.selfattn_cache
+                if hasattr(self.model, 'crossattn_cache'):
+                    del self.model.crossattn_cache
+                if self.sequential_load:
+                    self.unload_dit()
+                logging.info("generate-latents stage complete")
+                return None
 
             if self.sequential_load:
                 # M3.5: Fully unload DiT (not just .cpu()) to free ~3.4GB
