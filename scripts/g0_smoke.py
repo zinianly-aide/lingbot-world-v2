@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""Run the VLM-only G0 smoke test and write reproducible run metadata."""
+"""Run the VLM-only G0 smoke test and write reproducible run metadata.
+
+Supports two perception backends:
+  --vlm_backend transformers  (full BF16, requires recent transformers)
+  --vlm_backend mlx           (4-bit quantised, requires mlx-vlm on Apple Silicon)
+
+Also supports --world_condition_file to skip VLM entirely and reuse a
+cached structured world description.
+"""
 
 from __future__ import annotations
 
@@ -24,6 +32,15 @@ def _version(name: str) -> str | None:
         return None
 
 
+def _mlx_version() -> str | None:
+    try:
+        import mlx.core as mx
+
+        return getattr(mx, "__version__", "unknown")
+    except Exception:
+        return None
+
+
 def _write(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -32,16 +49,33 @@ def _write(path: Path, value: object) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="MiniCPM-V 4.6 G0 smoke test")
     parser.add_argument("--image", required=True)
-    parser.add_argument("--model", default="openbmb/MiniCPM-V-4.6")
+    parser.add_argument("--model", default=None, help="Override model name for the chosen backend")
+    parser.add_argument("--vlm_backend", choices=["transformers", "mlx"], default="transformers")
     parser.add_argument("--device", default="auto")
     parser.add_argument("--prompt", default="")
     parser.add_argument("--output-dir", default="g0-smoke")
+    parser.add_argument(
+        "--world_condition_file",
+        default=None,
+        help="Skip VLM and load a cached world_condition.json",
+    )
     args = parser.parse_args()
     output_dir = Path(args.output_dir)
+
+    # Default model per backend
+    if args.model is None:
+        args.model = {
+            "transformers": "openbmb/MiniCPM-V-4.6",
+            "mlx": "mlx-community/MiniCPM-V-4.6-4bit",
+        }[args.vlm_backend]
+
     info: dict[str, object] = {
         "status": "NOT RUN",
+        "backend": args.vlm_backend,
         "model": args.model,
         "transformers_version": _version("transformers"),
+        "mlx_version": _mlx_version(),
+        "mlx_vlm_version": _version("mlx_vlm"),
         "torch_version": _version("torch"),
         "device": args.device,
         "dtype": None,
@@ -53,6 +87,42 @@ def main() -> int:
         "python": sys.version,
         "platform": platform.platform(),
     }
+
+    # --world_condition_file: skip VLM entirely
+    if args.world_condition_file:
+        try:
+            from world_condition import (
+                WorldDescription,
+                compose_world_prompt,
+                load_world_condition,
+                save_world_condition,
+                save_world_prompt,
+            )
+        except Exception as exc:
+            info["error"] = f"dependency import failed: {type(exc).__name__}: {exc}"
+            _write(output_dir / "run_info.json", info)
+            return 2
+        wc_path = Path(args.world_condition_file)
+        if not wc_path.is_file():
+            info["error"] = f"world_condition_file not found: {wc_path}"
+            _write(output_dir / "run_info.json", info)
+            return 2
+        try:
+            world = load_world_condition(wc_path)
+            save_world_condition(world, output_dir / "world_condition.json")
+            save_world_prompt(
+                compose_world_prompt(world, args.prompt),
+                output_dir / "world_prompt.txt",
+            )
+            info["status"] = "PASS (cached)"
+            info["fallback"] = False
+            _write(output_dir / "run_info.json", info)
+            return 0
+        except Exception as exc:
+            info["error"] = f"cached world load failed: {type(exc).__name__}: {exc}"
+            _write(output_dir / "run_info.json", info)
+            return 2
+
     try:
         from PIL import Image
         from world_condition import MiniCPMVPerceiver, save_world_condition, save_world_prompt
@@ -65,19 +135,11 @@ def main() -> int:
         _write(output_dir / "run_info.json", info)
         return 2
 
-    try:
-        import torch
-
-        if args.device == "auto":
-            info["device"] = "cuda" if torch.cuda.is_available() else "cpu"
-        if str(info["device"]).startswith("cuda"):
-            torch.cuda.reset_peak_memory_stats()
-    except Exception as exc:
-        info["error"] = f"torch unavailable: {type(exc).__name__}: {exc}"
-        _write(output_dir / "run_info.json", info)
-        return 2
-
-    perceiver = MiniCPMVPerceiver(model_name=args.model, device=args.device)
+    perceiver = MiniCPMVPerceiver(
+        model_name=args.model,
+        device=args.device,
+        backend=args.vlm_backend,
+    )
     try:
         image = Image.open(args.image).convert("RGB")
         load_start = time.perf_counter()
@@ -95,12 +157,7 @@ def main() -> int:
             output_dir / "world_prompt.txt",
         )
         try:
-            import torch
-
-            if str(info["device"]).startswith("cuda"):
-                info["peak_memory"] = {"cuda_allocated_bytes": torch.cuda.max_memory_allocated()}
-            else:
-                info["peak_memory"] = {"ru_maxrss": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss}
+            info["peak_memory"] = {"ru_maxrss": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss}
         except Exception:
             pass
         info["status"] = "PASS" if not result.used_fallback else "FALLBACK"
@@ -111,12 +168,9 @@ def main() -> int:
     finally:
         perceiver.release()
         try:
-            import torch
-
-            if str(info["device"]).startswith("cuda"):
-                info["memory_after_release"] = {"cuda_allocated_bytes": torch.cuda.memory_allocated()}
-            else:
-                info["memory_after_release"] = {"ru_maxrss": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss}
+            info["memory_after_release"] = {
+                "ru_maxrss": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+            }
         except Exception:
             pass
         _write(output_dir / "run_info.json", info)

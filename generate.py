@@ -211,10 +211,17 @@ def _parse_args():
         default=False,
         help="Use MiniCPM-V to build an observation-only world prompt before UMT5.")
     parser.add_argument(
+        "--vlm_backend",
+        type=str,
+        default="transformers",
+        choices=["transformers", "mlx"],
+        help="VLM perception backend. 'mlx' uses 4-bit quantised MiniCPM-V via mlx-vlm (Apple Silicon recommended).")
+    parser.add_argument(
         "--vlm_model",
         type=str,
-        default="openbmb/MiniCPM-V-4.6",
-        help="MiniCPM-V checkpoint used only during world-prompt construction.")
+        default=None,
+        help="MiniCPM-V checkpoint used only during world-prompt construction. "
+             "Defaults to openbmb/MiniCPM-V-4.6 (transformers) or mlx-community/MiniCPM-V-4.6-4bit (mlx).")
     parser.add_argument(
         "--vlm_device",
         type=str,
@@ -256,7 +263,16 @@ def _prepare_world_prompt(args, original_prompt):
         except Exception as exc:
             error = f"cache load failed: {type(exc).__name__}: {exc}"
     else:
-        perceiver = MiniCPMVPerceiver(model_name=args.vlm_model, device=args.vlm_device)
+        # Auto-select default model per backend if user did not override.
+        vlm_model = args.vlm_model or {
+            "transformers": "openbmb/MiniCPM-V-4.6",
+            "mlx": "mlx-community/MiniCPM-V-4.6-4bit",
+        }.get(args.vlm_backend, "openbmb/MiniCPM-V-4.6")
+        perceiver = MiniCPMVPerceiver(
+            model_name=vlm_model,
+            device=args.vlm_device,
+            backend=args.vlm_backend,
+        )
         try:
             image = Image.open(args.vlm_image).convert("RGB")
             result = perceiver.analyze(image, user_prompt=original_prompt)

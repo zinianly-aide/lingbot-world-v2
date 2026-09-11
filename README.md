@@ -114,6 +114,13 @@ modelscope download robbyant/lingbot-world-v2-14b-causal-fast --local_dir ./ling
 
 The 1.3B Hugging Face package currently contains the DiT weights only. T5, VAE, and the tokenizer are shared with the 14B release — pass them with `--assets_dir` (or the third argument of `run_fast.sh`):
 
+**1.3B model details** (verified from safetensors headers):
+- Total parameters: **1.710B** (DiT backbone ~1.3B plus camera-control / head layers)
+- dtype: **F32 (float32)** — not BF16
+- Total tensor bytes: **6.84 GB** (1.710B × 4 bytes)
+- 6 shards, 1071 tensors
+- A BF16 version would be ~3.42 GB; the current release is F32 for precision.
+
 
 ### Inference
 
@@ -130,10 +137,15 @@ We provide `generate.py` for causal inference with KV caching, which processes v
   torchrun --nproc_per_node=8 generate.py --task i2v-A14B --size 480*832 --ckpt_dir lingbot-world-v2-14b-causal-fast --image examples/03/image.jpg --action_path examples/03 --dit_fsdp --t5_fsdp --ulysses_size 8 --frame_num 361 --local_attn_size 18 --sink_size 6 --prompt "A serene lakeside scene with a lone tree standing in calm water, surrounded by distant snow-capped mountains under a bright blue sky with drifting white clouds — gentle ripples reflect the tree and sky, creating a tranquil, meditative atmosphere."
   ```
 
-- `causal_fast` 1.3B — 480P, 4 GPUs (`ulysses_size` must divide 12 heads). Reuse T5/VAE from the 14B checkpoint if the 1.3B folder does not include them:
+- `causal_fast` 1.3B — 480P. **4 GPUs is the reference configuration** (`ulysses_size=4`, which divides 12 heads). The code also supports `WORLD_SIZE=1` / `ulysses_size=1` on a single CUDA GPU. Reuse T5/VAE from the 14B checkpoint if the 1.3B folder does not include them:
   ``` sh
+  # Reference: 4 GPUs
   torchrun --nproc_per_node=4 generate.py --task i2v-1.3B --size 480*832 --ckpt_dir lingbot-world-v2-1.3b-causal-fast --assets_dir lingbot-world-v2-14b-causal-fast --image examples/03/image.jpg --action_path examples/03 --dit_fsdp --t5_fsdp --ulysses_size 4 --frame_num 361 --local_attn_size 18 --sink_size 6 --prompt "A serene lakeside scene with a lone tree standing in calm water, surrounded by distant snow-capped mountains under a bright blue sky with drifting white clouds — gentle ripples reflect the tree and sky, creating a tranquil, meditative atmosphere."
+
+  # Single CUDA GPU (WORLD_SIZE=1, ulysses_size=1)
+  python generate.py --task i2v-1.3B --size 480*832 --ckpt_dir lingbot-world-v2-1.3b-causal-fast --assets_dir lingbot-world-v2-14b-causal-fast --image examples/03/image.jpg --action_path examples/03 --frame_num 361 --prompt "A serene lakeside scene..."
   ```
+  > **Note:** The current inference path is CUDA-specific (torch NCCL distributed, CUDA kernels). Apple Silicon / CPU is not supported without a port. The blocker is the CUDA implementation, not the 4-GPU requirement — `ulysses_size=1` works on one CUDA GPU.
 
 - `causal_pretrain` — 480P, multi-GPU:
   ``` sh
@@ -146,6 +158,68 @@ bash run_fast.sh <weights_dir> <frame_num> [assets_dir]
 # e.g. bash run_fast.sh lingbot-world-v2-14b-causal-fast 361
 # e.g. bash run_fast.sh lingbot-world-v2-1.3b-causal-fast 361 lingbot-world-v2-14b-causal-fast
 ```
+
+### VLM World Prompt (G0 experimental)
+
+An optional VLM-conditioned prompt pipeline that observes the input frame with MiniCPM-V 4.6 and composes a structured world description before UMT5 encoding. **Disabled by default** — without `--vlm_world_prompt`, behavior is identical to the original LingBot pipeline.
+
+**How it works:**
+```
+input image → MiniCPM-V 4.6 → structured world JSON → compose_world_prompt() → UMT5 → LingBot
+```
+The VLM runs only during prompt construction and is released immediately afterward. It never bypasses UMT5 or modifies LingBot weights.
+
+**Backends:**
+
+| Backend | Model | Best for | Notes |
+|---|---|---|---|
+| `transformers` | `openbmb/MiniCPM-V-4.6` (BF16, ~16GB) | CUDA Linux | Full precision; requires transformers ≥5.x with built-in minicpmv4_6 |
+| `mlx` | `mlx-community/MiniCPM-V-4.6-4bit` (~2GB) | Apple Silicon | 4-bit quantised via mlx-vlm; ~1GB peak memory, ~6s inference on M4 |
+
+**Recommended workflow (Mac + CUDA split):**
+
+Because the LingBot inference path is CUDA-only, the recommended pattern is to pre-generate the world condition on Mac and consume it on the CUDA machine:
+
+```sh
+# Step 1: On Mac (Apple Silicon), generate world_condition.json with MLX 4-bit
+python scripts/g0_smoke.py \
+  --image examples/00/image.jpg \
+  --prompt "Keep the main subject and move the camera forward" \
+  --output-dir g0-output \
+  --vlm_backend mlx
+# Produces g0-output/world_condition.json and g0-output/world_prompt.txt
+
+# Step 2: On CUDA Linux, run LingBot using the cached world condition
+# (skips VLM loading entirely — no MiniCPM-V needed on the GPU machine)
+python generate.py --task i2v-1.3B --size 480*832 \
+  --ckpt_dir lingbot-world-v2-1.3b-causal-fast \
+  --assets_dir lingbot-world-v2-14b-causal-fast \
+  --image examples/00/image.jpg \
+  --world_condition_file g0-output/world_condition.json \
+  --prompt "Keep the main subject and move the camera forward" \
+  --frame_num 361
+```
+
+**Direct VLM on CUDA Linux** (if you want the full pipeline in one command):
+```sh
+python generate.py --task i2v-1.3B --size 480*832 \
+  --ckpt_dir lingbot-world-v2-1.3b-causal-fast \
+  --assets_dir lingbot-world-v2-14b-causal-fast \
+  --image examples/00/image.jpg \
+  --vlm_world_prompt --vlm_backend transformers \
+  --prompt "Keep the main subject and move the camera forward" \
+  --frame_num 361
+```
+
+**CLI flags:**
+- `--vlm_world_prompt`: enable VLM world conditioning (default: off)
+- `--vlm_backend {transformers,mlx}`: select VLM backend (default: transformers)
+- `--vlm_model`: override model path (auto-selected per backend if omitted)
+- `--vlm_image`: image for VLM perception (defaults to `--image`)
+- `--world_condition_file`: skip VLM entirely, load cached world_condition.json
+- `--dump_world_prompt`: save world_condition.json + world_prompt.txt to `--save_dir`
+
+**Failure safety:** If the VLM fails to load or produces invalid output, the pipeline automatically falls back to the original user prompt. LingBot generation is never blocked by VLM errors.
 
 ### Deployment
 We do NOT plan to release our deployment code. If you would like to deploy our model yourself, please refer to the LingBot-World deployment in [SGLang](https://docs.sglang.io/cookbook/diffusion/LingBot-World/LingBot-World-2.0) or [flashdreams](https://github.com/NVIDIA/flashdreams).
