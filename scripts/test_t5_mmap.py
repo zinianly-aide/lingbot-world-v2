@@ -99,26 +99,30 @@ def test_mmap(checkpoint_path):
 
 
 def construct_meta_umt5():
-    """Stage 2: Construct UMT5 encoder on meta device."""
+    """Stage 2: Construct UMT5 encoder on meta device using LingBot's own T5Encoder."""
     print("\n" + "=" * 60)
-    print("Stage 2: Construct meta UMT5 encoder")
+    print("Stage 2: Construct meta UMT5 encoder (LingBot T5Encoder)")
     print("=" * 60)
 
     rss_before = log("Before meta UMT5 construction")
 
-    from transformers import UMT5EncoderModel, UMT5Config
+    # Add project root to path for imports
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from wan.modules.t5 import T5Encoder
 
-    config = UMT5Config(
-        vocab_size=256384,
-        d_model=4096,
-        d_ff=10240,
-        num_heads=64,
-        num_layers=24,
-        is_encoder_decoder=False,
-    )
-
+    # umt5-xxl config (matching wan/modules/t5.py umt5_xxl())
     with torch.device("meta"):
-        model = UMT5EncoderModel(config)
+        model = T5Encoder(
+            vocab=256384,
+            dim=4096,
+            dim_attn=4096,
+            dim_ffn=10240,
+            num_heads=64,
+            num_layers=24,
+            num_buckets=32,
+            shared_pos=False,
+            dropout=0.1,
+        )
 
     rss_after = log("After meta UMT5 construction", rss_before)
 
@@ -136,7 +140,7 @@ def construct_meta_umt5():
     all_meta = (meta_params == total_params) and (meta_buffers == total_buffers)
     print(f"  All meta: {'YES' if all_meta else 'NO'}")
 
-    return model, config
+    return model
 
 
 def compare_keys(model, state_dict):
@@ -242,58 +246,63 @@ def materialize_weights(model, state_dict, target_dtype=None):
 
 
 def test_prompt_forward(model, assets_dir, prompt="A red car is parked beside a tree."):
-    """Stage 5: Run real prompt forward."""
+    """Stage 5: Run real prompt forward using LingBot's T5Encoder interface."""
     print("\n" + "=" * 60)
-    print("Stage 5: Real prompt forward")
+    print("Stage 5: Real prompt forward (LingBot T5Encoder)")
     print("=" * 60)
 
     rss_before = log("Before prompt forward")
 
-    from transformers import AutoTokenizer
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from wan.modules.tokenizers import HuggingfaceTokenizer
 
     tokenizer_path = os.path.join(assets_dir, "google", "umt5-xxl")
     if not os.path.exists(tokenizer_path):
-        # Try alternative paths
-        for candidate in [
-            os.path.join(assets_dir, "umt5-xxl"),
-            "google/umt5-xxl",
-        ]:
-            if os.path.exists(candidate) or candidate.startswith("google/"):
-                tokenizer_path = candidate
-                break
+        tokenizer_path = "google/umt5-xxl"
 
     print(f"  Loading tokenizer from: {tokenizer_path}")
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+    tokenizer = HuggingfaceTokenizer(name=tokenizer_path, seq_len=512, clean='whitespace')
 
-    inputs = tokenizer(prompt, return_tensors="pt", padding=True, truncation=True, max_length=512)
-    print(f"  Input IDs shape: {inputs['input_ids'].shape}")
+    # Tokenize (LingBot style)
+    ids, mask = tokenizer([prompt], return_mask=True, add_special_tokens=True)
+    print(f"  Input IDs shape: {ids.shape}")
+    print(f"  Mask shape: {mask.shape}")
+
+    # Move to model device
+    device = next(model.parameters()).device
+    ids = ids.to(device)
+    mask = mask.to(device)
 
     start = time.time()
     with torch.no_grad():
-        outputs = model(**inputs)
+        context = model(ids, mask)  # [B, L, 4096]
 
     forward_time = time.time() - start
-    context = outputs.last_hidden_state[0]  # [L, 4096]
+
+    # Get sequence length and trim (LingBot style)
+    seq_lens = mask.gt(0).sum(dim=1).long()
+    context_trimmed = context[0][:seq_lens[0]]  # [L, 4096]
 
     rss_after = log(f"After prompt forward ({forward_time:.1f}s)", rss_before)
 
-    print(f"  Context shape: {context.shape}")
+    print(f"  Context shape (full): {context.shape}")
+    print(f"  Context shape (trimmed): {context_trimmed.shape}")
     print(f"  Context dtype: {context.dtype}")
-    print(f"  Sequence length: {context.shape[0]}")
-    print(f"  Hidden dim: {context.shape[1]}")
-    print(f"  All finite: {torch.isfinite(context).all().item()}")
-    print(f"  Has NaN: {torch.isnan(context).any().item()}")
-    print(f"  Has Inf: {torch.isinf(context).any().item()}")
+    print(f"  Sequence length: {context_trimmed.shape[0]}")
+    print(f"  Hidden dim: {context_trimmed.shape[1]}")
+    print(f"  All finite: {torch.isfinite(context_trimmed).all().item()}")
+    print(f"  Has NaN: {torch.isnan(context_trimmed).any().item()}")
+    print(f"  Has Inf: {torch.isinf(context_trimmed).any().item()}")
 
     success = (
-        context.shape[1] == 4096
-        and context.shape[0] > 0
-        and context.shape[0] <= 512
-        and torch.isfinite(context).all().item()
+        context_trimmed.shape[1] == 4096
+        and context_trimmed.shape[0] > 0
+        and context_trimmed.shape[0] <= 512
+        and torch.isfinite(context_trimmed).all().item()
     )
     print(f"  Forward success: {'YES' if success else 'NO'}")
 
-    return context, tokenizer, success
+    return context_trimmed, tokenizer, success
 
 
 def save_prompt_embedding(context, prompt, output_path):
@@ -310,7 +319,7 @@ def save_prompt_embedding(context, prompt, output_path):
         output_path,
         context,
         prompt=prompt,
-        model_id="umt5-xxl-encoder",
+        text_len=512,
     )
 
     log("After save", rss_before)
@@ -385,7 +394,7 @@ def main():
         print("\nWARNING: mmap not effective. Continuing but memory may be high.")
 
     # Stage 2: meta UMT5
-    model, config = construct_meta_umt5()
+    model = construct_meta_umt5()
     results["meta_construction_success"] = True
 
     # Stage 3: key comparison
