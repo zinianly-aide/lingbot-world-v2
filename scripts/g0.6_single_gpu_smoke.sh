@@ -5,21 +5,22 @@
 # B: cached world_condition.json + composed prompt
 #
 # Usage:
-#   bash scripts/g0.6_single_gpu_smoke.sh <ckpt_dir> <assets_dir> [image] [frame_num] [size]
+#   bash scripts/g0.6_single_gpu_smoke.sh <ckpt_dir> <assets_dir> [image] [action_path] [frame_num] [size]
 #
 # Example:
 #   bash scripts/g0.6_single_gpu_smoke.sh \
 #     ./lingbot-world-v2-1.3b-causal-fast \
 #     ./lingbot-world-v2-14b-causal-fast \
-#     examples/00/image.jpg 17 832*480
+#     examples/00/image.jpg examples/00 17 832*480
 
 set -e
 
 CKPT_DIR="${1:?Usage: $0 <ckpt_dir> <assets_dir> [image] [frame_num] [size]}"
 ASSETS_DIR="${2:?Missing assets_dir (14B checkpoint for T5/VAE)}"
 IMAGE="${3:-examples/00/image.jpg}"
-FRAME_NUM="${4:-17}"
-SIZE="${5:-832*480}"
+ACTION_PATH="${4:-examples/00}"
+FRAME_NUM="${5:-17}"
+SIZE="${6:-832*480}"
 SEED=42
 OUTPUT_DIR="g0.6-smoke"
 WORLD_CONDITION_FILE="g0-smoke-mlx/world_condition.json"
@@ -31,6 +32,7 @@ echo "============================================"
 echo "CKPT_DIR:     $CKPT_DIR"
 echo "ASSETS_DIR:   $ASSETS_DIR"
 echo "IMAGE:        $IMAGE"
+echo "ACTION_PATH:  $ACTION_PATH"
 echo "FRAME_NUM:    $FRAME_NUM"
 echo "SIZE:         $SIZE"
 echo "SEED:         $SEED"
@@ -78,6 +80,7 @@ python3 generate.py \
     --ckpt_dir "$CKPT_DIR" \
     --assets_dir "$ASSETS_DIR" \
     --image "$IMAGE" \
+    --action_path "$ACTION_PATH" \
     --prompt "$PROMPT" \
     --base_seed "$SEED" \
     --save_dir "$OUTPUT_DIR/A" \
@@ -104,6 +107,7 @@ else
         --ckpt_dir "$CKPT_DIR" \
         --assets_dir "$ASSETS_DIR" \
         --image "$IMAGE" \
+        --action_path "$ACTION_PATH" \
         --prompt "$PROMPT" \
         --base_seed "$SEED" \
         --world_condition_file "$WORLD_CONDITION_FILE" \
