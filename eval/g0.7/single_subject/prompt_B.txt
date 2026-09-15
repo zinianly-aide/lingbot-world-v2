@@ -1,0 +1,10 @@
+Requested evolution (authoritative user intent): Move the camera slowly forward while keeping the lone tree stable and centered.
+Current world: natural landscape with lake, mountains, sky
+Persistent entities: lone tree (green leafy, twisted trunk, in water; position: centered slightly right, in water; state: ); lake (calm water surrounding the tree; position: ; state: ); mountains (in the background, behind the lake; position: ; state: ); sky (blue with white clouds; position: ; state: )
+Spatial layout: tree in water, mountains behind lake, sky above
+Lighting/weather: bright daylight, clear conditions; partly cloudy
+Camera: moving slowly forward, keeping the tree centered
+Observed motion: slow forward motion, tree remains stable
+Observed intent (context only): none
+Constraints: preserve identity; preserve object layout unless the requested action changes it; preserve environment consistency; none
+Use the observed world only as continuity context. Follow the requested evolution as the authoritative user intent.

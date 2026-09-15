@@ -1,0 +1,36 @@
+{
+  "environment": "natural landscape with lake, mountains, sky",
+  "scene_layout": "tree in water, mountains behind lake, sky above",
+  "main_entities": [
+    {
+      "name": "lone tree",
+      "appearance": "green leafy, twisted trunk, in water",
+      "position": "centered slightly right, in water",
+      "state": ""
+    },
+    {
+      "name": "lake",
+      "appearance": "calm water surrounding the tree",
+      "position": "",
+      "state": ""
+    },
+    {
+      "name": "mountains",
+      "appearance": "in the background, behind the lake",
+      "position": "",
+      "state": ""
+    },
+    {
+      "name": "sky",
+      "appearance": "blue with white clouds",
+      "position": "",
+      "state": ""
+    }
+  ],
+  "lighting": "bright daylight, clear conditions",
+  "weather": "partly cloudy",
+  "camera": "moving slowly forward, keeping the tree centered",
+  "motion": "slow forward motion, tree remains stable",
+  "persistent_constraints": [],
+  "user_intent": ""
+}

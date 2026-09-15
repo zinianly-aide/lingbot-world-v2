@@ -6,6 +6,26 @@ __pycache__/
 output/
 logs/
 *.mp4
-*.json
 *.pth
 *.zip
+
+# G0.7 evaluation: ignore large caches and generated videos
+eval/g0.7/.cache/
+eval/g0.7/*/videos/
+
+# Smoke / validation artifacts from prior gates (not part of G0.7)
+g0-smoke/
+g0-smoke-mlx/
+m3-validation/
+m4-full/
+m4-smoke/
+m5-smoke/
+
+# Re-allow specific G0.7 JSON config/data files (overrides *.json above)
+!eval/g0.7/config.json
+!eval/g0.7/blind_map.json
+!eval/g0.7/*/world_condition.json
+!eval/g0.7/*/embeddings/*.json
+
+# venv
+venv/

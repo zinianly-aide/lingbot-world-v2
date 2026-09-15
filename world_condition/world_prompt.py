@@ -66,6 +66,73 @@ def compose_world_prompt(
     return header + "\n" + fixed[len(header) : len(header) + max(0, max_chars - len(header) - 1)].rstrip()
 
 
+def compose_compact_world_prompt(
+    world: WorldDescription | dict[str, Any],
+    user_prompt: str,
+    max_entities: int = 5,
+) -> str:
+    """Return a compact structured world prompt that keeps only generation-critical info.
+
+    The original user prompt is always placed first and is never truncated or
+    overridden.  Only identity, appearance, spatial relations, environment,
+    camera, motion, and persistent constraints are retained — redundant
+    natural-language prose from the full-world prompt is dropped.
+    """
+    observation = world if isinstance(world, WorldDescription) else WorldDescription.from_mapping(world)
+    user_prompt = (user_prompt or "").strip()
+
+    lines: list[str] = [f"User request:\n{user_prompt}", "", "Observed world:"]
+
+    # Environment (one line)
+    env = _clip(observation.environment, 120)
+    if env and env != "unknown":
+        lines.append(f"- Environment: {env}")
+
+    # Main entities (compact: name + appearance + position)
+    entity_lines: list[str] = []
+    for entity in observation.main_entities[:max_entities]:
+        parts: list[str] = []
+        if entity.appearance:
+            parts.append(_clip(entity.appearance, 60))
+        if entity.position:
+            parts.append(f"position: {_clip(entity.position, 50)}")
+        if entity.state and entity.state.lower() not in ("unknown", "still", "static"):
+            parts.append(f"state: {_clip(entity.state, 40)}")
+        detail = "; ".join(parts) if parts else "observed"
+        entity_lines.append(f"  - {entity.name}: {detail}")
+    if entity_lines:
+        lines.append("- Main entities:")
+        lines.extend(entity_lines)
+
+    # Spatial layout
+    layout = _clip(observation.scene_layout, 120)
+    if layout and layout != "unknown":
+        lines.append(f"- Layout: {layout}")
+
+    # Camera
+    camera = _clip(observation.camera, 80)
+    if camera and camera != "unknown":
+        lines.append(f"- Camera: {camera}")
+
+    # Motion
+    motion = _clip(observation.motion, 80)
+    if motion and motion != "unknown":
+        lines.append(f"- Motion: {motion}")
+
+    # Persistent constraints
+    constraints = [c for c in observation.persistent_constraints if c]
+    if constraints:
+        constraint_text = "; ".join(_clip(c, 60) for c in constraints[:4])
+        lines.append(f"- Constraints: {constraint_text}")
+    else:
+        lines.append("- Constraints: preserve subject identity and scene layout")
+
+    lines.append("")
+    lines.append("Follow the user request as authoritative intent. Use observed world only for continuity.")
+
+    return "\n".join(lines)
+
+
 def load_world_condition(path: str | Path) -> WorldDescription:
     with Path(path).open("r", encoding="utf-8") as handle:
         return WorldDescription.from_mapping(json.load(handle))

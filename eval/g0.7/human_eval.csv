@@ -1,0 +1,4 @@
+blind_id,video_id,scene_id,seed,output_video,status,identity_consistency,attribute_preservation,spatial_layout,environment_consistency,camera_continuity,temporal_stability,intent_fidelity,hallucination,positive_score,adjusted_score,notes
+video_001,single_subject_B_seed42,single_subject,42,/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/B_seed42.mp4,PASS,,,,,,,,,,,
+video_002,single_subject_A_seed42,single_subject,42,/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/A_seed42.mp4,PASS,,,,,,,,,,,
+video_003,single_subject_C_seed42,single_subject,42,/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/C_seed42.mp4,PASS,,,,,,,,,,,

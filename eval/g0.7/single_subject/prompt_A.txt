@@ -1,0 +1,1 @@
+Move the camera slowly forward while keeping the lone tree stable and centered.

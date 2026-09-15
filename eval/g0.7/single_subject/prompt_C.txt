@@ -1,0 +1,16 @@
+User request:
+Move the camera slowly forward while keeping the lone tree stable and centered.
+
+Observed world:
+- Environment: natural landscape with lake, mountains, sky
+- Main entities:
+  - lone tree: green leafy, twisted trunk, in water; position: centered slightly right, in water
+  - lake: calm water surrounding the tree
+  - mountains: in the background, behind the lake
+  - sky: blue with white clouds
+- Layout: tree in water, mountains behind lake, sky above
+- Camera: moving slowly forward, keeping the tree centered
+- Motion: slow forward motion, tree remains stable
+- Constraints: preserve subject identity and scene layout
+
+Follow the user request as authoritative intent. Use observed world only for continuity.

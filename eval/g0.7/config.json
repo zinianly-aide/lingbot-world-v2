@@ -1,0 +1,63 @@
+{
+  "eval_name": "g0.7-real-abc-eval",
+  "baseline_commit": "52ce9f4",
+  "branch": "feat/g0.7-eval",
+  "generation": {
+    "device": "mps",
+    "task": "i2v-1.3B",
+    "infer_mode": "causal_fast",
+    "frame_num": 13,
+    "chunk_size": 4,
+    "size": "832*480",
+    "local_attn_size": -1,
+    "sequential_load": true,
+    "staged_pipeline": true
+  },
+  "paths": {
+    "checkpoint_dir": "/Volumes/ssd/huggingface/hub/models--robbyant--lingbot-world-v2-1.3b-causal-fast/snapshots/7e36a5f919f86cb4255cc9bfc30adb44963fbde1",
+    "assets_dir": "/Volumes/ssd/lingbot-assets",
+    "t5_checkpoint": "/Volumes/ssd/lingbot-assets/models_t5_umt5-xxl-enc-bf16.pth",
+    "tokenizer_path": "/Volumes/ssd/lingbot-assets/google/umt5-xxl",
+    "vae_checkpoint": "/Volumes/ssd/lingbot-assets/Wan2.1_VAE.pth"
+  },
+  "seeds": [42, 123, 2026],
+  "variants": ["A", "B", "C"],
+  "umt5_max_tokens": 512,
+  "scenes": [
+    {
+      "id": "single_subject",
+      "description": "Single subject with clear attributes — Wanaka tree in lake",
+      "image": "examples/03/image.jpg",
+      "action_path": "examples/03",
+      "user_prompt": "Move the camera slowly forward while keeping the lone tree stable and centered."
+    },
+    {
+      "id": "spatial",
+      "description": "Multi-object spatial arrangement — Stonehenge stones",
+      "image": "examples/01/image.jpg",
+      "action_path": "examples/01",
+      "user_prompt": "Pan the camera slowly to the right, preserving the circular arrangement of standing stones."
+    },
+    {
+      "id": "indoor",
+      "description": "Indoor room structure — living room with furniture",
+      "image": "eval/g0.7/eval_assets/indoor/image.jpg",
+      "action_path": "eval/g0.7/eval_assets/indoor",
+      "user_prompt": "Move the camera slowly forward through the living room, keeping the sofa and coffee table stable."
+    },
+    {
+      "id": "outdoor",
+      "description": "Outdoor landscape with architecture — Great Wall",
+      "image": "examples/04/image.jpg",
+      "action_path": "examples/04",
+      "user_prompt": "Glide the camera forward along the Great Wall, preserving the stone path and watchtowers."
+    },
+    {
+      "id": "camera_motion",
+      "description": "Strong camera motion with subject stability — dragon riding toward castle",
+      "image": "examples/00/image.jpg",
+      "action_path": "examples/00",
+      "user_prompt": "Fly forward toward the castle, keeping the dragon's neck and reins stable in the foreground."
+    }
+  ]
+}

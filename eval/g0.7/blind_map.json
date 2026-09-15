@@ -1,0 +1,47 @@
+{
+  "shuffle_seed": 42,
+  "total_videos": 3,
+  "mapping": {
+    "video_001": {
+      "video_id": "single_subject_B_seed42",
+      "scene_id": "single_subject",
+      "variant": "B",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/B_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 225,
+      "truncated": false
+    },
+    "video_002": {
+      "video_id": "single_subject_A_seed42",
+      "scene_id": "single_subject",
+      "variant": "A",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/A_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 17,
+      "truncated": false
+    },
+    "video_003": {
+      "video_id": "single_subject_C_seed42",
+      "scene_id": "single_subject",
+      "variant": "C",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/C_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 154,
+      "truncated": false
+    }
+  },
+  "dimension_descriptions": {
+    "identity_consistency": "Does the main subject retain its identity across frames? (0-5, higher=better)",
+    "attribute_preservation": "Are subject attributes (color, shape, appearance) preserved? (0-5, higher=better)",
+    "spatial_layout": "Is the spatial arrangement of objects preserved? (0-5, higher=better)",
+    "environment_consistency": "Is the environment/background consistent? (0-5, higher=better)",
+    "camera_continuity": "Is the camera motion smooth and continuous? (0-5, higher=better)",
+    "temporal_stability": "Is the video temporally stable (no flickering/jitter)? (0-5, higher=better)",
+    "intent_fidelity": "Does the video follow the user's requested action? (0-5, higher=better)",
+    "hallucination": "NEGATIVE: degree of unsupported new content / semantic drift. (0=none, 5=severe)"
+  },
+  "scoring_instructions": "Score each video 0-5 on all dimensions. hallucination is NEGATIVE (0=no hallucination, 5=severe). Do NOT look at blind_map.json until all scoring is complete. positive_score = mean of 7 positive dimensions. adjusted_score = positive_score - 0.5 * hallucination."
+}

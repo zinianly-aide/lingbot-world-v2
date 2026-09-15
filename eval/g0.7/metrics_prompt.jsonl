@@ -1,0 +1,3 @@
+{"scene": "single_subject", "variant": "A", "prompt_chars": 79, "token_count_before_truncation": 17, "token_count_after_truncation": 17, "truncated": false, "world_condition_chars": 815, "entity_count": 4}
+{"scene": "single_subject", "variant": "B", "prompt_chars": 1025, "token_count_before_truncation": 225, "token_count_after_truncation": 225, "truncated": false, "world_condition_chars": 815, "entity_count": 4}
+{"scene": "single_subject", "variant": "C", "prompt_chars": 723, "token_count_before_truncation": 154, "token_count_after_truncation": 154, "truncated": false, "world_condition_chars": 815, "entity_count": 4}
