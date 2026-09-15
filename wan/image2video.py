@@ -1400,7 +1400,8 @@ class WanI2VCausal:
             print(f"[M5] cross_kv_init_count={cross_kv_init_count} (must be 1)", flush=True)
 
             # M3.6: In generate-latents stage, save latents and return
-            if stage == "generate-latents":
+            # M4.8: full stage also saves latents when --output_latents_file given (for staged/full equivalence check)
+            if stage in ("generate-latents", "full"):
                 if output_latents_file:
                     from wan.utils.staged_cache import save_generated_latents, GeneratedLatentsMetadata
                     meta = GeneratedLatentsMetadata(
