@@ -425,7 +425,12 @@ def run_causal(args, cfg, img, device, rank, mode="causal_fast"):
         shift=args.sample_shift,
         seed=args.base_seed,
         offload_model=args.offload_model,
-        max_attention_size=args.max_attention_size)
+        max_attention_size=args.max_attention_size,
+        stage=getattr(args, 'stage', 'full'),
+        image_condition_file=getattr(args, 'image_condition_file', None),
+        dump_image_condition=getattr(args, 'dump_image_condition', None),
+        latents_file=getattr(args, 'latents_file', None),
+        output_latents_file=getattr(args, 'output_latents_file', None))
 
 
 def generate(args):
@@ -505,15 +510,19 @@ def generate(args):
             args.save_file = f'{args.save_dir}/{args.save_file}'
 
         logging.info(f"Saving generated video to {args.save_file}")
-        save_video(
-            tensor=video[None],
-            save_file=args.save_file,
-            fps=cfg.sample_fps,
-            nrow=1,
-            normalize=True,
-            value_range=(-1, 1))
+        if video is not None:
+            save_video(
+                tensor=video[None],
+                save_file=args.save_file,
+                fps=cfg.sample_fps,
+                nrow=1,
+                normalize=True,
+                value_range=(-1, 1))
+        else:
+            logging.info(f"Stage '{args.stage}' completed without video output (intermediate cache saved).")
 
-    del video
+    if video is not None:
+        del video
 
     device_synchronize(args._device)
     if dist.is_initialized():

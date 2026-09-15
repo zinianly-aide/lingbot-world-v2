@@ -16,7 +16,7 @@ from wan.modules.model import (
     sinusoidal_embedding_1d
 )
 
-from .attention import flash_attention
+from .attention import attention as unified_attention
 from wan.utils.device import autocast_ctx
 from wan.utils.rope import rope_apply_real
 
@@ -184,8 +184,8 @@ class WanCrossAttention(WanSelfAttention):
             k = self.norm_k(self.k(context)).view(b, -1, n, d)
             v = self.v(context).view(b, -1, n, d)
 
-        # compute attention
-        x = flash_attention(q, k, v, k_lens=context_lens)
+        # compute attention (use unified dispatch for CUDA FlashAttention / MPS-CPU SDPA)
+        x = unified_attention(q, k, v, k_lens=context_lens, dtype=q.dtype)
 
         # output
         x = x.flatten(2)
@@ -452,12 +452,15 @@ class WanModelFast(ModelMixin, ConfigMixin):
         # buffers (don't use register_buffer otherwise dtype will be changed in to())
         assert (dim % num_heads) == 0 and (dim // num_heads) % 2 == 0
         d = dim // num_heads
-        self.freqs = torch.cat([
-            rope_params(1024, d - 4 * (d // 6)),
-            rope_params(1024, 2 * (d // 6)),
-            rope_params(1024, 2 * (d // 6))
-        ],
-            dim=1)
+        # Always create freqs on CPU to avoid meta tensor issues when model
+        # is initialized on meta device for low-memory streaming loading.
+        with torch.device('cpu'):
+            self.freqs = torch.cat([
+                rope_params(1024, d - 4 * (d // 6)),
+                rope_params(1024, 2 * (d // 6)),
+                rope_params(1024, 2 * (d // 6))
+            ],
+                dim=1)
 
         # initialize weights
         self.init_weights()

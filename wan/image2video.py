@@ -191,7 +191,7 @@ def load_dit_model(model_cls, checkpoint_dir, subfolder, config, torch_dtype,
                 if target_device is not None:
                     wrong_device = [
                         n for n, p in model.named_parameters()
-                        if p.device != target_device
+                        if p.device.type != target_device.type
                     ]
                     if wrong_device:
                         logging.warning(
@@ -540,11 +540,14 @@ class WanI2VCausal:
             return
 
         logging.info("Loading VAE...")
+        # MPS: use FP16 for VAE to reduce memory pressure (VAE decode is memory-heavy)
+        vae_dtype = torch.float16 if self.device.type == "mps" else torch.float32
         self.vae = Wan2_1_VAE(
             vae_pth=_resolve_asset_path(
                 self.config.vae_checkpoint, self._checkpoint_dir, self._assets_dir),
-            device=self.device)
-        logging.info("VAE loaded.")
+            device=self.device,
+            dtype=vae_dtype)
+        logging.info(f"VAE loaded (dtype={vae_dtype}).")
 
     def load_dit(self):
         """Load the DiT model (idempotent).
@@ -559,7 +562,10 @@ class WanI2VCausal:
         is_mps = self.device.type == "mps"
         dit_target_device = self.device if is_mps else None
         dit_allow_fallback = not is_mps
-        dit_dtype = torch.float16 if is_mps else torch.bfloat16
+        # MPS: use FP32 to avoid MPSNDArrayMatrixMultiplication dtype mismatch
+        # (MPS requires destination and accumulator to have the same dtype).
+        # FP16 mixed-precision matmul is not fully supported on MPS.
+        dit_dtype = torch.float32 if is_mps else torch.bfloat16
 
         logging.info(f"Loading DiT model (infer_mode={self.infer_mode})...")
 
@@ -601,11 +607,11 @@ class WanI2VCausal:
         if is_mps:
             wrong_param_device = [
                 n for n, p in self.model.named_parameters()
-                if p.device != self.device
+                if p.device.type != self.device.type
             ]
             wrong_buffer_device = [
                 n for n, b in self.model.named_buffers()
-                if b.device != self.device
+                if b.device.type != self.device.type
             ]
             meta_params = sum(1 for p in self.model.parameters() if p.is_meta)
             meta_buffers = sum(1 for b in self.model.buffers() if b.is_meta)
@@ -814,10 +820,13 @@ class WanI2VCausal:
         if dit_fsdp:
             model = shard_fn(model)
         else:
-            if convert_model_dtype:
-                model.to(self.param_dtype)
-            if not self.init_on_cpu:
-                model.to(self.device)
+            # MPS: streaming loader already placed params on target device/dtype.
+            # Skip model.to() calls which would create a CPU copy and lose MPS placement.
+            if self.device.type != "mps":
+                if convert_model_dtype:
+                    model.to(self.param_dtype)
+                if not self.init_on_cpu:
+                    model.to(self.device)
 
         return model
 
@@ -834,8 +843,10 @@ class WanI2VCausal:
         """
         # use higher precision for calculations
         original_dtype = flow_pred.dtype
+        # MPS does not support float64; use float32 on MPS, float64 elsewhere
+        high_prec_dtype = torch.float32 if flow_pred.device.type == 'mps' else torch.float64
         flow_pred, xt, sigmas, timesteps = map(
-            lambda x: x.double().to(flow_pred.device), [flow_pred, xt, scheduler.sigmas, scheduler.timesteps]
+            lambda x: x.to(dtype=high_prec_dtype, device=flow_pred.device), [flow_pred, xt, scheduler.sigmas, scheduler.timesteps]
         )
         timestep_id = torch.argmin((timesteps - timestep).abs())
         sigma_t = sigmas[timestep_id].reshape(-1, 1, 1, 1)
@@ -877,10 +888,13 @@ class WanI2VCausal:
         # M3.5: In sequential mode, ensure required models are loaded before
         # generation. T5 is loaded lazily inside _get_text_context if needed.
         if self.sequential_load:
-            if self.vae is None:
-                self.load_vae()
-            if self.model is None:
-                self.load_dit()
+            # Load only the models needed for this stage
+            if stage in ("encode-image", "decode", "full"):
+                if self.vae is None:
+                    self.load_vae()
+            if stage in ("generate-latents", "full"):
+                if self.model is None:
+                    self.load_dit()
 
         return gen_fn(
             input_prompt,
@@ -1036,6 +1050,9 @@ class WanI2VCausal:
         cache_key = hashlib.sha256(input_prompt.encode('utf-8')).hexdigest()
         if cache_key in self._t5_cache:
             context = self._t5_cache[cache_key]
+        elif stage in ("encode-image", "decode"):
+            # M3.6: encode-image and decode stages don't need T5
+            context = [torch.zeros(1, 1, 4096, device=self.device)]
         elif self.text_encoder is None and self.prompt_embeds_file is not None:
             # Load pre-computed prompt embedding, skip T5 entirely
             from wan.utils.prompt_embedding import load_prompt_embedding
@@ -1048,21 +1065,17 @@ class WanI2VCausal:
             context = [context_tensor.to(self.device)]
             self._t5_cache[cache_key] = context
         else:
-            # M3.6: encode-image and decode stages don't need T5
-            if stage in ("encode-image", "decode"):
-                context = [torch.zeros(1, 1, 4096, device=self.device)]
+            # M3.4: In sequential mode, load T5 on demand if not already loaded
+            if self.sequential_load and self.text_encoder is None:
+                self.load_text_encoder()
+            if not self.t5_cpu:
+                self.text_encoder.model.to(self.device)
+                context = self.text_encoder([input_prompt], self.device)
+                if offload_model:
+                    self.text_encoder.model.cpu()
             else:
-                # M3.4: In sequential mode, load T5 on demand if not already loaded
-                if self.sequential_load and self.text_encoder is None:
-                    self.load_text_encoder()
-                if not self.t5_cpu:
-                    self.text_encoder.model.to(self.device)
-                    context = self.text_encoder([input_prompt], self.device)
-                    if offload_model:
-                        self.text_encoder.model.cpu()
-                else:
-                    context = self.text_encoder([input_prompt], torch.device('cpu'))
-                    context = [t.to(self.device) for t in context]
+                context = self.text_encoder([input_prompt], torch.device('cpu'))
+                context = [t.to(self.device) for t in context]
             self._t5_cache[cache_key] = context
 
         Ks = torch.from_numpy(np.load(os.path.join(action_path, "intrinsics.npy"))).float()
@@ -1175,13 +1188,28 @@ class WanI2VCausal:
         if stage == "decode" and latents_file is not None:
             from wan.utils.staged_cache import load_generated_latents, GeneratedLatentsMetadata
             logging.info(f"Loading generated latents from cache: {latents_file}")
+            # Match the metadata fields set during generate-latents stage
             expected_meta = GeneratedLatentsMetadata(
+                checkpoint_id=str(getattr(self.config, 'fast_checkpoint', '')),
                 aligned_frame_num=F,
                 lat_f=lat_f, lat_h=lat_h, lat_w=lat_w,
+                dtype=str(torch.float32),  # MPS uses FP32 for DiT
             )
             pred_latent_chunks, loaded_meta = load_generated_latents(latents_file, expected_meta)
             pred_latent_chunks = pred_latent_chunks.to(self.device)
             logging.info(f"Latents loaded: shape={pred_latent_chunks.shape}, dtype={pred_latent_chunks.dtype}")
+
+            # Force memory cleanup before VAE decode (ensure DiT is not loaded)
+            if self.sequential_load:
+                if self.model is not None:
+                    logging.warning("DiT model still loaded during decode stage, unloading...")
+                    self.unload_dit()
+                import gc
+                gc.collect()
+                if self.device.type == 'mps':
+                    torch.mps.empty_cache()
+                    torch.mps.synchronize()
+                logging.info(f"Memory after cleanup: MPS allocated={torch.mps.current_allocated_memory()/1e9:.2f}GB" if self.device.type == 'mps' else "")
 
             # Decode stage: load VAE, decode, unload VAE, return
             if self.sequential_load and self.vae is None:
