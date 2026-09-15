@@ -1246,6 +1246,39 @@ class WanI2VCausal:
                                                           shape=cross_kv_shape,
                                                           dtype=transformer_dtype,
                                                           device=self.device)
+
+        # ---- M5 instrumentation: KV geometry ----
+        num_layers = model_args.num_layers
+        num_heads = model_args.num_heads
+        num_inference_chunk = (lat_f + chunk_size - 1) // chunk_size
+        kv_dtype = self_kv_cache[0]["k"].dtype
+        self_kv_bytes = sum(
+            (self_kv_cache[l]["k"].numel() + self_kv_cache[l]["v"].numel()) * self_kv_cache[l]["k"].element_size()
+            for l in range(num_layers))
+        cross_kv_bytes = sum(
+            (cross_kv_cache[l]["k"].numel() + cross_kv_cache[l]["v"].numel()) * cross_kv_cache[l]["k"].element_size()
+            for l in range(num_layers))
+        print(f"[M5] KV geometry: frame_seqlen={frame_seqlen} lat_f={lat_f} kv_size={kv_size} num_layers={num_layers} num_heads={num_heads} head_dim={head_dim}", flush=True)
+        print(f"[M5] self KV: shape={self_kv_shape} dtype={kv_dtype} bytes={self_kv_bytes/1e9:.3f}GB", flush=True)
+        print(f"[M5] cross KV: shape={cross_kv_shape} dtype={cross_kv_cache[0]['k'].dtype} bytes={cross_kv_bytes/1e9:.3f}GB", flush=True)
+        print(f"[M5] requested_frame_num={frame_num} aligned_frame_num={F} lat_f={lat_f} chunk_size={chunk_size} num_chunks={num_inference_chunk}", flush=True)
+
+        def _m5_mem(tag):
+            rss_mb = 0
+            try:
+                import psutil
+                rss_mb = psutil.Process().memory_info().rss / 1e6
+            except Exception:
+                pass
+            mps_cur = torch.mps.current_allocated_memory() / 1e9 if self.device.type == 'mps' else 0.0
+            mps_drv = torch.mps.driver_allocated_memory() / 1e9 if self.device.type == 'mps' else 0.0
+            print(f"[M5:mem] {tag}: RSS={rss_mb:.0f}MB MPS_cur={mps_cur:.2f}GB MPS_drv={mps_drv:.2f}GB", flush=True)
+
+        _m5_mem("after KV alloc")
+
+        # ---- M5: cross-KV init counter (must be 1 across whole generation) ----
+        cross_kv_init_count = 0
+
         # evaluation mode
         with (
                 device_autocast(self.device, dtype=self.param_dtype),
@@ -1268,6 +1301,29 @@ class WanI2VCausal:
                     "c2ws_plucker_emb": current_c2ws_plucker_emb.chunk(1, dim=0),
                 }
 
+                current_start = chunk_id * chunk_size * frame_seqlen
+                current_end = current_start + chunk_size * frame_seqlen
+                start_frame = current_start // frame_seqlen
+
+                # ---- M5: chunk-level causal state ----
+                g0 = self_kv_cache[0]
+                print(f"[M5] CHUNK {chunk_id}: current_start={current_start} current_end={current_end} "
+                      f"start_frame={start_frame} global_end_index={g0['global_end_index'].item()} "
+                      f"local_end_index={g0['local_end_index'].item()} "
+                      f"kv_cache_id={id(self_kv_cache[0])} cross_kv_id={id(cross_kv_cache[0])}", flush=True)
+                if chunk_id == 0:
+                    # verify chunk0 self-KV starts zero
+                    k0 = self_kv_cache[0]["k"]
+                    if torch.is_floating_point(k0):
+                        kabs = k0.abs().sum().item()
+                        print(f"[M5] CHUNK 0 pre: self-KV[0].k abs_sum={kabs:.6f} (expect ~0)", flush=True)
+                else:
+                    # verify chunk1 self-KV is NOT reset (persistent)
+                    k0 = self_kv_cache[0]["k"]
+                    if torch.is_floating_point(k0):
+                        kabs = k0.abs().sum().item()
+                        print(f"[M5] CHUNK {chunk_id} pre: self-KV[0].k abs_sum={kabs:.6f} (expect >0, persistent)", flush=True)
+
                 kwargs = {
                     'context': [context[0]],
                     'seq_len': max_seq_len,
@@ -1275,7 +1331,7 @@ class WanI2VCausal:
                     'dit_cond_dict': dit_cond_dict,
                     'kv_cache': self_kv_cache,
                     'crossattn_cache': cross_kv_cache,
-                    'current_start': chunk_id * chunk_size * frame_seqlen,
+                    'current_start': current_start,
                     'max_attention_size': kv_size if max_attention_size is None else max_attention_size,
                     'frame_seqlen': frame_seqlen,
                 }
@@ -1289,9 +1345,12 @@ class WanI2VCausal:
 
                     timestep = torch.stack(current_timestep).to(self.device)
 
+                    first_call = (not self._cross_attn_initialized)
+                    if first_call:
+                        cross_kv_init_count += 1
                     noise_pred = self.model(
                         x=latent_model_input, t=timestep,
-                        cross_attn_first_call=not self._cross_attn_initialized,
+                        cross_attn_first_call=first_call,
                         **kwargs)[0]
                     self._cross_attn_initialized = True
 
@@ -1304,6 +1363,15 @@ class WanI2VCausal:
                         timestep=current_timestep[0],
                         scheduler=self.scheduler,
                     )
+
+                    # ---- M5: per-step finite check ----
+                    for tname, tval in (("noise_pred", noise_pred), ("x0", x0), ("current_latent", current_latent)):
+                        if not torch.isfinite(tval).all():
+                            print(f"[M5:FAIL] CHUNK {chunk_id} step {timestep_idx} {tname} has NaN/Inf "
+                                          f"min={tval.min().item():.4f} max={tval.max().item():.4f} "
+                                          f"mean={tval.mean().item():.4f} std={tval.std().item():.4f}")
+                            raise RuntimeError(f"[M5:FAIL] non-finite {tname} at chunk {chunk_id} step {timestep_idx}")
+                    _m5_mem(f"chunk{chunk_id} step{timestep_idx}")
 
                     if timestep_idx < len(timesteps) - 1:
                         next_timestep = timesteps[timestep_idx + 1]
@@ -1321,7 +1389,15 @@ class WanI2VCausal:
                            cross_attn_first_call=False,
                            **kwargs)
 
+                # ---- M5: post-chunk causal state ----
+                g0 = self_kv_cache[0]
+                k0 = self_kv_cache[0]["k"]
+                kabs = k0.abs().sum().item() if torch.is_floating_point(k0) else -1.0
+                print(f"[M5] CHUNK {chunk_id} post: global_end_index={g0['global_end_index'].item()} local_end_index={g0['local_end_index'].item()} self-KV[0].k abs_sum={kabs:.6f}", flush=True)
+                _m5_mem(f"after chunk{chunk_id} context update")
+
             pred_latent_chunks = torch.cat(pred_latent_chunks, dim=1)
+            print(f"[M5] cross_kv_init_count={cross_kv_init_count} (must be 1)", flush=True)
 
             # M3.6: In generate-latents stage, save latents and return
             if stage == "generate-latents":
