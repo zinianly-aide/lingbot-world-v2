@@ -38,6 +38,11 @@ eval/e1/teacher_contexts/*.safetensors
 eval/e1/adapter_final/*.safetensors
 eval/e1/best_adapter.safetensors
 
+# E1.2: cached MiniCPM hidden states + Adapter v2 weights are regenerable.
+eval/e1.2/minicpm_cache/*.safetensors
+eval/e1.2/best_adapter_v2.safetensors
+eval/e1.2/adapter_v2_final.safetensors
+
 # E2: MiniCPM5+Adapter paired video eval.
 # Large artifacts (videos, embedding tensors, latents) are regenerable via
 # scripts/e1_encode_with_adapter.py and scripts/g07_gen_stage.py.
