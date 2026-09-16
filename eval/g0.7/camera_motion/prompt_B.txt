@@ -1,0 +1,10 @@
+Requested evolution (authoritative user intent): Fly forward toward the castle, keeping the dragon's neck and reins stable in the foreground.
+Current world: outdoor, lush green environment with trees and vegetation
+Persistent entities: dragon (winged creature, neck and reins visible in foreground; position: foreground, first-person perspective; state: flying); castle (large stone castle; position: background, in the distance; state: ); trees and vegetation (lush green foliage; position: below and around, midground; state: )
+Spatial layout: dragon neck and reins in foreground, large castle in background distance, green vegetation surrounding
+Lighting/weather: natural daylight; clear, daytime
+Camera: first-person view from dragon, facing forward toward castle
+Observed motion: forward flight, castle approaching in distance
+Observed intent (context only): none
+Constraints: preserve identity; preserve object layout unless the requested action changes it; preserve environment consistency; preserve dragon neck and reins in foreground; castle remains visible in background; maintain first-person flight perspective
+Use the observed world only as continuity context. Follow the requested evolution as the authoritative user intent.

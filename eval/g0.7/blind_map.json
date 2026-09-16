@@ -1,18 +1,258 @@
 {
   "shuffle_seed": 42,
-  "total_videos": 3,
+  "total_videos": 45,
   "mapping": {
     "video_001": {
-      "video_id": "single_subject_B_seed42",
-      "scene_id": "single_subject",
+      "video_id": "indoor_B_seed42",
+      "scene_id": "indoor",
       "variant": "B",
       "seed": 42,
-      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/B_seed42.mp4",
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/indoor/videos/B_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 113,
+      "truncated": false
+    },
+    "video_002": {
+      "video_id": "indoor_C_seed42",
+      "scene_id": "indoor",
+      "variant": "C",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/indoor/videos/C_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 54,
+      "truncated": false
+    },
+    "video_003": {
+      "video_id": "camera_motion_B_seed42",
+      "scene_id": "camera_motion",
+      "variant": "B",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/camera_motion/videos/B_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 118,
+      "truncated": false
+    },
+    "video_004": {
+      "video_id": "spatial_B_seed123",
+      "scene_id": "spatial",
+      "variant": "B",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/spatial/videos/B_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 112,
+      "truncated": false
+    },
+    "video_005": {
+      "video_id": "indoor_C_seed2026",
+      "scene_id": "indoor",
+      "variant": "C",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/indoor/videos/C_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 54,
+      "truncated": false
+    },
+    "video_006": {
+      "video_id": "spatial_B_seed42",
+      "scene_id": "spatial",
+      "variant": "B",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/spatial/videos/B_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 112,
+      "truncated": false
+    },
+    "video_007": {
+      "video_id": "outdoor_B_seed123",
+      "scene_id": "outdoor",
+      "variant": "B",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/outdoor/videos/B_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 192,
+      "truncated": false
+    },
+    "video_008": {
+      "video_id": "outdoor_C_seed2026",
+      "scene_id": "outdoor",
+      "variant": "C",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/outdoor/videos/C_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 150,
+      "truncated": false
+    },
+    "video_009": {
+      "video_id": "spatial_C_seed42",
+      "scene_id": "spatial",
+      "variant": "C",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/spatial/videos/C_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 53,
+      "truncated": false
+    },
+    "video_010": {
+      "video_id": "single_subject_B_seed2026",
+      "scene_id": "single_subject",
+      "variant": "B",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/B_seed2026.mp4",
       "status": "PASS",
       "prompt_token_count": 225,
       "truncated": false
     },
-    "video_002": {
+    "video_011": {
+      "video_id": "camera_motion_A_seed42",
+      "scene_id": "camera_motion",
+      "variant": "A",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/camera_motion/videos/A_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 24,
+      "truncated": false
+    },
+    "video_012": {
+      "video_id": "single_subject_C_seed123",
+      "scene_id": "single_subject",
+      "variant": "C",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/C_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 154,
+      "truncated": false
+    },
+    "video_013": {
+      "video_id": "camera_motion_C_seed42",
+      "scene_id": "camera_motion",
+      "variant": "C",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/camera_motion/videos/C_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 215,
+      "truncated": false
+    },
+    "video_014": {
+      "video_id": "outdoor_A_seed42",
+      "scene_id": "outdoor",
+      "variant": "A",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/outdoor/videos/A_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 21,
+      "truncated": false
+    },
+    "video_015": {
+      "video_id": "spatial_B_seed2026",
+      "scene_id": "spatial",
+      "variant": "B",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/spatial/videos/B_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 112,
+      "truncated": false
+    },
+    "video_016": {
+      "video_id": "outdoor_C_seed123",
+      "scene_id": "outdoor",
+      "variant": "C",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/outdoor/videos/C_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 150,
+      "truncated": false
+    },
+    "video_017": {
+      "video_id": "outdoor_A_seed2026",
+      "scene_id": "outdoor",
+      "variant": "A",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/outdoor/videos/A_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 21,
+      "truncated": false
+    },
+    "video_018": {
+      "video_id": "camera_motion_B_seed2026",
+      "scene_id": "camera_motion",
+      "variant": "B",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/camera_motion/videos/B_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 118,
+      "truncated": false
+    },
+    "video_019": {
+      "video_id": "camera_motion_C_seed123",
+      "scene_id": "camera_motion",
+      "variant": "C",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/camera_motion/videos/C_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 59,
+      "truncated": false
+    },
+    "video_020": {
+      "video_id": "outdoor_B_seed2026",
+      "scene_id": "outdoor",
+      "variant": "B",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/outdoor/videos/B_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 192,
+      "truncated": false
+    },
+    "video_021": {
+      "video_id": "spatial_C_seed123",
+      "scene_id": "spatial",
+      "variant": "C",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/spatial/videos/C_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 53,
+      "truncated": false
+    },
+    "video_022": {
+      "video_id": "outdoor_A_seed123",
+      "scene_id": "outdoor",
+      "variant": "A",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/outdoor/videos/A_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 21,
+      "truncated": false
+    },
+    "video_023": {
+      "video_id": "indoor_B_seed2026",
+      "scene_id": "indoor",
+      "variant": "B",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/indoor/videos/B_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 113,
+      "truncated": false
+    },
+    "video_024": {
+      "video_id": "indoor_C_seed123",
+      "scene_id": "indoor",
+      "variant": "C",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/indoor/videos/C_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 54,
+      "truncated": false
+    },
+    "video_025": {
+      "video_id": "outdoor_C_seed42",
+      "scene_id": "outdoor",
+      "variant": "C",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/outdoor/videos/C_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 150,
+      "truncated": false
+    },
+    "video_026": {
       "video_id": "single_subject_A_seed42",
       "scene_id": "single_subject",
       "variant": "A",
@@ -22,7 +262,37 @@
       "prompt_token_count": 17,
       "truncated": false
     },
-    "video_003": {
+    "video_027": {
+      "video_id": "single_subject_A_seed123",
+      "scene_id": "single_subject",
+      "variant": "A",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/A_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 17,
+      "truncated": false
+    },
+    "video_028": {
+      "video_id": "indoor_B_seed123",
+      "scene_id": "indoor",
+      "variant": "B",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/indoor/videos/B_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 113,
+      "truncated": false
+    },
+    "video_029": {
+      "video_id": "indoor_A_seed123",
+      "scene_id": "indoor",
+      "variant": "A",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/indoor/videos/A_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 19,
+      "truncated": false
+    },
+    "video_030": {
       "video_id": "single_subject_C_seed42",
       "scene_id": "single_subject",
       "variant": "C",
@@ -30,6 +300,156 @@
       "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/C_seed42.mp4",
       "status": "PASS",
       "prompt_token_count": 154,
+      "truncated": false
+    },
+    "video_031": {
+      "video_id": "camera_motion_B_seed123",
+      "scene_id": "camera_motion",
+      "variant": "B",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/camera_motion/videos/B_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 118,
+      "truncated": false
+    },
+    "video_032": {
+      "video_id": "camera_motion_A_seed2026",
+      "scene_id": "camera_motion",
+      "variant": "A",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/camera_motion/videos/A_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 24,
+      "truncated": false
+    },
+    "video_033": {
+      "video_id": "single_subject_B_seed42",
+      "scene_id": "single_subject",
+      "variant": "B",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/B_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 225,
+      "truncated": false
+    },
+    "video_034": {
+      "video_id": "single_subject_B_seed123",
+      "scene_id": "single_subject",
+      "variant": "B",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/B_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 225,
+      "truncated": false
+    },
+    "video_035": {
+      "video_id": "outdoor_B_seed42",
+      "scene_id": "outdoor",
+      "variant": "B",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/outdoor/videos/B_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 192,
+      "truncated": false
+    },
+    "video_036": {
+      "video_id": "single_subject_C_seed2026",
+      "scene_id": "single_subject",
+      "variant": "C",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/C_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 154,
+      "truncated": false
+    },
+    "video_037": {
+      "video_id": "camera_motion_A_seed123",
+      "scene_id": "camera_motion",
+      "variant": "A",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/camera_motion/videos/A_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 24,
+      "truncated": false
+    },
+    "video_038": {
+      "video_id": "spatial_A_seed42",
+      "scene_id": "spatial",
+      "variant": "A",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/spatial/videos/A_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 18,
+      "truncated": false
+    },
+    "video_039": {
+      "video_id": "spatial_A_seed2026",
+      "scene_id": "spatial",
+      "variant": "A",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/spatial/videos/A_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 18,
+      "truncated": false
+    },
+    "video_040": {
+      "video_id": "spatial_C_seed2026",
+      "scene_id": "spatial",
+      "variant": "C",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/spatial/videos/C_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 53,
+      "truncated": false
+    },
+    "video_041": {
+      "video_id": "indoor_A_seed42",
+      "scene_id": "indoor",
+      "variant": "A",
+      "seed": 42,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/indoor/videos/A_seed42.mp4",
+      "status": "PASS",
+      "prompt_token_count": 19,
+      "truncated": false
+    },
+    "video_042": {
+      "video_id": "indoor_A_seed2026",
+      "scene_id": "indoor",
+      "variant": "A",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/indoor/videos/A_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 19,
+      "truncated": false
+    },
+    "video_043": {
+      "video_id": "single_subject_A_seed2026",
+      "scene_id": "single_subject",
+      "variant": "A",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/A_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 17,
+      "truncated": false
+    },
+    "video_044": {
+      "video_id": "spatial_A_seed123",
+      "scene_id": "spatial",
+      "variant": "A",
+      "seed": 123,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/spatial/videos/A_seed123.mp4",
+      "status": "PASS",
+      "prompt_token_count": 18,
+      "truncated": false
+    },
+    "video_045": {
+      "video_id": "camera_motion_C_seed2026",
+      "scene_id": "camera_motion",
+      "variant": "C",
+      "seed": 2026,
+      "output_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/camera_motion/videos/C_seed2026.mp4",
+      "status": "PASS",
+      "prompt_token_count": 59,
       "truncated": false
     }
   },

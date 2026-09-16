@@ -1,0 +1,13 @@
+User request:
+Pan the camera slowly to the right, preserving the circular arrangement of standing stones.
+
+Observed world:
+- Environment: outdoor, grassy area under overcast conditions
+- Main entities:
+  - stone stones: large, gray, with horizontal caps and vertical sides; position: scattered across the field; state: ancient, weathered
+- Layout: standing stones with horizontal caps arranged in circular pattern, grassy field, overcast sky
+- Camera: eye-level distance shot, facing the stone arrangement
+- Motion: static input, no motion
+- Constraints: preserve circular arrangement of standing stones; maintain grassy field and overcast sky
+
+Follow the user request as authoritative intent. Use observed world only for continuity.

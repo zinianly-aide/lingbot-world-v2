@@ -1,0 +1,17 @@
+User request:
+Move the camera slowly forward through the living room, keeping the sofa and coffee table stable.
+
+Observed world:
+- Environment: indoor living room
+- Main entities:
+  - sofa: upholstered seating, main furniture piece; position: center of room
+  - coffee table: low table in front of sofa; position: in front of sofa, center
+  - floor lamp: tall standing lamp; position: to the side of seating area
+  - bookshelf: shelving unit with books; position: against wall
+  - window: window letting in natural light; position: on one wall
+- Layout: sofa and coffee table in center, floor lamp to side, bookshelf against wall, window providing natural light
+- Camera: slight angle, capturing the room's layout
+- Motion: static input, no motion
+- Constraints: preserve furniture arrangement; maintain room layout and lighting
+
+Follow the user request as authoritative intent. Use observed world only for continuity.

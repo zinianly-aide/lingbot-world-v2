@@ -1,3 +1,15 @@
 {"scene": "single_subject", "variant": "A", "prompt_chars": 79, "token_count_before_truncation": 17, "token_count_after_truncation": 17, "truncated": false, "world_condition_chars": 815, "entity_count": 4}
 {"scene": "single_subject", "variant": "B", "prompt_chars": 1025, "token_count_before_truncation": 225, "token_count_after_truncation": 225, "truncated": false, "world_condition_chars": 815, "entity_count": 4}
 {"scene": "single_subject", "variant": "C", "prompt_chars": 723, "token_count_before_truncation": 154, "token_count_after_truncation": 154, "truncated": false, "world_condition_chars": 815, "entity_count": 4}
+{"scene": "spatial", "variant": "A", "prompt_chars": 91, "token_count_before_truncation": 18, "token_count_after_truncation": 18, "truncated": false, "world_condition_chars": 672, "entity_count": 1}
+{"scene": "spatial", "variant": "B", "prompt_chars": 991, "token_count_before_truncation": 192, "token_count_after_truncation": 192, "truncated": false, "world_condition_chars": 672, "entity_count": 1}
+{"scene": "spatial", "variant": "C", "prompt_chars": 733, "token_count_before_truncation": 149, "token_count_after_truncation": 149, "truncated": false, "world_condition_chars": 672, "entity_count": 1}
+{"scene": "indoor", "variant": "A", "prompt_chars": 97, "token_count_before_truncation": 19, "token_count_after_truncation": 19, "truncated": false, "world_condition_chars": 1064, "entity_count": 5}
+{"scene": "indoor", "variant": "B", "prompt_chars": 1249, "token_count_before_truncation": 265, "token_count_after_truncation": 265, "truncated": false, "world_condition_chars": 1064, "entity_count": 5}
+{"scene": "indoor", "variant": "C", "prompt_chars": 918, "token_count_before_truncation": 197, "token_count_after_truncation": 197, "truncated": false, "world_condition_chars": 1064, "entity_count": 5}
+{"scene": "outdoor", "variant": "A", "prompt_chars": 89, "token_count_before_truncation": 21, "token_count_after_truncation": 21, "truncated": false, "world_condition_chars": 589, "entity_count": 1}
+{"scene": "outdoor", "variant": "B", "prompt_chars": 914, "token_count_before_truncation": 192, "token_count_after_truncation": 192, "truncated": false, "world_condition_chars": 589, "entity_count": 1}
+{"scene": "outdoor", "variant": "C", "prompt_chars": 683, "token_count_before_truncation": 150, "token_count_after_truncation": 150, "truncated": false, "world_condition_chars": 589, "entity_count": 1}
+{"scene": "camera_motion", "variant": "A", "prompt_chars": 92, "token_count_before_truncation": 24, "token_count_after_truncation": 24, "truncated": false, "world_condition_chars": 990, "entity_count": 3}
+{"scene": "camera_motion", "variant": "B", "prompt_chars": 1238, "token_count_before_truncation": 265, "token_count_after_truncation": 265, "truncated": false, "world_condition_chars": 990, "entity_count": 3}
+{"scene": "camera_motion", "variant": "C", "prompt_chars": 966, "token_count_before_truncation": 215, "token_count_after_truncation": 215, "truncated": false, "world_condition_chars": 990, "entity_count": 3}

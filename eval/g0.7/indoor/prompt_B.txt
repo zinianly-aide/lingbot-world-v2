@@ -1,0 +1,10 @@
+Requested evolution (authoritative user intent): Move the camera slowly forward through the living room, keeping the sofa and coffee table stable.
+Current world: indoor living room
+Persistent entities: sofa (upholstered seating, main furniture piece; position: center of room; state: ); coffee table (low table in front of sofa; position: in front of sofa, center; state: ); floor lamp (tall standing lamp; position: to the side of seating area; state: ); bookshelf (shelving unit with books; position: against wall; state: ); window (window letting in natural light; position: on one wall; state: )
+Spatial layout: sofa and coffee table in center, floor lamp to side, bookshelf against wall, window providing natural light
+Lighting/weather: natural light from window + artificial light from floor lamp; indoor
+Camera: slight angle, capturing the room's layout
+Observed motion: static input, no motion
+Observed intent (context only): none
+Constraints: preserve identity; preserve object layout unless the requested action changes it; preserve environment consistency; preserve furniture arrangement; maintain room layout and lighting
+Use the observed world only as continuity context. Follow the requested evolution as the authoritative user intent.

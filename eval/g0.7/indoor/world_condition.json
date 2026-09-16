@@ -1,0 +1,45 @@
+{
+  "environment": "indoor living room",
+  "scene_layout": "sofa and coffee table in center, floor lamp to side, bookshelf against wall, window providing natural light",
+  "main_entities": [
+    {
+      "name": "sofa",
+      "appearance": "upholstered seating, main furniture piece",
+      "position": "center of room",
+      "state": ""
+    },
+    {
+      "name": "coffee table",
+      "appearance": "low table in front of sofa",
+      "position": "in front of sofa, center",
+      "state": ""
+    },
+    {
+      "name": "floor lamp",
+      "appearance": "tall standing lamp",
+      "position": "to the side of seating area",
+      "state": ""
+    },
+    {
+      "name": "bookshelf",
+      "appearance": "shelving unit with books",
+      "position": "against wall",
+      "state": ""
+    },
+    {
+      "name": "window",
+      "appearance": "window letting in natural light",
+      "position": "on one wall",
+      "state": ""
+    }
+  ],
+  "lighting": "natural light from window + artificial light from floor lamp",
+  "weather": "indoor",
+  "camera": "slight angle, capturing the room's layout",
+  "motion": "static input, no motion",
+  "persistent_constraints": [
+    "preserve furniture arrangement",
+    "maintain room layout and lighting"
+  ],
+  "user_intent": ""
+}

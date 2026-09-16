@@ -1,0 +1,18 @@
+{
+  "environment": "outdoor, with forested hills and blue sky",
+  "scene_layout": "the Great Wall extends upward, curving through the hillside, with watchtowers and walls visible",
+  "main_entities": [
+    {
+      "name": "Great Wall",
+      "appearance": "stone brick structure with battlements and walkways",
+      "position": "spelling along the slope of the hill",
+      "state": "intact and preserved"
+    }
+  ],
+  "lighting": "bright daylight, clear sky",
+  "weather": "clear and sunny",
+  "camera": "positioned to capture the path and walls",
+  "motion": "glide forward along the wall",
+  "persistent_constraints": [],
+  "user_intent": ""
+}

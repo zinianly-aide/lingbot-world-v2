@@ -1,0 +1,10 @@
+Requested evolution (authoritative user intent): Glide the camera forward along the Great Wall, preserving the stone path and watchtowers.
+Current world: outdoor, with forested hills and blue sky
+Persistent entities: Great Wall (stone brick structure with battlements and walkways; position: spelling along the slope of the hill; state: intact and preserved)
+Spatial layout: the Great Wall extends upward, curving through the hillside, with watchtowers and walls visible
+Lighting/weather: bright daylight, clear sky; clear and sunny
+Camera: positioned to capture the path and walls
+Observed motion: glide forward along the wall
+Observed intent (context only): none
+Constraints: preserve identity; preserve object layout unless the requested action changes it; preserve environment consistency; none
+Use the observed world only as continuity context. Follow the requested evolution as the authoritative user intent.

@@ -89,34 +89,41 @@ class WorldDescription:
 
 
 def _extract_json(raw: str) -> str:
-    """Extract the first balanced JSON object from a VLM response."""
+    """Extract the first balanced, parseable JSON object from a VLM response."""
     cleaned = raw.strip()
+    # Strip chain-of-thought blocks (MLX / reasoning models wrap analysis in <think>)
+    cleaned = re.sub(r"<think>.*?</think>", "", cleaned, flags=re.DOTALL | re.IGNORECASE)
     cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", cleaned, flags=re.IGNORECASE | re.DOTALL)
-    start = cleaned.find("{")
-    if start < 0:
-        return cleaned
-    depth = 0
-    in_string = False
-    escaped = False
-    for index in range(start, len(cleaned)):
-        char = cleaned[index]
-        if in_string:
-            if escaped:
-                escaped = False
-            elif char == "\\":
-                escaped = True
-            elif char == '"':
-                in_string = False
-            continue
-        if char == '"':
-            in_string = True
-        elif char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
-                return cleaned[start : index + 1]
-    return cleaned[start:]
+    # Try each '{' as a potential JSON start; return the first that parses as valid JSON
+    starts = [m.start() for m in re.finditer(r"\{", cleaned)]
+    for start in starts:
+        depth = 0
+        in_string = False
+        escaped = False
+        for index in range(start, len(cleaned)):
+            char = cleaned[index]
+            if in_string:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == '"':
+                    in_string = False
+                continue
+            if char == '"':
+                in_string = True
+            elif char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    candidate = cleaned[start : index + 1]
+                    try:
+                        json.loads(candidate)
+                        return candidate
+                    except (json.JSONDecodeError, ValueError):
+                        break  # this { didn't yield valid JSON, try the next
+    return cleaned
 
 
 def parse_world_description(raw: Any) -> WorldDescription:

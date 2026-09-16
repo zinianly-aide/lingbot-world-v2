@@ -1,0 +1,13 @@
+User request:
+Glide the camera forward along the Great Wall, preserving the stone path and watchtowers.
+
+Observed world:
+- Environment: outdoor, with forested hills and blue sky
+- Main entities:
+  - Great Wall: stone brick structure with battlements and walkways; position: spelling along the slope of the hill; state: intact and preserved
+- Layout: the Great Wall extends upward, curving through the hillside, with watchtowers and walls visible
+- Camera: positioned to capture the path and walls
+- Motion: glide forward along the wall
+- Constraints: preserve subject identity and scene layout
+
+Follow the user request as authoritative intent. Use observed world only for continuity.

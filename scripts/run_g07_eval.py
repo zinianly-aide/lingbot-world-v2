@@ -450,7 +450,7 @@ def should_skip(
     """Check if an existing result can be skipped (hash match)."""
     if existing is None:
         return False, "no existing result"
-    if existing.get("status") != "PASS":
+    if existing.get("status") not in ("PASS", "SKIPPED"):
         return False, "existing result is FAIL"
     if not os.path.exists(existing.get("output_video", "")):
         return False, "output video missing"

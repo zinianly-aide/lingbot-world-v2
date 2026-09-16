@@ -1,0 +1,21 @@
+{
+  "environment": "outdoor, grassy area under overcast conditions",
+  "scene_layout": "standing stones with horizontal caps arranged in circular pattern, grassy field, overcast sky",
+  "main_entities": [
+    {
+      "name": "stone stones",
+      "appearance": "large, gray, with horizontal caps and vertical sides",
+      "position": "scattered across the field",
+      "state": "ancient, weathered"
+    }
+  ],
+  "lighting": "diffuse from cloud cover",
+  "weather": "cloudy",
+  "camera": "eye-level distance shot, facing the stone arrangement",
+  "motion": "static input, no motion",
+  "persistent_constraints": [
+    "preserve circular arrangement of standing stones",
+    "maintain grassy field and overcast sky"
+  ],
+  "user_intent": ""
+}

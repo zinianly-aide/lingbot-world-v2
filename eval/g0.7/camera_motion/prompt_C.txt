@@ -1,0 +1,15 @@
+User request:
+Fly forward toward the castle, keeping the dragon's neck and reins stable in the foreground.
+
+Observed world:
+- Environment: outdoor, lush green environment with trees and vegetation
+- Main entities:
+  - dragon: winged creature, neck and reins visible in foreground; position: foreground, first-person perspective; state: flying
+  - castle: large stone castle; position: background, in the distance
+  - trees and vegetation: lush green foliage; position: below and around, midground
+- Layout: dragon neck and reins in foreground, large castle in background distance, green vegetation surrounding
+- Camera: first-person view from dragon, facing forward toward castle
+- Motion: forward flight, castle approaching in distance
+- Constraints: preserve dragon neck and reins in foreground; castle remains visible in background; maintain first-person flight perspective
+
+Follow the user request as authoritative intent. Use observed world only for continuity.

@@ -1,0 +1,34 @@
+{
+  "environment": "outdoor, lush green environment with trees and vegetation",
+  "scene_layout": "dragon neck and reins in foreground, large castle in background distance, green vegetation surrounding",
+  "main_entities": [
+    {
+      "name": "dragon",
+      "appearance": "winged creature, neck and reins visible in foreground",
+      "position": "foreground, first-person perspective",
+      "state": "flying"
+    },
+    {
+      "name": "castle",
+      "appearance": "large stone castle",
+      "position": "background, in the distance",
+      "state": ""
+    },
+    {
+      "name": "trees and vegetation",
+      "appearance": "lush green foliage",
+      "position": "below and around, midground",
+      "state": ""
+    }
+  ],
+  "lighting": "natural daylight",
+  "weather": "clear, daytime",
+  "camera": "first-person view from dragon, facing forward toward castle",
+  "motion": "forward flight, castle approaching in distance",
+  "persistent_constraints": [
+    "preserve dragon neck and reins in foreground",
+    "castle remains visible in background",
+    "maintain first-person flight perspective"
+  ],
+  "user_intent": ""
+}

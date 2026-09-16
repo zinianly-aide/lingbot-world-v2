@@ -1,0 +1,10 @@
+Requested evolution (authoritative user intent): Pan the camera slowly to the right, preserving the circular arrangement of standing stones.
+Current world: outdoor, grassy area under overcast conditions
+Persistent entities: stone stones (large, gray, with horizontal caps and vertical sides; position: scattered across the field; state: ancient, weathered)
+Spatial layout: standing stones with horizontal caps arranged in circular pattern, grassy field, overcast sky
+Lighting/weather: diffuse from cloud cover; cloudy
+Camera: eye-level distance shot, facing the stone arrangement
+Observed motion: static input, no motion
+Observed intent (context only): none
+Constraints: preserve identity; preserve object layout unless the requested action changes it; preserve environment consistency; preserve circular arrangement of standing stones; maintain grassy field and overcast sky
+Use the observed world only as continuity context. Follow the requested evolution as the authoritative user intent.
