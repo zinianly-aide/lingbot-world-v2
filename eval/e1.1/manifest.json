@@ -1,0 +1,45 @@
+{
+  "best_epoch": "epoch5",
+  "epoch5_adapter_sha256": "d68ab40a5fd93aa8a0f8a361b0505b7e2ca2db787725f827679961b0a7f4dbbd",
+  "epoch20_adapter_sha256": "7dae9a573e04d904dad9677c6dca2a253dd2363ff16660fd9e8c3087258559d0",
+  "adapter_config": {
+    "hidden_dim": 2048,
+    "output_dim": 4096,
+    "num_queries": 64,
+    "num_resampler_layers": 2,
+    "num_heads": 8,
+    "ffn_mult": 4,
+    "dtype": "float32",
+    "training_config": {
+      "epochs": 20,
+      "batch_size": 4,
+      "lr": 0.0001,
+      "weight_decay": 0.01,
+      "optimizer": "AdamW",
+      "device": "mps",
+      "loss_weights": {
+        "cosine": 1.0,
+        "mse": 1.0,
+        "cross_attn": 1.0
+      },
+      "num_probes": 32,
+      "seed": 42,
+      "trainable_params": 142831616,
+      "adapter_total_params": 142831616
+    },
+    "best_val_pooled_cosine_sim": 0.820023
+  },
+  "minicpm5_model_id": "openbmb/MiniCPM5-2B",
+  "minicpm5_snapshot": "12a3808a956f869c767195e9266b59c4d21d92e2",
+  "text_embedding_source": "/Volumes/ssd/huggingface/hub/models--robbyant--lingbot-world-v2-1.3b-causal-fast/snapshots/7e36a5f919f86cb4255cc9bfc30adb44963fbde1/model-00001-of-00006.safetensors",
+  "prompts_file_sha256": "6d4cd49aa339fb1631ae0b9c132cb101078e53fb027126d5622f55e7bb34aef4",
+  "teacher_context_count": 56,
+  "student_context_epoch5_count": 56,
+  "student_context_epoch20_count": 56,
+  "probe_seed": 42,
+  "probe_num_heads": 12,
+  "probe_head_dim": 128,
+  "probe_num_queries": 32,
+  "evaluation_timestamp": "2026-09-16T22:44:41+0800",
+  "wall_time_seconds": 1.6
+}

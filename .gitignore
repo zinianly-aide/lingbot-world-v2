@@ -37,3 +37,11 @@ eval/e1/teacher_contexts/*.safetensors
 # reproducible via scripts/e1_train_adapter.py. Do not commit to GitHub.
 eval/e1/adapter_final/*.safetensors
 eval/e1/best_adapter.safetensors
+
+# E1.1: corrected downstream-metric re-eval.  Student context tensors are
+# large (56 x [64,4096] bf16 per checkpoint, regenerable via
+# scripts/e1_1_reeval.py); only commit the JSON results / summary / manifest.
+eval/e1.1/student_contexts_epoch5/*.safetensors
+eval/e1.1/student_contexts_epoch20/*.safetensors
+!eval/e1.1/*.json
+!eval/e1.1/*.jsonl
