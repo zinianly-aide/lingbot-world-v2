@@ -1,0 +1,205 @@
+{
+  "e2_status": "COMPLETE",
+  "minicpm": {
+    "total": 15,
+    "pass": 15,
+    "fail": 0,
+    "generation_time": {
+      "mean": 213.3,
+      "median": 144.7,
+      "std": 205.2
+    },
+    "temporal_mad_mean": {
+      "mean": 0.1478,
+      "median": 0.1477,
+      "std": 0.0016
+    },
+    "per_frame_std": {
+      "mean": 0.2264
+    }
+  },
+  "umt5_baseline": {
+    "total": 15,
+    "generation_time": {
+      "mean": 545.7,
+      "median": 512.1,
+      "std": 100.7
+    },
+    "temporal_mad_mean": {
+      "mean": 0.0576,
+      "median": 0.0511,
+      "std": 0.0238
+    }
+  },
+  "vae_dtype_comparison": {
+    "fp16": {
+      "n": 2,
+      "mean_gen_time": 658.5
+    },
+    "bf16": {
+      "n": 13,
+      "mean_gen_time": 144.8
+    },
+    "speedup_pct": 78.0,
+    "note": "BF16 VAE decode ~1.77x faster than FP16 (warm decode 62.6s vs 110.7s). First FP16 run included cold model load; BF16 batch reused warm cache."
+  },
+  "pair_comparison": {
+    "method": "Objective sanity metrics only. temporal_mad_mean lower = more stable = win. per_frame_std within 5% = tie. NOT semantic quality score.",
+    "win": 0,
+    "tie": 0,
+    "loss": 15,
+    "pairs": [
+      {
+        "scene_id": "single_subject",
+        "seed": 42,
+        "minicpm_mad": 0.1502,
+        "umt5_mad": 0.0491,
+        "mad_delta_pct": 206.1,
+        "minicpm_std": 0.233,
+        "umt5_std": 0.1994,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "single_subject",
+        "seed": 123,
+        "minicpm_mad": 0.1498,
+        "umt5_mad": 0.0511,
+        "mad_delta_pct": 192.9,
+        "minicpm_std": 0.2374,
+        "umt5_std": 0.2003,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "single_subject",
+        "seed": 2026,
+        "minicpm_mad": 0.1501,
+        "umt5_mad": 0.0571,
+        "mad_delta_pct": 163.0,
+        "minicpm_std": 0.2346,
+        "umt5_std": 0.2006,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "spatial",
+        "seed": 42,
+        "minicpm_mad": 0.1462,
+        "umt5_mad": 0.023,
+        "mad_delta_pct": 534.6,
+        "minicpm_std": 0.2263,
+        "umt5_std": 0.2803,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "spatial",
+        "seed": 123,
+        "minicpm_mad": 0.1452,
+        "umt5_mad": 0.0311,
+        "mad_delta_pct": 367.6,
+        "minicpm_std": 0.2308,
+        "umt5_std": 0.2791,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "spatial",
+        "seed": 2026,
+        "minicpm_mad": 0.1456,
+        "umt5_mad": 0.0265,
+        "mad_delta_pct": 448.6,
+        "minicpm_std": 0.2281,
+        "umt5_std": 0.2817,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "indoor",
+        "seed": 42,
+        "minicpm_mad": 0.1485,
+        "umt5_mad": 0.041,
+        "mad_delta_pct": 262.2,
+        "minicpm_std": 0.2204,
+        "umt5_std": 0.301,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "indoor",
+        "seed": 123,
+        "minicpm_mad": 0.1477,
+        "umt5_mad": 0.0471,
+        "mad_delta_pct": 213.7,
+        "minicpm_std": 0.2248,
+        "umt5_std": 0.3011,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "indoor",
+        "seed": 2026,
+        "minicpm_mad": 0.1479,
+        "umt5_mad": 0.0389,
+        "mad_delta_pct": 279.9,
+        "minicpm_std": 0.2225,
+        "umt5_std": 0.3015,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "outdoor",
+        "seed": 42,
+        "minicpm_mad": 0.1489,
+        "umt5_mad": 0.0874,
+        "mad_delta_pct": 70.4,
+        "minicpm_std": 0.2285,
+        "umt5_std": 0.2917,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "outdoor",
+        "seed": 123,
+        "minicpm_mad": 0.1486,
+        "umt5_mad": 0.0899,
+        "mad_delta_pct": 65.3,
+        "minicpm_std": 0.2309,
+        "umt5_std": 0.2944,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "outdoor",
+        "seed": 2026,
+        "minicpm_mad": 0.1477,
+        "umt5_mad": 0.0906,
+        "mad_delta_pct": 63.0,
+        "minicpm_std": 0.231,
+        "umt5_std": 0.2936,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "camera_motion",
+        "seed": 42,
+        "minicpm_mad": 0.1469,
+        "umt5_mad": 0.0782,
+        "mad_delta_pct": 87.9,
+        "minicpm_std": 0.2139,
+        "umt5_std": 0.272,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "camera_motion",
+        "seed": 123,
+        "minicpm_mad": 0.1465,
+        "umt5_mad": 0.0814,
+        "mad_delta_pct": 80.1,
+        "minicpm_std": 0.2183,
+        "umt5_std": 0.2729,
+        "verdict": "loss"
+      },
+      {
+        "scene_id": "camera_motion",
+        "seed": 2026,
+        "minicpm_mad": 0.1467,
+        "umt5_mad": 0.0717,
+        "mad_delta_pct": 104.6,
+        "minicpm_std": 0.2156,
+        "umt5_std": 0.2724,
+        "verdict": "loss"
+      }
+    ]
+  },
+  "g1_status": "NOT STARTED"
+}

@@ -539,15 +539,30 @@ class WanI2VCausal:
         if self.vae is not None:
             return
 
+        import os as _os
         logging.info("Loading VAE...")
-        # MPS: use FP16 for VAE to reduce memory pressure (VAE decode is memory-heavy)
-        vae_dtype = torch.float16 if self.device.type == "mps" else torch.float32
+        # Allow VAE compute dtype override via LINGBOT_VAE_DTYPE env var
+        # (bf16 is ~1.8x faster than fp16 on MPS for VAE decode; default unchanged)
+        _vae_override = _os.environ.get("LINGBOT_VAE_DTYPE", "").lower()
+        if _vae_override == "bf16":
+            vae_dtype = torch.bfloat16
+        elif _vae_override == "fp32":
+            vae_dtype = torch.float32
+        else:
+            # MPS: use FP16 for VAE to reduce memory pressure (VAE decode is memory-heavy)
+            vae_dtype = torch.float16 if self.device.type == "mps" else torch.float32
         self.vae = Wan2_1_VAE(
             vae_pth=_resolve_asset_path(
                 self.config.vae_checkpoint, self._checkpoint_dir, self._assets_dir),
             device=self.device,
             dtype=vae_dtype)
-        logging.info(f"VAE loaded (dtype={vae_dtype}).")
+        # Wan2_1_VAE loads weights in FP32 from checkpoint; explicitly cast to target dtype
+        # (autocast is disabled on MPS, so without this the dtype param has no effect)
+        if vae_dtype != torch.float32:
+            self.vae.model = self.vae.model.to(vae_dtype)
+            self.vae.mean = self.vae.mean.to(vae_dtype)
+            self.vae.std = self.vae.std.to(vae_dtype)
+        logging.info(f"VAE loaded (dtype={vae_dtype}, override={_vae_override or 'default'}).")
 
     def load_dit(self):
         """Load the DiT model (idempotent).

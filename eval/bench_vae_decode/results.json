@@ -1,0 +1,120 @@
+{
+  "device": "mps",
+  "latent_path": "eval/e2/.cache/single_subject_42/latents.safetensors",
+  "latent_shape": [
+    16,
+    4,
+    58,
+    104
+  ],
+  "vae_checkpoint": "/Volumes/ssd/lingbot-assets/Wan2.1_VAE.pth",
+  "timestamp": "2026-09-17T00:27:43",
+  "results": [
+    {
+      "config": "fp32_full",
+      "dtype": "fp32",
+      "decode_mode": "full",
+      "chunk_size": null,
+      "status": "OOM",
+      "error": "MPS backend out of memory (MPS allocated: 11.03 GiB, other allocations: 9.80 GiB, max allowed: 20.13 GiB). Tried to allocate 576.00 MiB on shared pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 to disable upper limit for memory allocations (may cause system failure)."
+    },
+    {
+      "config": "fp16_full",
+      "dtype": "fp16",
+      "decode_mode": "full",
+      "chunk_size": null,
+      "output_shape": [
+        3,
+        13,
+        464,
+        832
+      ],
+      "output_dtype": "torch.float32",
+      "cold": {
+        "load_wall_s": 0.811,
+        "decode_wall_s": 61.921,
+        "mps_to_cpu_wall_s": 0.318,
+        "postprocess_wall_s": 0.098,
+        "total_wall_s": 63.149,
+        "mps_allocated_peak_mb": 790.0,
+        "mps_driver_peak_mb": 17124.0,
+        "rss_peak_mb": 1043.6
+      },
+      "warm": {
+        "decode_wall_s": 110.734,
+        "mps_to_cpu_wall_s": 0.291,
+        "postprocess_wall_s": 0.144,
+        "total_wall_s": 111.168,
+        "mps_allocated_peak_mb": 848.0,
+        "mps_driver_peak_mb": 16930.0,
+        "rss_peak_mb": 1043.6
+      }
+    },
+    {
+      "config": "bf16_full",
+      "dtype": "bf16",
+      "decode_mode": "full",
+      "chunk_size": null,
+      "output_shape": [
+        3,
+        13,
+        464,
+        832
+      ],
+      "output_dtype": "torch.float32",
+      "cold": {
+        "load_wall_s": 1.028,
+        "decode_wall_s": 54.658,
+        "mps_to_cpu_wall_s": 0.072,
+        "postprocess_wall_s": 0.031,
+        "total_wall_s": 55.789,
+        "mps_allocated_peak_mb": 1036.8,
+        "mps_driver_peak_mb": 14810.0,
+        "rss_peak_mb": 1043.6
+      },
+      "warm": {
+        "decode_wall_s": 62.642,
+        "mps_to_cpu_wall_s": 0.24,
+        "postprocess_wall_s": 0.148,
+        "total_wall_s": 63.03,
+        "mps_allocated_peak_mb": 1094.8,
+        "mps_driver_peak_mb": 16970.0,
+        "rss_peak_mb": 1043.6
+      },
+      "error_vs_fp32_full_baseline": {
+        "max_abs_error": 0.05641937255859375,
+        "mean_abs_error": 0.0025592150632292032
+      }
+    }
+  ],
+  "conclusions": {
+    "baseline_config": "fp16_full (practical baseline; fp32 OOM on 16GB)",
+    "baseline_decode_warm_s": 110.734,
+    "fp32_oom_on_16gb": true,
+    "fastest_config": "bf16_full",
+    "fastest_decode_warm_s": 62.642,
+    "speedup_vs_baseline": 1.77,
+    "highest_memory_config": "bf16_full",
+    "highest_driver_peak_mb": 16970.0,
+    "failed_configs": [
+      "fp32_full"
+    ],
+    "cpu_fallback": {
+      "cpu_fallback_detected": false,
+      "fallback_warnings": [],
+      "notes": "Conv3D with kernel_size=3 probe; GroupNorm and Upsample assumed MPS-native"
+    },
+    "forced_float_check": {
+      "model_param_dtype": "torch.float32",
+      "vae_dtype_attr": "torch.float32",
+      "decode_calls_float": true,
+      "autocast_mismatch": false
+    },
+    "driver_memory_residual_after_all": {
+      "before_gc_mb": 2265.7,
+      "after_gc_mb": 1225.7
+    },
+    "chunked_decode_note": "Skipped - VAE.decode internally does per-frame Python loop, external chunking only adds call overhead",
+    "primary_bottleneck_hypothesis": "Frame-by-frame Python for-loop in VAE decode (T iterations, each with Conv3D+GroupNorm+Upsample+feature cache management). Each iteration incurs Python overhead + MPS kernel launch. BF16/FP16 may reduce memory bandwidth but MPS Conv3D kernel launch overhead dominates. CPU fallback not detected for Conv3D k=3. MLX backend may avoid Python loop overhead."
+  }
+}

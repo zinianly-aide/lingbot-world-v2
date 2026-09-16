@@ -1,0 +1,242 @@
+[
+  {
+    "blind_id": "video_001",
+    "encoder": "umt5",
+    "scene_id": "outdoor",
+    "seed": 42,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/outdoor/videos/A_seed42.mp4",
+    "sha256": "18de1da7ad0a473c6585ac87670b77e1d33e44214d2d1c70762ed10836f255e9"
+  },
+  {
+    "blind_id": "video_002",
+    "encoder": "minicpm+adapter",
+    "scene_id": "indoor",
+    "seed": 123,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/indoor_seed123_minicpm.mp4",
+    "sha256": "e4e80ace702d93d05908724220ee1a880ba1ad157d9156db388bc631d727c6c9"
+  },
+  {
+    "blind_id": "video_003",
+    "encoder": "minicpm+adapter",
+    "scene_id": "spatial",
+    "seed": 2026,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/spatial_seed2026_minicpm.mp4",
+    "sha256": "00b0fd5f7570427510f6db5686b303f657ac71582b6c100bae00aefcd5f99793"
+  },
+  {
+    "blind_id": "video_004",
+    "encoder": "minicpm+adapter",
+    "scene_id": "camera_motion",
+    "seed": 123,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/camera_motion_seed123_minicpm.mp4",
+    "sha256": "6f1a6df6e9442cce73133e9480ddeab94630066646f73ff82e7b5d128c93c03f"
+  },
+  {
+    "blind_id": "video_005",
+    "encoder": "minicpm+adapter",
+    "scene_id": "outdoor",
+    "seed": 2026,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/outdoor_seed2026_minicpm.mp4",
+    "sha256": "0628b0e5714b1c2d7486e6c438e167408b482fb7b2002e82357faa59a6208e68"
+  },
+  {
+    "blind_id": "video_006",
+    "encoder": "minicpm+adapter",
+    "scene_id": "spatial",
+    "seed": 42,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/spatial_seed42_minicpm.mp4",
+    "sha256": "f532be2c673ea5c7ee856b2a4aa6c8438a89420d1d7d2821e055cf599240342c"
+  },
+  {
+    "blind_id": "video_007",
+    "encoder": "umt5",
+    "scene_id": "single_subject",
+    "seed": 2026,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/A_seed2026.mp4",
+    "sha256": "a1ccf4c262df0b37310636d50e6dd53fa321796aea81e5a4f24db4a0f3a26f28"
+  },
+  {
+    "blind_id": "video_008",
+    "encoder": "minicpm+adapter",
+    "scene_id": "indoor",
+    "seed": 42,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/indoor_seed42_minicpm.mp4",
+    "sha256": "8e5ee4ba175a7805806fbeb28e008d82898871e422cc4d2a99267c26807154da"
+  },
+  {
+    "blind_id": "video_009",
+    "encoder": "umt5",
+    "scene_id": "spatial",
+    "seed": 2026,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/spatial/videos/A_seed2026.mp4",
+    "sha256": "314186f3110a2951b0a3d3f76f23347065a4c56dcfec23bb1c92c4dbf2183a4a"
+  },
+  {
+    "blind_id": "video_010",
+    "encoder": "umt5",
+    "scene_id": "indoor",
+    "seed": 123,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/indoor/videos/A_seed123.mp4",
+    "sha256": "abddaf98c5a9464a91c2af1fce0fd6621a4721d724534bb4ce9874cb2dc170d9"
+  },
+  {
+    "blind_id": "video_011",
+    "encoder": "umt5",
+    "scene_id": "spatial",
+    "seed": 123,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/spatial/videos/A_seed123.mp4",
+    "sha256": "96dbea34d56320dec5d33da47fc6a1834b2a8929a9e4e3f4ce291024c0cbb396"
+  },
+  {
+    "blind_id": "video_012",
+    "encoder": "umt5",
+    "scene_id": "camera_motion",
+    "seed": 42,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/camera_motion/videos/A_seed42.mp4",
+    "sha256": "f5c0c3e09b554de7423733d2eacf4c283eeaa2cfe32d7e25fa9c60180fec61ac"
+  },
+  {
+    "blind_id": "video_013",
+    "encoder": "umt5",
+    "scene_id": "camera_motion",
+    "seed": 2026,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/camera_motion/videos/A_seed2026.mp4",
+    "sha256": "b5e9da003f40a20e386eeb765c4c2a0f70a87e704918e44fb4438e240250ae85"
+  },
+  {
+    "blind_id": "video_014",
+    "encoder": "umt5",
+    "scene_id": "outdoor",
+    "seed": 123,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/outdoor/videos/A_seed123.mp4",
+    "sha256": "9d592c42e2de1820750110b0067df4ed53029874651cdf9553cb2a98623629d2"
+  },
+  {
+    "blind_id": "video_015",
+    "encoder": "minicpm+adapter",
+    "scene_id": "indoor",
+    "seed": 2026,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/indoor_seed2026_minicpm.mp4",
+    "sha256": "f619ac9676f06a07162aabda66fbe9d5cb340e9dbb2bacd9579bc687956c5110"
+  },
+  {
+    "blind_id": "video_016",
+    "encoder": "umt5",
+    "scene_id": "camera_motion",
+    "seed": 123,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/camera_motion/videos/A_seed123.mp4",
+    "sha256": "a51fd01c3f7a1dd71836b0e138386972c6f956cc0632886b6cb35f020c2d6548"
+  },
+  {
+    "blind_id": "video_017",
+    "encoder": "umt5",
+    "scene_id": "single_subject",
+    "seed": 42,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/A_seed42.mp4",
+    "sha256": "c944816ef070d1416e602403b675edb91c065b3db3a638aec005e4962cc0fc77"
+  },
+  {
+    "blind_id": "video_018",
+    "encoder": "umt5",
+    "scene_id": "indoor",
+    "seed": 42,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/indoor/videos/A_seed42.mp4",
+    "sha256": "93d6611047fd01ce47f982cef83084ac9868dd612c77781a98c05db5f838bdfd"
+  },
+  {
+    "blind_id": "video_019",
+    "encoder": "minicpm+adapter",
+    "scene_id": "outdoor",
+    "seed": 42,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/outdoor_seed42_minicpm.mp4",
+    "sha256": "67046b40b4c808569c193be240141c35497829750b9273bda8ea76b707375993"
+  },
+  {
+    "blind_id": "video_020",
+    "encoder": "minicpm+adapter",
+    "scene_id": "single_subject",
+    "seed": 123,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/single_subject_seed123_minicpm.mp4",
+    "sha256": "5d6310c6acd38d62d6e2227dab2cc862a8fcdf70b72e25d3393b4b2eee07aacc"
+  },
+  {
+    "blind_id": "video_021",
+    "encoder": "umt5",
+    "scene_id": "indoor",
+    "seed": 2026,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/indoor/videos/A_seed2026.mp4",
+    "sha256": "8f85ab2b38fb954e26b95b24f01530d8e42c726ba7df5610d7b08e65d053efe6"
+  },
+  {
+    "blind_id": "video_022",
+    "encoder": "minicpm+adapter",
+    "scene_id": "camera_motion",
+    "seed": 2026,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/camera_motion_seed2026_minicpm.mp4",
+    "sha256": "f67d02526df2dbd6c29b8cd95cdb62298479ad84aa6b07111455ed28d5bbee6e"
+  },
+  {
+    "blind_id": "video_023",
+    "encoder": "minicpm+adapter",
+    "scene_id": "single_subject",
+    "seed": 2026,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/single_subject_seed2026_minicpm.mp4",
+    "sha256": "1d3235dc9c9ad8084c538c48566ed9167bdbd8ea116fc4126528c1b3576632ec"
+  },
+  {
+    "blind_id": "video_024",
+    "encoder": "minicpm+adapter",
+    "scene_id": "camera_motion",
+    "seed": 42,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/camera_motion_seed42_minicpm.mp4",
+    "sha256": "15b2b670e07e1cc579e9b9deceeb627010428ff8c3fa60db5f35f737268c41f6"
+  },
+  {
+    "blind_id": "video_025",
+    "encoder": "umt5",
+    "scene_id": "spatial",
+    "seed": 42,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/spatial/videos/A_seed42.mp4",
+    "sha256": "6c90c90ea3831e31423bbd630f78a6587287e4e96917d1b93971a73204c1403f"
+  },
+  {
+    "blind_id": "video_026",
+    "encoder": "minicpm+adapter",
+    "scene_id": "spatial",
+    "seed": 123,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/spatial_seed123_minicpm.mp4",
+    "sha256": "a9e84266d10af56ccd4afb54a2a71a7b2950cb17d03361b2e4444c1a64ab577a"
+  },
+  {
+    "blind_id": "video_027",
+    "encoder": "umt5",
+    "scene_id": "outdoor",
+    "seed": 2026,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/outdoor/videos/A_seed2026.mp4",
+    "sha256": "b0f2dc7231fb6948ec8d76c11d2baf8a1d260eb00a9022514c84222e4ef8c1e3"
+  },
+  {
+    "blind_id": "video_028",
+    "encoder": "minicpm+adapter",
+    "scene_id": "single_subject",
+    "seed": 42,
+    "source_video": "eval/e2/videos/single_subject_seed42_minicpm.mp4",
+    "sha256": "a4398886f2cbe6d460c9af7f88a47538b08b786f9268e58d840d83f11ec8067a"
+  },
+  {
+    "blind_id": "video_029",
+    "encoder": "umt5",
+    "scene_id": "single_subject",
+    "seed": 123,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/single_subject/videos/A_seed123.mp4",
+    "sha256": "8f2893f1e082fbeab81bb36059abd2cba95956f4136cad7d241dfc363797fb3e"
+  },
+  {
+    "blind_id": "video_030",
+    "encoder": "minicpm+adapter",
+    "scene_id": "outdoor",
+    "seed": 123,
+    "source_video": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/videos/outdoor_seed123_minicpm.mp4",
+    "sha256": "864131576738c93cf1d639654502bd5005ec480a5dda5ed13c0026220c2ca38f"
+  }
+]

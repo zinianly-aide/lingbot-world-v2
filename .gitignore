@@ -48,3 +48,5 @@ eval/e2/blind/videos/
 !eval/e2/embeddings/*.json
 !eval/e2/*.json
 !eval/e2/blind/*.json
+eval/e2/.cache/
+eval/e2/batch_*.log
