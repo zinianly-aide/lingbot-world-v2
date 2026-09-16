@@ -199,6 +199,34 @@ class RealCrossAttnDistiller(nn.Module):
 # Loss bundle for one (teacher1536, student1536) pair
 # ---------------------------------------------------------------------------
 
+def pad_raw(ctx: torch.Tensor, mask: torch.Tensor, text_len: int = 512):
+    """Pad [B,N,D] context with raw zeros to text_len (masked positions stay 0).
+
+    Shared helper (also used by test_e1_2_adapter_v2); matches the v2 contract
+    of feeding Wan's fixed 512-token text geometry.
+    """
+    b, n, d = ctx.shape
+    if n > text_len:
+        raise ValueError(f"context length {n} > text_len {text_len}")
+    out = ctx.new_zeros(b, text_len, d)
+    out[:, :n] = ctx
+    out_mask = torch.zeros(b, text_len, dtype=torch.bool, device=ctx.device)
+    out_mask[:, :n] = mask.bool()
+    return out, out_mask
+
+
+def masked_cosine_loss(student: torch.Tensor, teacher: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    valid = mask.bool()
+    s = student[valid]
+    t = teacher[valid]
+    return (1.0 - F.cosine_similarity(s, t, dim=-1)).mean()
+
+
+def masked_mse(student: torch.Tensor, teacher: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    valid = mask.bool().unsqueeze(-1).expand_as(student)
+    return F.mse_loss(student[valid], teacher[valid])
+
+
 def compute_e12_losses(teacher1536: torch.Tensor, student1536: torch.Tensor,
                        distiller: RealCrossAttnDistiller,
                        kv_weight: float) -> dict:
