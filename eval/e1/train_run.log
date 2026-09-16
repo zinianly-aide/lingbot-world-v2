@@ -1,0 +1,43 @@
+2026-09-16 21:22:23,301 - INFO - Loss weights: cosine=1.000 mse=1.000 xattn=1.000
+2026-09-16 21:22:23,302 - INFO - Prompts: total=56 train=45 val=11
+2026-09-16 21:22:23,303 - INFO - Loading MiniCPM5 from /Volumes/ssd/huggingface/hub/models--openbmb--MiniCPM5-2B/snapshots/12a3808a956f869c767195e9266b59c4d21d92e2 (frozen, bf16)...
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/380 [00:00<?, ?it/s]Loading weights: 100%|██████████| 380/380 [00:00<00:00, 3983.39it/s]
+[transformers] [1mLlamaModel LOAD REPORT[0m from: /Volumes/ssd/huggingface/hub/models--openbmb--MiniCPM5-2B/snapshots/12a3808a956f869c767195e9266b59c4d21d92e2
+Key            | Status     |  | 
+---------------+------------+--+-
+lm_head.weight | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+2026-09-16 21:22:31,928 - INFO - TextAdapter: trainable=142831616  total=142831616
+2026-09-16 21:22:31,929 - INFO - MiniCPM5 params (frozen): 2249369600
+2026-09-16 21:22:31,930 - INFO - text_embedding params (frozen): 8653824
+2026-09-16 21:22:35,150 - INFO - After first backward: MiniCPM5 all-grad-None=True  text_embedding all-grad-None=True
+2026-09-16 21:22:49,293 - INFO - epoch 1/20  train[cos=0.4150 mse=0.95385 xattn=0.95385 loss=2.32274]  val[cos_sim=0.7439 mse=0.91496 xattn=0.91496 attn_sim=0.7439 pp_cos=0.0573 pp_mse=0.04570]
+2026-09-16 21:22:50,047 - INFO -   >> new best val pooled_cosine_sim=0.7439 -> /Users/anshi/clawd/lingbot-world-v2/eval/e1/best_adapter.safetensors
+2026-09-16 21:23:03,256 - INFO - epoch 2/20  train[cos=0.3096 mse=0.30490 xattn=0.30253 loss=0.91701]  val[cos_sim=0.7265 mse=0.01740 xattn=0.01554 attn_sim=0.6878 pp_cos=0.4921 pp_mse=0.00881]
+2026-09-16 21:23:16,592 - INFO - epoch 3/20  train[cos=0.2090 mse=0.01088 xattn=0.00790 loss=0.22778]  val[cos_sim=0.7967 mse=0.00789 xattn=0.00487 attn_sim=0.7555 pp_cos=0.5836 pp_mse=0.00495]
+2026-09-16 21:23:17,481 - INFO -   >> new best val pooled_cosine_sim=0.7967 -> /Users/anshi/clawd/lingbot-world-v2/eval/e1/best_adapter.safetensors
+2026-09-16 21:23:30,356 - INFO - epoch 4/20  train[cos=0.1670 mse=0.00709 xattn=0.00431 loss=0.17843]  val[cos_sim=0.8049 mse=0.00737 xattn=0.00354 attn_sim=0.7880 pp_cos=0.5906 pp_mse=0.00472]
+2026-09-16 21:23:30,866 - INFO -   >> new best val pooled_cosine_sim=0.8049 -> /Users/anshi/clawd/lingbot-world-v2/eval/e1/best_adapter.safetensors
+2026-09-16 21:23:43,311 - INFO - epoch 5/20  train[cos=0.1488 mse=0.00795 xattn=0.00452 loss=0.16126]  val[cos_sim=0.8200 mse=0.00662 xattn=0.00368 attn_sim=0.7510 pp_cos=0.6278 pp_mse=0.00441]
+2026-09-16 21:23:43,921 - INFO -   >> new best val pooled_cosine_sim=0.8200 -> /Users/anshi/clawd/lingbot-world-v2/eval/e1/best_adapter.safetensors
+2026-09-16 21:23:56,654 - INFO - epoch 6/20  train[cos=0.1281 mse=0.00619 xattn=0.00361 loss=0.13790]  val[cos_sim=0.8105 mse=0.00441 xattn=0.00244 attn_sim=0.6992 pp_cos=0.6628 pp_mse=0.00369]
+2026-09-16 21:24:10,003 - INFO - epoch 7/20  train[cos=0.1270 mse=0.00380 xattn=0.00214 loss=0.13290]  val[cos_sim=0.8154 mse=0.00293 xattn=0.00163 attn_sim=0.6768 pp_cos=0.6935 pp_mse=0.00288]
+2026-09-16 21:24:23,127 - INFO - epoch 8/20  train[cos=0.1163 mse=0.00287 xattn=0.00166 loss=0.12085]  val[cos_sim=0.8168 mse=0.00267 xattn=0.00161 attn_sim=0.6704 pp_cos=0.7069 pp_mse=0.00274]
+2026-09-16 21:24:34,640 - INFO - epoch 9/20  train[cos=0.1010 mse=0.00276 xattn=0.00169 loss=0.10541]  val[cos_sim=0.8163 mse=0.00236 xattn=0.00146 attn_sim=0.6697 pp_cos=0.7132 pp_mse=0.00253]
+2026-09-16 21:24:45,559 - INFO - epoch 10/20  train[cos=0.0916 mse=0.00253 xattn=0.00156 loss=0.09569]  val[cos_sim=0.8119 mse=0.00210 xattn=0.00143 attn_sim=0.6546 pp_cos=0.7234 pp_mse=0.00230]
+2026-09-16 21:24:59,794 - INFO - epoch 11/20  train[cos=0.0862 mse=0.00210 xattn=0.00124 loss=0.08953]  val[cos_sim=0.8109 mse=0.00182 xattn=0.00138 attn_sim=0.6402 pp_cos=0.7326 pp_mse=0.00217]
+2026-09-16 21:25:12,389 - INFO - epoch 12/20  train[cos=0.0758 mse=0.00192 xattn=0.00117 loss=0.07892]  val[cos_sim=0.8105 mse=0.00170 xattn=0.00118 attn_sim=0.6664 pp_cos=0.7385 pp_mse=0.00210]
+2026-09-16 21:25:23,965 - INFO - epoch 13/20  train[cos=0.0754 mse=0.00177 xattn=0.00108 loss=0.07825]  val[cos_sim=0.8179 mse=0.00190 xattn=0.00114 attn_sim=0.7161 pp_cos=0.7421 pp_mse=0.00223]
+2026-09-16 21:25:36,935 - INFO - epoch 14/20  train[cos=0.0661 mse=0.00195 xattn=0.00114 loss=0.06922]  val[cos_sim=0.8156 mse=0.00194 xattn=0.00112 attn_sim=0.7243 pp_cos=0.7344 pp_mse=0.00226]
+2026-09-16 21:25:50,521 - INFO - epoch 15/20  train[cos=0.0619 mse=0.00183 xattn=0.00109 loss=0.06481]  val[cos_sim=0.8128 mse=0.00177 xattn=0.00105 attn_sim=0.7205 pp_cos=0.7437 pp_mse=0.00213]
+2026-09-16 21:26:03,379 - INFO - epoch 16/20  train[cos=0.0555 mse=0.00179 xattn=0.00101 loss=0.05833]  val[cos_sim=0.8101 mse=0.00165 xattn=0.00115 attn_sim=0.6926 pp_cos=0.7470 pp_mse=0.00202]
+2026-09-16 21:26:15,934 - INFO - epoch 17/20  train[cos=0.0494 mse=0.00157 xattn=0.00095 loss=0.05194]  val[cos_sim=0.8125 mse=0.00178 xattn=0.00100 attn_sim=0.7369 pp_cos=0.7427 pp_mse=0.00222]
+2026-09-16 21:26:29,893 - INFO - epoch 18/20  train[cos=0.0421 mse=0.00150 xattn=0.00090 loss=0.04446]  val[cos_sim=0.8124 mse=0.00142 xattn=0.00094 attn_sim=0.7090 pp_cos=0.7576 pp_mse=0.00184]
+2026-09-16 21:26:42,661 - INFO - epoch 19/20  train[cos=0.0359 mse=0.00115 xattn=0.00068 loss=0.03775]  val[cos_sim=0.8111 mse=0.00116 xattn=0.00090 attn_sim=0.6867 pp_cos=0.7682 pp_mse=0.00166]
+2026-09-16 21:26:57,187 - INFO - epoch 20/20  train[cos=0.0314 mse=0.00095 xattn=0.00059 loss=0.03295]  val[cos_sim=0.8082 mse=0.00107 xattn=0.00084 attn_sim=0.6930 pp_cos=0.7668 pp_mse=0.00160]
+2026-09-16 21:26:58,198 - INFO - Final adapter saved: /Users/anshi/clawd/lingbot-world-v2/eval/e1/adapter_final/adapter.safetensors
+2026-09-16 21:26:58,198 - INFO - Best adapter: /Users/anshi/clawd/lingbot-world-v2/eval/e1/best_adapter.safetensors (val cos_sim=0.8200)
+2026-09-16 21:26:58,198 - INFO - Training log: /Users/anshi/clawd/lingbot-world-v2/eval/e1/training_log.jsonl

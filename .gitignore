@@ -29,3 +29,11 @@ m5-smoke/
 
 # venv
 venv/
+
+# E1: cached UMT5 teacher contexts are large (regenerable); only commit manifest.
+eval/e1/teacher_contexts/*.safetensors
+!eval/e1/teacher_contexts/manifest.jsonl
+# E1: adapter weights are large (~545MB each, fp32); stored locally on SSD,
+# reproducible via scripts/e1_train_adapter.py. Do not commit to GitHub.
+eval/e1/adapter_final/*.safetensors
+eval/e1/best_adapter.safetensors

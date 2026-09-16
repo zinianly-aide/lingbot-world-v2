@@ -1,0 +1,27 @@
+{
+  "hidden_dim": 2048,
+  "output_dim": 4096,
+  "num_queries": 64,
+  "num_resampler_layers": 2,
+  "num_heads": 8,
+  "ffn_mult": 4,
+  "dtype": "float32",
+  "training_config": {
+    "epochs": 20,
+    "batch_size": 4,
+    "lr": 0.0001,
+    "weight_decay": 0.01,
+    "optimizer": "AdamW",
+    "device": "mps",
+    "loss_weights": {
+      "cosine": 1.0,
+      "mse": 1.0,
+      "cross_attn": 1.0
+    },
+    "num_probes": 32,
+    "seed": 42,
+    "trainable_params": 142831616,
+    "adapter_total_params": 142831616
+  },
+  "best_val_pooled_cosine_sim": 0.820023
+}
