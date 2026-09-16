@@ -1,0 +1,34 @@
+{
+  "prompt": "A red car is parked beside a tree.",
+  "device": "mps",
+  "results": [
+    {
+      "encoder": "UMT5-XXL",
+      "status": "PASS",
+      "load_wall_s": 32.019,
+      "encode_wall_s": 0.013,
+      "output_shape": [
+        11,
+        4096
+      ],
+      "output_dtype": "bfloat16",
+      "rss_peak_mb": 773.8,
+      "mps_alloc_peak_mb": 10856.5,
+      "mps_driver_mb": 11240.7
+    },
+    {
+      "encoder": "MiniCPM5-2B",
+      "status": "PASS",
+      "load_wall_s": 8.615,
+      "encode_wall_s": 0.268,
+      "output_shape": [
+        10,
+        2048
+      ],
+      "output_dtype": "torch.float32",
+      "rss_peak_mb": 526.0,
+      "mps_alloc_peak_mb": 4291.3,
+      "mps_driver_mb": 5274.7
+    }
+  ]
+}

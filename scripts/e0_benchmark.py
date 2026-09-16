@@ -50,6 +50,19 @@ DEFAULT_MINICPM5_DIR = "/Volumes/ssd/huggingface/hub/models--openbmb--MiniCPM5-2
 DEFAULT_DEVICE = "mps"
 
 
+def minicpm5_snapshot_dir() -> str:
+    """Resolve the actual snapshot directory containing config.json + weights."""
+    import glob
+    snaps = glob.glob(os.path.join(DEFAULT_MINICPM5_DIR, "snapshots", "*"))
+    if not snaps:
+        return DEFAULT_MINICPM5_DIR
+    # pick the snapshot with config.json
+    for s in sorted(snaps, reverse=True):
+        if os.path.isfile(os.path.join(s, "config.json")):
+            return s
+    return snaps[0]
+
+
 # ---------------------------------------------------------------------------
 # Memory helpers
 # ---------------------------------------------------------------------------
@@ -95,13 +108,14 @@ def minicpm5_available(model_dir: str) -> tuple[bool, str]:
             except OSError:
                 pass
         return False, f"download in progress ({len(incomplete)} incomplete blob(s), ~{size_gb:.2f} GB)"
-    # Must have at least one real safetensors weight.
-    has_weight = any(
-        f.endswith(".safetensors") and not f.endswith(".incomplete")
-        for f in os.listdir(blobs)
-    )
+    # Must have at least one real safetensors weight in the snapshot dir.
+    # (HF hub stores blobs as hash-named files; .safetensors only appears
+    #  as symlinks under snapshots/<hash>/.)
+    import glob
+    weight_files = glob.glob(os.path.join(model_dir, "snapshots", "*", "*.safetensors"))
+    has_weight = len(weight_files) > 0
     if not has_weight:
-        return False, "no .safetensors weight blobs found"
+        return False, "no .safetensors weight files found in snapshot"
     return True, "ok"
 
 
@@ -186,6 +200,8 @@ def run_minicpm5_worker(prompt: str, device: str, result_json: str) -> dict:
 
         from transformers import AutoModel, AutoTokenizer
 
+        snap_dir = minicpm5_snapshot_dir()
+
         if torch.backends.mps.is_available():
             torch.mps.empty_cache()
             try:
@@ -194,9 +210,9 @@ def run_minicpm5_worker(prompt: str, device: str, result_json: str) -> dict:
                 pass
 
         t_load0 = time.time()
-        tokenizer = AutoTokenizer.from_pretrained(DEFAULT_MINICPM5_DIR, local_files_only=True)
+        tokenizer = AutoTokenizer.from_pretrained(snap_dir, local_files_only=True, use_fast=False)
         model = AutoModel.from_pretrained(
-            DEFAULT_MINICPM5_DIR,
+            snap_dir,
             torch_dtype=torch.bfloat16,
             local_files_only=True,
         )
