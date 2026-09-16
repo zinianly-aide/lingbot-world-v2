@@ -1,0 +1,42 @@
+{
+  "dtype": "bf16",
+  "latent_path": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/.cache/single_subject_42/latents.safetensors",
+  "latent_channels_last_shape": [
+    1,
+    4,
+    58,
+    104,
+    16
+  ],
+  "output_shape": [
+    3,
+    13,
+    464,
+    832
+  ],
+  "load_wall_s": 0.301,
+  "warmup_wall_s": 40.466,
+  "infer_runs_s": [
+    43.026,
+    41.252,
+    43.911
+  ],
+  "infer_median_s": 43.026,
+  "peak_rss_mb": 548.6,
+  "error_vs_mps_bf16": {
+    "max_abs_error": 0.057537972927093506,
+    "mean_abs_error": 0.002218095352873206
+  },
+  "sanity": {
+    "range": [
+      -1.0,
+      1.0
+    ],
+    "mean": -0.15382535755634308,
+    "std": 0.3643885850906372,
+    "all_black": false,
+    "all_white": false,
+    "frozen": false,
+    "temporal_mad": 0.3030262589454651
+  }
+}

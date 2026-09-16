@@ -50,3 +50,11 @@ eval/e2/blind/videos/
 !eval/e2/blind/*.json
 eval/e2/.cache/
 eval/e2/batch_*.log
+
+# E2E profiling + MLX VAE POC (eval/bench_e2e, eval/bench_vae_mlx).
+# Commit only small result/config JSONs; ignore large regenerable artifacts.
+eval/bench_e2e/.tmp/
+eval/bench_vae_mlx/vae_mlx/model.safetensors
+eval/bench_vae_mlx/ref_mps_bf16.npy
+eval/bench_vae_mlx/*.log
+eval/bench_e2e/*.log

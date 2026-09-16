@@ -1,0 +1,93 @@
+{
+  "device": "mps",
+  "config": {
+    "frame_num": 13,
+    "size": "832*480",
+    "chunk_size": 4,
+    "seed": 42,
+    "prompt": "Move the camera slowly forward while keeping the lone tree stable and centered.",
+    "image": "examples/03/image.jpg"
+  },
+  "cached_artifacts": {
+    "prompt_embeds": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/embeddings/single_subject_minicpm.safetensors",
+    "image_condition": "/Users/anshi/clawd/lingbot-world-v2/eval/g0.7/.cache/image_condition_single_subject.safetensors",
+    "latents": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/.cache/single_subject_42/latents.safetensors"
+  },
+  "stages": {
+    "prompt_embeds_load": {
+      "wall_s": 0.0006,
+      "mps_allocated_peak_mb": 0.0,
+      "mps_driver_peak_mb": 0.5,
+      "shape": {
+        "context": [
+          64,
+          4096
+        ]
+      },
+      "dtype": {
+        "context": "torch.bfloat16"
+      },
+      "rss_mb": 206.8
+    },
+    "image_condition_load": {
+      "wall_s": 0.0001,
+      "mps_allocated_peak_mb": 0.0,
+      "mps_driver_peak_mb": 0.5,
+      "shape": {
+        "image_condition": [
+          20,
+          4,
+          58,
+          104
+        ]
+      },
+      "dtype": {
+        "image_condition": "torch.float32"
+      },
+      "rss_mb": 206.8
+    },
+    "dit_generate_latents_cold": {
+      "wall_s": 64.836,
+      "returncode": 0,
+      "stdout_tail": "[M5] KV geometry: frame_seqlen=1508 lat_f=4 kv_size=6032 num_layers=30 num_heads=12 head_dim=128\n[M5] self KV: shape=[1, 6032, 12, 128] dtype=torch.bfloat16 bytes=1.112GB\n[M5] cross KV: shape=[1, 512, 12, 128] dtype=torch.bfloat16 bytes=0.094GB\n[M5] requested_frame_num=13 aligned_frame_num=13 lat_f=4 chunk_size=4 num_chunks=1\n[M5:mem] after KV alloc: RSS=1063MB MPS_cur=8.31GB MPS_drv=8.99GB\n[M5] CHUNK 0: current_start=0 current_end=6032 start_frame=0 global_end_index=0 local_end_index=0 kv_cache_id=4756789056 cross_kv_id=4755817152\n[M5] CHUNK 0 pre: self-KV[0].k abs_sum=0.000000 (expect ~0)\n[M5:mem] chunk0 step0: RSS=758MB MPS_cur=8.31GB MPS_drv=10.05GB\n[M5:mem] chunk0 step1: RSS=759MB MPS_cur=8.31GB MPS_drv=10.05GB\n[M5:mem] chunk0 step2: RSS=758MB MPS_cur=8.31GB MPS_drv=10.05GB\n[M5:mem] chunk0 step3: RSS=694MB MPS_cur=8.31GB MPS_drv=10.05GB\n[M5] CHUNK 0 post: global_end_index=6032 local_end_index=6032 self-KV[0].k abs_sum=4804885.000000\n[M5:mem] after chunk0 context update: RSS=690MB MPS_cur=8.31GB MPS_drv=10.05GB\n[M5] cross_kv_init_count=1 (must be 1)\n",
+      "stderr_tail": "\n  0%|          | 0/1 [00:00<?, ?it/s]\n100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:48<00:00, 48.63s/it]\n100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:48<00:00, 48.63s/it]\n",
+      "success": true
+    },
+    "dit_generate_latents_warm": {
+      "wall_s": 65.553,
+      "returncode": 0,
+      "stdout_tail": "[M5] KV geometry: frame_seqlen=1508 lat_f=4 kv_size=6032 num_layers=30 num_heads=12 head_dim=128\n[M5] self KV: shape=[1, 6032, 12, 128] dtype=torch.bfloat16 bytes=1.112GB\n[M5] cross KV: shape=[1, 512, 12, 128] dtype=torch.bfloat16 bytes=0.094GB\n[M5] requested_frame_num=13 aligned_frame_num=13 lat_f=4 chunk_size=4 num_chunks=1\n[M5:mem] after KV alloc: RSS=1152MB MPS_cur=8.31GB MPS_drv=8.99GB\n[M5] CHUNK 0: current_start=0 current_end=6032 start_frame=0 global_end_index=0 local_end_index=0 kv_cache_id=4804579072 cross_kv_id=4803768064\n[M5] CHUNK 0 pre: self-KV[0].k abs_sum=0.000000 (expect ~0)\n[M5:mem] chunk0 step0: RSS=527MB MPS_cur=8.31GB MPS_drv=10.05GB\n[M5:mem] chunk0 step1: RSS=532MB MPS_cur=8.31GB MPS_drv=10.05GB\n[M5:mem] chunk0 step2: RSS=530MB MPS_cur=8.31GB MPS_drv=10.05GB\n[M5:mem] chunk0 step3: RSS=530MB MPS_cur=8.31GB MPS_drv=10.05GB\n[M5] CHUNK 0 post: global_end_index=6032 local_end_index=6032 self-KV[0].k abs_sum=4804885.000000\n[M5:mem] after chunk0 context update: RSS=530MB MPS_cur=8.31GB MPS_drv=10.05GB\n[M5] cross_kv_init_count=1 (must be 1)\n",
+      "stderr_tail": "\n  0%|          | 0/1 [00:00<?, ?it/s]\n100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:48<00:00, 48.62s/it]\n100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:48<00:00, 48.63s/it]\n",
+      "success": true
+    },
+    "vae_decode_cold": {
+      "wall_s": 96.59,
+      "returncode": 0,
+      "stdout_tail": "",
+      "stderr_tail": "",
+      "success": true
+    },
+    "vae_decode_warm": {
+      "wall_s": 116.196,
+      "returncode": 0,
+      "stdout_tail": "",
+      "stderr_tail": "",
+      "success": true
+    }
+  },
+  "bottleneck_analysis": {
+    "total_warm_wall_s": 181.749,
+    "stage_breakdown_warm": {
+      "dit_generate_latents": {
+        "wall_s": 65.553,
+        "pct": 36.1
+      },
+      "vae_decode": {
+        "wall_s": 116.196,
+        "pct": 63.9
+      }
+    },
+    "top1_bottleneck": "vae_decode",
+    "top1_pct": 63.9
+  }
+}
