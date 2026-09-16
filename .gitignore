@@ -37,3 +37,14 @@ eval/e1/teacher_contexts/*.safetensors
 # reproducible via scripts/e1_train_adapter.py. Do not commit to GitHub.
 eval/e1/adapter_final/*.safetensors
 eval/e1/best_adapter.safetensors
+
+# E2: MiniCPM5+Adapter paired video eval.
+# Large artifacts (videos, embedding tensors, latents) are regenerable via
+# scripts/e1_encode_with_adapter.py and scripts/g07_gen_stage.py.
+eval/e2/embeddings/*.safetensors
+eval/e2/videos/
+eval/e2/blind/videos/
+# Re-allow E2 metadata / manifests / encode result JSONs.
+!eval/e2/embeddings/*.json
+!eval/e2/*.json
+!eval/e2/blind/*.json

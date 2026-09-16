@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "output": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/embeddings/indoor_minicpm.safetensors",
+  "prompt_sha256": "4cf882c3004034bef88f7d3c4789c6b30adfd86845ab8539ccf60b5bc53035ce",
+  "model_id": "minicpm5-2b+adapter",
+  "encode_wall_time_seconds": 10.18,
+  "peak_mps_allocated_bytes": 5072534528,
+  "peak_driver_allocated_bytes": 5539315712,
+  "peak_mps_mb": 4837.5,
+  "peak_driver_mb": 5282.7,
+  "context_shape": [
+    64,
+    4096
+  ],
+  "context_dtype": "bfloat16",
+  "token_count": 19,
+  "prompt_chars": 97,
+  "metadata": {
+    "prompt_sha256": "4cf882c3004034bef88f7d3c4789c6b30adfd86845ab8539ccf60b5bc53035ce",
+    "dtype": "bfloat16",
+    "shape": [
+      64,
+      4096
+    ],
+    "hidden_dim": 4096,
+    "text_len": 64,
+    "model_id": "minicpm5-2b+adapter",
+    "format_version": "1.0",
+    "token_count": 19,
+    "adapter_weights": "/Users/anshi/clawd/lingbot-world-v2/eval/e1/best_adapter.safetensors",
+    "adapter_weights_sha256": "d68ab40a5fd93aa8a0f8a361b0505b7e2ca2db787725f827679961b0a7f4dbbd",
+    "adapter_config": "/Users/anshi/clawd/lingbot-world-v2/eval/e1/adapter_final/config.json",
+    "encoder": "minicpm5-2b+adapter"
+  },
+  "context_sha256": "2b074f3d7c14a6776391000f8a77d7514c03a4dd25d497292cb6c9501cfbefb8"
+}
