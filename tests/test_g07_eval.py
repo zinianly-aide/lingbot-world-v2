@@ -650,5 +650,381 @@ class TestEvalConfig(unittest.TestCase):
                 self.assertIn(field, scene, f"Scene {scene.get('id')} missing {field}")
 
 
+# ---------------------------------------------------------------------------
+# Blind evaluation anonymity & integrity
+# ---------------------------------------------------------------------------
+
+class TestBlindEvalAnonymity(unittest.TestCase):
+    """Verify human_eval.csv and blind/videos do not leak variant/scene/seed."""
+
+    def setUp(self):
+        self.csv_path = REPO_ROOT / "eval" / "g0.7" / "human_eval.csv"
+        self.blind_dir = REPO_ROOT / "eval" / "g0.7" / "blind" / "videos"
+        self.blind_map_path = REPO_ROOT / "eval" / "g0.7" / "blind_map.json"
+
+    def test_human_eval_csv_no_variant_column(self):
+        with open(self.csv_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            self.assertNotIn("variant", reader.fieldnames)
+            self.assertNotIn("video_id", reader.fieldnames)
+            self.assertNotIn("scene_id", reader.fieldnames)
+            self.assertNotIn("seed", reader.fieldnames)
+            self.assertNotIn("output_video", reader.fieldnames)
+
+    def test_human_eval_csv_data_no_scene_names(self):
+        with open(self.csv_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+        data_text = " ".join(",".join(r.values()) for r in rows)
+        for scene in ["single_subject", "spatial", "indoor", "outdoor", "camera_motion"]:
+            self.assertNotIn(scene, data_text, f"Scene name '{scene}' leaked into CSV data")
+
+    def test_human_eval_csv_data_no_paths(self):
+        with open(self.csv_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+        data_text = " ".join(",".join(r.values()) for r in rows)
+        self.assertNotIn("eval/g0.7/", data_text)
+        self.assertNotIn(".mp4", data_text)
+
+    def test_human_eval_csv_45_rows_unique_blind_ids(self):
+        with open(self.csv_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+        self.assertEqual(len(rows), 45)
+        blind_ids = [r["blind_id"] for r in rows]
+        self.assertEqual(len(set(blind_ids)), 45)
+        for bid in blind_ids:
+            self.assertRegex(bid, r"^video_\d{3}$")
+
+    def test_human_eval_csv_has_required_dimension_columns(self):
+        with open(self.csv_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            fields = reader.fieldnames
+        for dim in ["identity_consistency", "attribute_preservation", "spatial_layout",
+                     "environment_consistency", "camera_continuity", "temporal_stability",
+                     "intent_fidelity", "hallucination"]:
+            self.assertIn(dim, fields)
+        self.assertIn("positive_score", fields)
+        self.assertIn("adjusted_score", fields)
+        self.assertIn("notes", fields)
+
+    def test_blind_videos_filenames_anonymous(self):
+        if not self.blind_dir.exists():
+            self.skipTest("blind/videos directory not created yet")
+        import re
+        for fname in os.listdir(self.blind_dir):
+            self.assertRegex(fname, r"^video_\d{3}\.mp4$",
+                             f"Filename '{fname}' leaks identity")
+            for scene in ["single_subject", "spatial", "indoor", "outdoor", "camera_motion"]:
+                self.assertNotIn(scene, fname)
+            for v in ["_A_", "_B_", "_C_"]:
+                self.assertNotIn(v, fname)
+
+    def test_blind_videos_count_matches_blind_map(self):
+        if not self.blind_dir.exists():
+            self.skipTest("blind/videos directory not created yet")
+        with open(self.blind_map_path, encoding="utf-8") as f:
+            bm = json.load(f)
+        mapping = bm["mapping"]
+        video_files = [f for f in os.listdir(self.blind_dir) if f.endswith(".mp4")]
+        self.assertEqual(len(video_files), len(mapping))
+        for bid in mapping:
+            self.assertTrue(
+                (self.blind_dir / f"{bid}.mp4").exists(),
+                f"Missing blind copy for {bid}"
+            )
+
+    def test_blind_map_mapping_keys_match_csv(self):
+        with open(self.blind_map_path, encoding="utf-8") as f:
+            bm = json.load(f)
+        mapping = bm["mapping"]
+        with open(self.csv_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            csv_ids = set(r["blind_id"] for r in reader)
+        self.assertEqual(set(mapping.keys()), csv_ids)
+
+
+# ---------------------------------------------------------------------------
+# Summarize strict validation
+# ---------------------------------------------------------------------------
+
+class TestSummarizeValidation(unittest.TestCase):
+    """Test load_and_validate_human_scores strict validation logic."""
+
+    def _make_blind_map(self):
+        return {
+            "video_001": {"scene_id": "s1", "variant": "A", "seed": 42},
+            "video_002": {"scene_id": "s1", "variant": "B", "seed": 42},
+            "video_003": {"scene_id": "s1", "variant": "C", "seed": 42},
+        }
+
+    def _write_csv(self, tmpdir, rows, fieldnames=None):
+        if fieldnames is None:
+            fieldnames = ["blind_id"] + [
+                "identity_consistency", "attribute_preservation", "spatial_layout",
+                "environment_consistency", "camera_continuity", "temporal_stability",
+                "intent_fidelity", "hallucination",
+                "positive_score", "adjusted_score", "notes"]
+        path = tmpdir / "human_eval.csv"
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=fieldnames)
+            w.writeheader()
+            for r in rows:
+                w.writerow(r)
+        return path
+
+    def test_empty_scores_returns_empty_dict(self):
+        import summarize_g07_eval as sm
+        with tempfile.TemporaryDirectory() as td:
+            tmpdir = Path(td)
+            rows = [{"blind_id": f"video_{i:03d}"} for i in range(1, 46)]
+            path = self._write_csv(tmpdir, rows)
+            with patch.object(sm, "HUMAN_EVAL_PATH", path):
+                result = sm.load_and_validate_human_scores(self._make_blind_map())
+                self.assertEqual(result, {})
+
+    def test_all_valid_scores_pass(self):
+        import summarize_g07_eval as sm
+        with tempfile.TemporaryDirectory() as td:
+            tmpdir = Path(td)
+            bm = {f"video_{i:03d}": {"scene_id": "s", "variant": "A", "seed": 42}
+                  for i in range(1, 46)}
+            dims = ["identity_consistency", "attribute_preservation", "spatial_layout",
+                    "environment_consistency", "camera_continuity", "temporal_stability",
+                    "intent_fidelity", "hallucination"]
+            rows = []
+            for i in range(1, 46):
+                row = {"blind_id": f"video_{i:03d}"}
+                for d in dims:
+                    row[d] = "3"
+                rows.append(row)
+            path = self._write_csv(tmpdir, rows)
+            with patch.object(sm, "HUMAN_EVAL_PATH", path):
+                result = sm.load_and_validate_human_scores(bm)
+                self.assertEqual(len(result), 45)
+                self.assertIn("video_001", result)
+                self.assertEqual(result["video_001"]["identity_consistency"], 3.0)
+
+    def test_missing_dimension_errors(self):
+        import summarize_g07_eval as sm
+        with tempfile.TemporaryDirectory() as td:
+            tmpdir = Path(td)
+            bm = {"video_001": {"scene_id": "s", "variant": "A", "seed": 42}}
+            rows = [{"blind_id": "video_001", "identity_consistency": "3",
+                     "attribute_preservation": "3", "spatial_layout": "3",
+                     "environment_consistency": "3", "camera_continuity": "3",
+                     "temporal_stability": "3", "intent_fidelity": "3"}]
+            # hallucination missing
+            path = self._write_csv(tmpdir, rows)
+            with patch.object(sm, "HUMAN_EVAL_PATH", path):
+                with self.assertRaises(SystemExit):
+                    sm.load_and_validate_human_scores(bm)
+
+    def test_out_of_range_score_errors(self):
+        import summarize_g07_eval as sm
+        with tempfile.TemporaryDirectory() as td:
+            tmpdir = Path(td)
+            bm = {"video_001": {"scene_id": "s", "variant": "A", "seed": 42}}
+            dims = ["identity_consistency", "attribute_preservation", "spatial_layout",
+                    "environment_consistency", "camera_continuity", "temporal_stability",
+                    "intent_fidelity", "hallucination"]
+            row = {"blind_id": "video_001"}
+            for d in dims:
+                row[d] = "6"  # out of range
+            path = self._write_csv(tmpdir, [row])
+            with patch.object(sm, "HUMAN_EVAL_PATH", path):
+                with self.assertRaises(SystemExit):
+                    sm.load_and_validate_human_scores(bm)
+
+    def test_duplicate_blind_id_errors(self):
+        import summarize_g07_eval as sm
+        with tempfile.TemporaryDirectory() as td:
+            tmpdir = Path(td)
+            bm = {"video_001": {"scene_id": "s", "variant": "A", "seed": 42}}
+            dims = ["identity_consistency", "attribute_preservation", "spatial_layout",
+                    "environment_consistency", "camera_continuity", "temporal_stability",
+                    "intent_fidelity", "hallucination"]
+            row = {"blind_id": "video_001"}
+            for d in dims:
+                row[d] = "3"
+            path = self._write_csv(tmpdir, [row, row])  # duplicate
+            with patch.object(sm, "HUMAN_EVAL_PATH", path):
+                with self.assertRaises(SystemExit):
+                    sm.load_and_validate_human_scores(bm)
+
+    def test_unblindable_blind_id_errors(self):
+        import summarize_g07_eval as sm
+        with tempfile.TemporaryDirectory() as td:
+            tmpdir = Path(td)
+            bm = {"video_001": {"scene_id": "s", "variant": "A", "seed": 42}}
+            dims = ["identity_consistency", "attribute_preservation", "spatial_layout",
+                    "environment_consistency", "camera_continuity", "temporal_stability",
+                    "intent_fidelity", "hallucination"]
+            row = {"blind_id": "video_999"}  # not in blind_map
+            for d in dims:
+                row[d] = "3"
+            path = self._write_csv(tmpdir, [row])
+            with patch.object(sm, "HUMAN_EVAL_PATH", path):
+                with self.assertRaises(SystemExit):
+                    sm.load_and_validate_human_scores(bm)
+
+
+# ---------------------------------------------------------------------------
+# Unblinding correctness
+# ---------------------------------------------------------------------------
+
+class TestUnblindingCorrectness(unittest.TestCase):
+    """Test build_score_lookup maps blind_id to (scene, variant, seed) correctly."""
+
+    def test_build_score_lookup(self):
+        import summarize_g07_eval as sm
+        blind_map = {
+            "video_001": {"scene_id": "indoor", "variant": "A", "seed": 42},
+            "video_002": {"scene_id": "outdoor", "variant": "C", "seed": 2026},
+        }
+        human_scores = {
+            "video_001": {"identity_consistency": 4.0, "hallucination": 1.0},
+            "video_002": {"identity_consistency": 3.0, "hallucination": 2.0},
+        }
+        lookup = sm.build_score_lookup(human_scores, blind_map)
+        self.assertEqual(len(lookup), 2)
+        self.assertIn(("indoor", "A", 42), lookup)
+        self.assertIn(("outdoor", "C", 2026), lookup)
+        self.assertEqual(lookup[("indoor", "A", 42)]["identity_consistency"], 4.0)
+        self.assertEqual(lookup[("outdoor", "C", 2026)]["hallucination"], 2.0)
+
+    def test_blind_map_actual_mapping_covers_all_results(self):
+        """Every (scene, variant, seed) in results.jsonl must be in blind_map."""
+        with open(REPO_ROOT / "eval" / "g0.7" / "blind_map.json", encoding="utf-8") as f:
+            bm = json.load(f)
+        mapping = bm["mapping"]
+        mapped_keys = set()
+        for info in mapping.values():
+            mapped_keys.add((info["scene_id"], info["variant"], info["seed"]))
+        with open(REPO_ROOT / "eval" / "g0.7" / "results.jsonl", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                rec = json.loads(line)
+                key = (rec["scene_id"], rec["variant"], rec["seed"])
+                self.assertIn(key, mapped_keys,
+                              f"Result {key} not found in blind_map mapping")
+
+
+# ---------------------------------------------------------------------------
+# Paired deltas & wins/ties/losses
+# ---------------------------------------------------------------------------
+
+class TestPairedDeltas(unittest.TestCase):
+    """Test compute_paired_deltas with fixed small sample."""
+
+    def _make_records(self):
+        return [
+            {"scene_id": "s1", "variant": "A", "seed": 42, "status": "PASS"},
+            {"scene_id": "s1", "variant": "B", "seed": 42, "status": "PASS"},
+            {"scene_id": "s1", "variant": "C", "seed": 42, "status": "PASS"},
+            {"scene_id": "s2", "variant": "A", "seed": 42, "status": "PASS"},
+            {"scene_id": "s2", "variant": "B", "seed": 42, "status": "PASS"},
+            {"scene_id": "s2", "variant": "C", "seed": 42, "status": "PASS"},
+        ]
+
+    def _make_score_lookup(self):
+        dims_A = {"identity_consistency": 3.0, "attribute_preservation": 3.0,
+                  "spatial_layout": 3.0, "environment_consistency": 3.0,
+                  "camera_continuity": 3.0, "temporal_stability": 3.0,
+                  "intent_fidelity": 3.0, "hallucination": 1.0}
+        dims_B = {"identity_consistency": 4.0, "attribute_preservation": 4.0,
+                  "spatial_layout": 4.0, "environment_consistency": 4.0,
+                  "camera_continuity": 4.0, "temporal_stability": 4.0,
+                  "intent_fidelity": 4.0, "hallucination": 1.0}
+        dims_C = {"identity_consistency": 5.0, "attribute_preservation": 5.0,
+                  "spatial_layout": 5.0, "environment_consistency": 5.0,
+                  "camera_continuity": 5.0, "temporal_stability": 5.0,
+                  "intent_fidelity": 5.0, "hallucination": 0.0}
+        return {
+            ("s1", "A", 42): dims_A, ("s1", "B", 42): dims_B, ("s1", "C", 42): dims_C,
+            ("s2", "A", 42): dims_A, ("s2", "B", 42): dims_B, ("s2", "C", 42): dims_C,
+        }
+
+    def test_paired_deltas_calculation(self):
+        import summarize_g07_eval as sm
+        records = self._make_records()
+        lookup = self._make_score_lookup()
+        result = sm.compute_paired_deltas(records, lookup)
+
+        # A adjusted = 3.0 - 0.5*1.0 = 2.5
+        # B adjusted = 4.0 - 0.5*1.0 = 3.5
+        # C adjusted = 5.0 - 0.5*0.0 = 5.0
+        # B-A = 1.0, C-A = 2.5, C-B = 1.5
+
+        self.assertEqual(result["total_pairs"]["B-A"], 2)
+        self.assertEqual(result["total_pairs"]["C-A"], 2)
+        self.assertEqual(result["total_pairs"]["C-B"], 2)
+
+        for delta in result["paired_deltas"]["B-A"]:
+            self.assertAlmostEqual(delta["adjusted_delta"], 1.0, places=2)
+        for delta in result["paired_deltas"]["C-A"]:
+            self.assertAlmostEqual(delta["adjusted_delta"], 2.5, places=2)
+        for delta in result["paired_deltas"]["C-B"]:
+            self.assertAlmostEqual(delta["adjusted_delta"], 1.5, places=2)
+
+    def test_wins_ties_losses(self):
+        import summarize_g07_eval as sm
+        records = self._make_records()
+        lookup = self._make_score_lookup()
+        result = sm.compute_paired_deltas(records, lookup)
+
+        # B > A always: W=2, T=0, L=0
+        self.assertEqual(result["wins_overall"]["B-A"], {"win": 2, "tie": 0, "loss": 0})
+        # C > A always: W=2, T=0, L=0
+        self.assertEqual(result["wins_overall"]["C-A"], {"win": 2, "tie": 0, "loss": 0})
+        # C > B always: W=2, T=0, L=0
+        self.assertEqual(result["wins_overall"]["C-B"], {"win": 2, "tie": 0, "loss": 0})
+
+    def test_tie_detection(self):
+        import summarize_g07_eval as sm
+        records = [
+            {"scene_id": "s1", "variant": "A", "seed": 42, "status": "PASS"},
+            {"scene_id": "s1", "variant": "B", "seed": 42, "status": "PASS"},
+        ]
+        dims = {"identity_consistency": 3.0, "attribute_preservation": 3.0,
+                "spatial_layout": 3.0, "environment_consistency": 3.0,
+                "camera_continuity": 3.0, "temporal_stability": 3.0,
+                "intent_fidelity": 3.0, "hallucination": 1.0}
+        lookup = {("s1", "A", 42): dims, ("s1", "B", 42): dict(dims)}
+        result = sm.compute_paired_deltas(records, lookup)
+        self.assertEqual(result["wins_overall"]["B-A"], {"win": 0, "tie": 1, "loss": 0})
+
+    def test_loss_detection(self):
+        import summarize_g07_eval as sm
+        records = [
+            {"scene_id": "s1", "variant": "A", "seed": 42, "status": "PASS"},
+            {"scene_id": "s1", "variant": "B", "seed": 42, "status": "PASS"},
+        ]
+        dims_A = {"identity_consistency": 5.0, "attribute_preservation": 5.0,
+                  "spatial_layout": 5.0, "environment_consistency": 5.0,
+                  "camera_continuity": 5.0, "temporal_stability": 5.0,
+                  "intent_fidelity": 5.0, "hallucination": 0.0}
+        dims_B = {"identity_consistency": 2.0, "attribute_preservation": 2.0,
+                  "spatial_layout": 2.0, "environment_consistency": 2.0,
+                  "camera_continuity": 2.0, "temporal_stability": 2.0,
+                  "intent_fidelity": 2.0, "hallucination": 3.0}
+        lookup = {("s1", "A", 42): dims_A, ("s1", "B", 42): dims_B}
+        result = sm.compute_paired_deltas(records, lookup)
+        self.assertEqual(result["wins_overall"]["B-A"], {"win": 0, "tie": 0, "loss": 1})
+
+    def test_wins_per_scene(self):
+        import summarize_g07_eval as sm
+        records = self._make_records()
+        lookup = self._make_score_lookup()
+        result = sm.compute_paired_deltas(records, lookup)
+        self.assertIn("s1", result["wins_per_scene"])
+        self.assertIn("s2", result["wins_per_scene"])
+        self.assertEqual(result["wins_per_scene"]["s1"]["C-A"], {"win": 1, "tie": 0, "loss": 0})
+        self.assertEqual(result["wins_per_scene"]["s2"]["C-A"], {"win": 1, "tie": 0, "loss": 0})
+
+
 if __name__ == "__main__":
     unittest.main()

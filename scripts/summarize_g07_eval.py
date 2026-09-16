@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""G0.7 A/B/C evaluation summarizer.
+"""G0.7 A/B/C evaluation summarizer (blind-id unblinding).
 
-Reads results.jsonl and metrics_prompt.jsonl, computes per-variant mean/
-median/std across all dimensions, per-scene and per-seed breakdowns, and
-pairwise differences (B-A, C-A, C-B).  Also applies the G1 Entry Gate.
+Reads human_eval.csv by blind_id, unblinds via blind_map.json, merges with
+results.jsonl, computes per-variant / per-scene / per-seed mean/median/std,
+pairwise differences (B-A, C-A, C-B), paired (scene+seed) deltas with
+wins/ties/losses, and applies the G1 Entry Gate.
+
+Strict validation: if any scores are present, ALL 45 rows must have all 8
+dimensions filled with 0-5 values, no duplicate blind_ids, all unblindable.
+If zero scores are present, reports G1 NOT STARTED.
 
 Usage:
     python scripts/summarize_g07_eval.py
@@ -12,6 +17,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import statistics
 import sys
@@ -23,6 +29,7 @@ EVAL_DIR = REPO_ROOT / "eval" / "g0.7"
 RESULTS_PATH = EVAL_DIR / "results.jsonl"
 METRICS_PATH = EVAL_DIR / "metrics_prompt.jsonl"
 HUMAN_EVAL_PATH = EVAL_DIR / "human_eval.csv"
+BLIND_MAP_PATH = EVAL_DIR / "blind_map.json"
 
 POSITIVE_DIMS = [
     "identity_consistency",
@@ -36,6 +43,10 @@ POSITIVE_DIMS = [
 HALLUCINATION_DIM = "hallucination"
 ALL_DIMS = POSITIVE_DIMS + [HALLUCINATION_DIM]
 
+
+# ---------------------------------------------------------------------------
+# Loaders
+# ---------------------------------------------------------------------------
 
 def load_results() -> list[dict[str, Any]]:
     records = []
@@ -59,30 +70,124 @@ def load_prompt_metrics() -> list[dict[str, Any]]:
     return records
 
 
-def load_human_scores() -> dict[str, dict[str, float]]:
-    """Load human_eval.csv into {video_id: {dim: score}}."""
-    scores: dict[str, dict[str, float]] = {}
+def load_blind_map() -> dict[str, Any]:
+    """Load blind_map.json. Returns the mapping dict {blind_id: {...}}."""
+    if not BLIND_MAP_PATH.exists():
+        return {}
+    with open(BLIND_MAP_PATH, encoding="utf-8") as f:
+        data = json.load(f)
+    return data.get("mapping", {})
+
+
+def load_and_validate_human_scores(
+    blind_map: dict[str, Any],
+) -> dict[str, dict[str, float]]:
+    """Load human_eval.csv by blind_id and strictly validate.
+
+    Returns {blind_id: {dim: score}}.
+    If zero scores are present, returns empty dict (NOT STARTED path).
+    If partial/invalid scores, prints error and exits with code 1.
+    """
     if not HUMAN_EVAL_PATH.exists():
-        return scores
-    import csv
+        return {}
+
     with open(HUMAN_EVAL_PATH, encoding="utf-8") as f:
         reader = csv.DictReader(f)
-        for row in reader:
-            video_id = row.get("video_id", "")
-            if not video_id:
+        rows = list(reader)
+
+    # Check required columns
+    required = {"blind_id"} | set(ALL_DIMS)
+    missing_cols = required - set(reader.fieldnames or [])
+    if missing_cols:
+        print(f"ERROR: human_eval.csv missing columns: {missing_cols}", file=sys.stderr)
+        sys.exit(1)
+
+    # Detect if any scores are present
+    any_score = False
+    for row in rows:
+        for dim in ALL_DIMS:
+            if row.get(dim, "").strip():
+                any_score = True
+                break
+        if any_score:
+            break
+
+    if not any_score:
+        return {}  # No scores yet — NOT STARTED path
+
+    # --- Strict validation (scores present) ---
+    errors: list[str] = []
+
+    # 45 rows
+    if len(rows) != 45:
+        errors.append(f"Expected 45 rows, found {len(rows)}")
+
+    # No duplicate blind_ids
+    blind_ids = [row["blind_id"].strip() for row in rows]
+    dupes = [b for b in set(blind_ids) if blind_ids.count(b) > 1]
+    if dupes:
+        errors.append(f"Duplicate blind_ids: {dupes}")
+
+    scores: dict[str, dict[str, float]] = {}
+    for row in rows:
+        bid = row["blind_id"].strip()
+        if not bid:
+            errors.append("Row with empty blind_id")
+            continue
+
+        # All 8 dimensions non-empty and in 0-5
+        dim_scores: dict[str, float] = {}
+        for dim in ALL_DIMS:
+            val = row.get(dim, "").strip()
+            if not val:
+                errors.append(f"{bid}: dimension '{dim}' is empty")
                 continue
-            dim_scores: dict[str, float] = {}
-            for dim in ALL_DIMS:
-                val = row.get(dim, "").strip()
-                if val:
-                    try:
-                        dim_scores[dim] = float(val)
-                    except ValueError:
-                        pass
-            if dim_scores:
-                scores[video_id] = dim_scores
+            try:
+                fval = float(val)
+            except ValueError:
+                errors.append(f"{bid}: dimension '{dim}' is not a number: '{val}'")
+                continue
+            if fval < 0 or fval > 5:
+                errors.append(f"{bid}: dimension '{dim}'={fval} out of range [0,5]")
+                continue
+            dim_scores[dim] = fval
+
+        # All blind_ids must unblind
+        if bid not in blind_map:
+            errors.append(f"{bid}: not found in blind_map.json")
+        elif len(dim_scores) == 8:
+            scores[bid] = dim_scores
+
+    if errors:
+        print("ERROR: human_eval.csv validation failed:", file=sys.stderr)
+        for e in errors[:20]:
+            print(f"  - {e}", file=sys.stderr)
+        if len(errors) > 20:
+            print(f"  ... and {len(errors) - 20} more errors", file=sys.stderr)
+        sys.exit(1)
+
     return scores
 
+
+def build_score_lookup(
+    human_scores: dict[str, dict[str, float]],
+    blind_map: dict[str, Any],
+) -> dict[tuple[str, str, int], dict[str, float]]:
+    """Map blind_id scores to (scene_id, variant, seed) lookup.
+
+    Returns {(scene_id, variant, seed): {dim: score}}.
+    """
+    lookup: dict[tuple[str, str, int], dict[str, float]] = {}
+    for bid, dim_scores in human_scores.items():
+        info = blind_map.get(bid, {})
+        key = (info.get("scene_id", ""), info.get("variant", ""), info.get("seed", 0))
+        lookup[key] = dim_scores
+    return lookup
+
+
+# ---------------------------------------------------------------------------
+# Statistics helpers
+# ---------------------------------------------------------------------------
 
 def stats(values: list[float]) -> dict[str, Any]:
     if not values:
@@ -95,12 +200,24 @@ def stats(values: list[float]) -> dict[str, Any]:
     }
 
 
+def adjusted_from_scores(dim_scores: dict[str, float]) -> float | None:
+    """Compute positive_score and adjusted_score from dimension scores."""
+    pos_vals = [dim_scores[d] for d in POSITIVE_DIMS if d in dim_scores]
+    if len(pos_vals) == 7 and HALLUCINATION_DIM in dim_scores:
+        positive = statistics.mean(pos_vals)
+        return positive - dim_scores[HALLUCINATION_DIM] * 0.5
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Per-variant / per-scene / per-seed
+# ---------------------------------------------------------------------------
+
 def compute_variant_stats(
     records: list[dict[str, Any]],
-    human_scores: dict[str, dict[str, float]],
+    score_lookup: dict[tuple[str, str, int], dict[str, float]],
     variant: str,
 ) -> dict[str, Any]:
-    """Compute stats for one variant across all passing videos."""
     dim_values: dict[str, list[float]] = {d: [] for d in ALL_DIMS}
     adjusted_values: list[float] = []
     sanity_mad: list[float] = []
@@ -108,37 +225,31 @@ def compute_variant_stats(
     for rec in records:
         if rec.get("variant") != variant or rec.get("status") not in ("PASS", "SKIPPED"):
             continue
-        video_id = f"{rec['scene_id']}_{rec['variant']}_seed{rec['seed']}"
-        hs = human_scores.get(video_id, {})
+        key = (rec["scene_id"], rec["variant"], rec["seed"])
+        hs = score_lookup.get(key, {})
 
         for dim in ALL_DIMS:
             if dim in hs:
                 dim_values[dim].append(hs[dim])
 
-        # Adjusted score
-        pos_vals = [hs[d] for d in POSITIVE_DIMS if d in hs]
-        if pos_vals and HALLUCINATION_DIM in hs:
-            positive = statistics.mean(pos_vals)
-            adjusted = positive - hs[HALLUCINATION_DIM] * 0.5
-            adjusted_values.append(adjusted)
+        adj = adjusted_from_scores(hs)
+        if adj is not None:
+            adjusted_values.append(adj)
 
-        # Sanity
         sm = rec.get("sanity_metrics", {})
         if sm.get("temporal_mad_mean") is not None:
             sanity_mad.append(sm["temporal_mad_mean"])
 
-    result = {
+    return {
         "dimensions": {d: stats(dim_values[d]) for d in ALL_DIMS},
         "adjusted_score": stats(adjusted_values),
         "sanity_temporal_mad_mean": stats(sanity_mad),
     }
-    return result
 
 
 def compute_pairwise_diffs(
     variant_stats: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
-    """Compute B-A, C-A, C-B differences for each dimension and adjusted score."""
     pairs = [("B", "A"), ("C", "A"), ("C", "B")]
     diffs: dict[str, dict[str, Any]] = {}
     for v1, v2 in pairs:
@@ -160,9 +271,8 @@ def compute_pairwise_diffs(
 
 def compute_per_scene(
     records: list[dict[str, Any]],
-    human_scores: dict[str, dict[str, float]],
+    score_lookup: dict[tuple[str, str, int], dict[str, float]],
 ) -> dict[str, dict[str, Any]]:
-    """Per-scene breakdown: mean adjusted score per variant."""
     scenes = sorted(set(r["scene_id"] for r in records))
     result: dict[str, dict[str, Any]] = {}
     for scene in scenes:
@@ -175,14 +285,14 @@ def compute_per_scene(
                     continue
                 if rec.get("status") not in ("PASS", "SKIPPED"):
                     continue
-                video_id = f"{rec['scene_id']}_{rec['variant']}_seed{rec['seed']}"
-                hs = human_scores.get(video_id, {})
+                key = (rec["scene_id"], rec["variant"], rec["seed"])
+                hs = score_lookup.get(key, {})
                 for dim in ALL_DIMS:
                     if dim in hs:
                         dim_values[dim].append(hs[dim])
-                pos_vals = [hs[d] for d in POSITIVE_DIMS if d in hs]
-                if pos_vals and HALLUCINATION_DIM in hs:
-                    adj_values.append(statistics.mean(pos_vals) - hs[HALLUCINATION_DIM] * 0.5)
+                adj = adjusted_from_scores(hs)
+                if adj is not None:
+                    adj_values.append(adj)
             scene_result[variant] = {
                 "adjusted_score": stats(adj_values),
                 "dimensions": {d: stats(dim_values[d]) for d in ALL_DIMS},
@@ -193,9 +303,8 @@ def compute_per_scene(
 
 def compute_per_seed(
     records: list[dict[str, Any]],
-    human_scores: dict[str, dict[str, float]],
+    score_lookup: dict[tuple[str, str, int], dict[str, float]],
 ) -> dict[str, dict[str, Any]]:
-    """Per-seed breakdown: mean adjusted score per variant."""
     seeds = sorted(set(r["seed"] for r in records))
     result: dict[str, dict[str, Any]] = {}
     for seed in seeds:
@@ -207,26 +316,108 @@ def compute_per_seed(
                     continue
                 if rec.get("status") not in ("PASS", "SKIPPED"):
                     continue
-                video_id = f"{rec['scene_id']}_{rec['variant']}_seed{rec['seed']}"
-                hs = human_scores.get(video_id, {})
-                pos_vals = [hs[d] for d in POSITIVE_DIMS if d in hs]
-                if pos_vals and HALLUCINATION_DIM in hs:
-                    adj_values.append(statistics.mean(pos_vals) - hs[HALLUCINATION_DIM] * 0.5)
+                key = (rec["scene_id"], rec["variant"], rec["seed"])
+                hs = score_lookup.get(key, {})
+                adj = adjusted_from_scores(hs)
+                if adj is not None:
+                    adj_values.append(adj)
             seed_result[variant] = stats(adj_values)
         result[str(seed)] = seed_result
     return result
 
 
+# ---------------------------------------------------------------------------
+# Paired (scene + seed) deltas & wins/ties/losses
+# ---------------------------------------------------------------------------
+
+def compute_paired_deltas(
+    records: list[dict[str, Any]],
+    score_lookup: dict[tuple[str, str, int], dict[str, float]],
+) -> dict[str, Any]:
+    """For each (scene_id, seed), compare A/B/C adjusted scores and dims.
+
+    Returns per-pair deltas, wins/ties/losses overall and per scene.
+    """
+    # Group records by (scene_id, seed)
+    groups: dict[tuple[str, int], dict[str, dict[str, float]]] = {}
+    for rec in records:
+        if rec.get("status") not in ("PASS", "SKIPPED"):
+            continue
+        key = (rec["scene_id"], rec["seed"])
+        vkey = (rec["scene_id"], rec["variant"], rec["seed"])
+        hs = score_lookup.get(vkey)
+        if hs is None:
+            continue
+        if key not in groups:
+            groups[key] = {}
+        groups[key][rec["variant"]] = hs
+
+    pairs = [("B", "A"), ("C", "A"), ("C", "B")]
+    pair_deltas: dict[str, list[dict[str, Any]]] = {f"{v1}-{v2}": [] for v1, v2 in pairs}
+    wins_overall: dict[str, dict[str, int]] = {
+        f"{v1}-{v2}": {"win": 0, "tie": 0, "loss": 0} for v1, v2 in pairs
+    }
+    wins_per_scene: dict[str, dict[str, dict[str, int]]] = {}
+
+    for (scene, seed), variants in sorted(groups.items()):
+        if scene not in wins_per_scene:
+            wins_per_scene[scene] = {
+                f"{v1}-{v2}": {"win": 0, "tie": 0, "loss": 0} for v1, v2 in pairs
+            }
+        for v1, v2 in pairs:
+            pkey = f"{v1}-{v2}"
+            if v1 not in variants or v2 not in variants:
+                continue
+            s1 = variants[v1]
+            s2 = variants[v2]
+            adj1 = adjusted_from_scores(s1)
+            adj2 = adjusted_from_scores(s2)
+            if adj1 is None or adj2 is None:
+                continue
+
+            delta_adj = round(adj1 - adj2, 3)
+            dim_deltas: dict[str, float] = {}
+            for dim in ALL_DIMS:
+                if dim in s1 and dim in s2:
+                    dim_deltas[dim] = round(s1[dim] - s2[dim], 3)
+
+            pair_deltas[pkey].append({
+                "scene": scene, "seed": seed,
+                "adjusted_delta": delta_adj,
+                "dimension_deltas": dim_deltas,
+            })
+
+            if delta_adj > 0:
+                wins_overall[pkey]["win"] += 1
+                wins_per_scene[scene][pkey]["win"] += 1
+            elif delta_adj == 0:
+                wins_overall[pkey]["tie"] += 1
+                wins_per_scene[scene][pkey]["tie"] += 1
+            else:
+                wins_overall[pkey]["loss"] += 1
+                wins_per_scene[scene][pkey]["loss"] += 1
+
+    return {
+        "paired_deltas": pair_deltas,
+        "wins_overall": wins_overall,
+        "wins_per_scene": wins_per_scene,
+        "total_pairs": {k: len(v) for k, v in pair_deltas.items()},
+    }
+
+
+# ---------------------------------------------------------------------------
+# G1 Entry Gate (logic unchanged — input now from score_lookup)
+# ---------------------------------------------------------------------------
+
 def g1_entry_gate(
     records: list[dict[str, Any]],
-    human_scores: dict[str, dict[str, float]],
+    score_lookup: dict[tuple[str, str, int], dict[str, float]],
     per_scene: dict[str, dict[str, Any]],
     per_seed: dict[str, dict[str, Any]],
     prompt_metrics: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Strict G1 Entry Gate. Returns G1 JUSTIFIED or G1 NOT JUSTIFIED."""
-    # Check if we have human scores at all
-    if not human_scores:
+    if not score_lookup:
         return {
             "decision": "G1 NOT STARTED",
             "reason": "No human evaluation scores available yet.",
@@ -246,14 +437,13 @@ def g1_entry_gate(
             scene_details[scene] = {"C": c_mean, "A": a_mean, "improved": False}
     check_scenes = scenes_improved >= 4
 
-    # Check 2: identity_consistency does not decrease for C vs A
     def global_dim_mean(variant: str, dim: str) -> float | None:
         vals = []
         for rec in records:
             if rec["variant"] != variant or rec.get("status") not in ("PASS", "SKIPPED"):
                 continue
-            video_id = f"{rec['scene_id']}_{rec['variant']}_seed{rec['seed']}"
-            hs = human_scores.get(video_id, {})
+            key = (rec["scene_id"], rec["variant"], rec["seed"])
+            hs = score_lookup.get(key, {})
             if dim in hs:
                 vals.append(hs[dim])
         return statistics.mean(vals) if vals else None
@@ -262,17 +452,14 @@ def g1_entry_gate(
     a_identity = global_dim_mean("A", "identity_consistency")
     check_identity = c_identity is not None and a_identity is not None and c_identity >= a_identity - 0.1
 
-    # Check 3: intent_fidelity does not decrease
     c_intent = global_dim_mean("C", "intent_fidelity")
     a_intent = global_dim_mean("A", "intent_fidelity")
     check_intent = c_intent is not None and a_intent is not None and c_intent >= a_intent - 0.1
 
-    # Check 4: hallucination does not significantly increase (lower is better)
     c_hall = global_dim_mean("C", "hallucination")
     a_hall = global_dim_mean("A", "hallucination")
     check_hallucination = c_hall is not None and a_hall is not None and c_hall <= a_hall + 0.5
 
-    # Check 5: at least 2/3 seeds show C > A trend
     seeds_improved = 0
     for seed, sdata in per_seed.items():
         c_mean = sdata["C"]["mean"]
@@ -281,7 +468,6 @@ def g1_entry_gate(
             seeds_improved += 1
     check_seeds = seeds_improved >= 2
 
-    # Check 6: C truncation better than B or token budget more stable
     b_trunc = [m for m in prompt_metrics if m["variant"] == "B"]
     c_trunc = [m for m in prompt_metrics if m["variant"] == "C"]
     b_trunc_count = sum(1 for m in b_trunc if m["truncated"])
@@ -301,7 +487,6 @@ def g1_entry_gate(
 
     all_pass = all(c["pass"] for c in all_checks.values())
 
-    # Also check if B improves but C doesn't (compact prompt design issue)
     b_scenes_improved = sum(
         1 for scene, sdata in per_scene.items()
         if sdata["B"]["adjusted_score"]["mean"] is not None
@@ -327,6 +512,10 @@ def g1_entry_gate(
     }
 
 
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Summarize G0.7 A/B/C evaluation results.")
     parser.add_argument("--output", type=str, default=None,
@@ -335,29 +524,25 @@ def main() -> int:
 
     records = load_results()
     prompt_metrics = load_prompt_metrics()
-    human_scores = load_human_scores()
+    blind_map = load_blind_map()
+    human_scores = load_and_validate_human_scores(blind_map)
+    score_lookup = build_score_lookup(human_scores, blind_map)
 
     if not records:
         print("No results found. Run run_g07_eval.py first.", file=sys.stderr)
         return 1
 
-    # Status overview
     status_counts: dict[str, int] = {}
     for r in records:
         s = r.get("status", "UNKNOWN")
         status_counts[s] = status_counts.get(s, 0) + 1
 
-    # Per-variant stats
-    variant_stats = {v: compute_variant_stats(records, human_scores, v) for v in ["A", "B", "C"]}
-
-    # Pairwise diffs
+    variant_stats = {v: compute_variant_stats(records, score_lookup, v) for v in ["A", "B", "C"]}
     pairwise = compute_pairwise_diffs(variant_stats)
+    per_scene = compute_per_scene(records, score_lookup)
+    per_seed = compute_per_seed(records, score_lookup)
+    paired = compute_paired_deltas(records, score_lookup)
 
-    # Per-scene and per-seed
-    per_scene = compute_per_scene(records, human_scores)
-    per_seed = compute_per_seed(records, human_scores)
-
-    # Prompt token stats
     token_stats: dict[str, Any] = {}
     for variant in ["A", "B", "C"]:
         vmetrics = [m for m in prompt_metrics if m["variant"] == variant]
@@ -368,8 +553,7 @@ def main() -> int:
             "mean_chars": round(statistics.mean(m["prompt_chars"] for m in vmetrics), 1) if vmetrics else None,
         }
 
-    # G1 gate
-    gate = g1_entry_gate(records, human_scores, per_scene, per_seed, prompt_metrics)
+    gate = g1_entry_gate(records, score_lookup, per_scene, per_seed, prompt_metrics)
 
     summary = {
         "eval_name": "g0.7-real-abc-eval",
@@ -378,6 +562,7 @@ def main() -> int:
         "human_scores_available": len(human_scores),
         "variant_stats": variant_stats,
         "pairwise_differences": pairwise,
+        "paired_deltas": paired,
         "per_scene": per_scene,
         "per_seed": per_seed,
         "prompt_token_stats": token_stats,
@@ -393,7 +578,6 @@ def main() -> int:
     else:
         print(output_text)
 
-    # Print key findings
     print("\n" + "=" * 60)
     print("KEY FINDINGS")
     print("=" * 60)
@@ -405,6 +589,10 @@ def main() -> int:
     print(f"  B-A adjusted: {pairwise['B-A']['adjusted_score']}")
     print(f"  C-A adjusted: {pairwise['C-A']['adjusted_score']}")
     print(f"  C-B adjusted: {pairwise['C-B']['adjusted_score']}")
+    if paired["wins_overall"]:
+        print("\nPaired wins/ties/losses (adjusted_score):")
+        for pkey, wt in paired["wins_overall"].items():
+            print(f"  {pkey}: W={wt['win']} T={wt['tie']} L={wt['loss']} (n={paired['total_pairs'][pkey]})")
     print(f"\nG1 Gate: {gate['decision']}")
     print(f"  Reason: {gate['reason']}")
     for check_name, check_data in gate["checks"].items():
