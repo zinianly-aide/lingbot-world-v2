@@ -58,3 +58,18 @@ eval/bench_vae_mlx/vae_mlx/model.safetensors
 eval/bench_vae_mlx/ref_mps_bf16.npy
 eval/bench_vae_mlx/*.log
 eval/bench_e2e/*.log
+
+# E1.1: corrected downstream-metric re-eval.  Student context tensors are
+# large (56 x [64,4096] bf16 per checkpoint, regenerable via
+# scripts/e1_1_reeval.py); only commit the JSON results / summary / manifest.
+eval/e1.1/student_contexts_epoch5/*.safetensors
+eval/e1.1/student_contexts_epoch20/*.safetensors
+!eval/e1.1/*.json
+!eval/e1.1/*.jsonl
+
+# E2 root-cause diagnosis (step1/step2) and E1.2 training artifacts.
+# Large student/latent/frame outputs are regenerable; commit JSON reports only.
+eval/e2_diag/**/*.png
+eval/e2_diag/**/*.mp4
+eval/e1.2/student_contexts/*.safetensors
+eval/e1.2/vae_decode/*.png
