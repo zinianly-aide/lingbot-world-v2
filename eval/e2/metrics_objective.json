@@ -1,0 +1,245 @@
+{
+  "_note": "Objective sanity metrics only. Auxiliary reference, does not contribute to human evaluation conclusions.",
+  "pairs": [
+    {
+      "scene_id": "single_subject",
+      "seed": 42,
+      "minicpm": {
+        "temporal_mad_mean": 0.1502,
+        "temporal_mad_max": 0.2268,
+        "per_frame_std": 0.233,
+        "resolution": "832x464"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.0491,
+        "temporal_mad_max": 0.083,
+        "per_frame_std": 0.1994,
+        "resolution": "832x464"
+      }
+    },
+    {
+      "scene_id": "single_subject",
+      "seed": 123,
+      "minicpm": {
+        "temporal_mad_mean": 0.1498,
+        "temporal_mad_max": 0.2299,
+        "per_frame_std": 0.2374,
+        "resolution": "832x464"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.0511,
+        "temporal_mad_max": 0.0855,
+        "per_frame_std": 0.2003,
+        "resolution": "832x464"
+      }
+    },
+    {
+      "scene_id": "single_subject",
+      "seed": 2026,
+      "minicpm": {
+        "temporal_mad_mean": 0.1501,
+        "temporal_mad_max": 0.2291,
+        "per_frame_std": 0.2346,
+        "resolution": "832x464"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.0571,
+        "temporal_mad_max": 0.0873,
+        "per_frame_std": 0.2006,
+        "resolution": "832x464"
+      }
+    },
+    {
+      "scene_id": "spatial",
+      "seed": 42,
+      "minicpm": {
+        "temporal_mad_mean": 0.1462,
+        "temporal_mad_max": 0.2371,
+        "per_frame_std": 0.2263,
+        "resolution": "832x464"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.023,
+        "temporal_mad_max": 0.0329,
+        "per_frame_std": 0.2803,
+        "resolution": "832x464"
+      }
+    },
+    {
+      "scene_id": "spatial",
+      "seed": 123,
+      "minicpm": {
+        "temporal_mad_mean": 0.1452,
+        "temporal_mad_max": 0.2394,
+        "per_frame_std": 0.2308,
+        "resolution": "832x464"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.0311,
+        "temporal_mad_max": 0.0394,
+        "per_frame_std": 0.2791,
+        "resolution": "832x464"
+      }
+    },
+    {
+      "scene_id": "spatial",
+      "seed": 2026,
+      "minicpm": {
+        "temporal_mad_mean": 0.1456,
+        "temporal_mad_max": 0.2384,
+        "per_frame_std": 0.2281,
+        "resolution": "832x464"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.0265,
+        "temporal_mad_max": 0.0396,
+        "per_frame_std": 0.2817,
+        "resolution": "832x464"
+      }
+    },
+    {
+      "scene_id": "indoor",
+      "seed": 42,
+      "minicpm": {
+        "temporal_mad_mean": 0.1485,
+        "temporal_mad_max": 0.2362,
+        "per_frame_std": 0.2204,
+        "resolution": "832x464"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.041,
+        "temporal_mad_max": 0.0563,
+        "per_frame_std": 0.301,
+        "resolution": "832x464"
+      }
+    },
+    {
+      "scene_id": "indoor",
+      "seed": 123,
+      "minicpm": {
+        "temporal_mad_mean": 0.1477,
+        "temporal_mad_max": 0.2382,
+        "per_frame_std": 0.2248,
+        "resolution": "832x464"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.0471,
+        "temporal_mad_max": 0.0681,
+        "per_frame_std": 0.3011,
+        "resolution": "832x464"
+      }
+    },
+    {
+      "scene_id": "indoor",
+      "seed": 2026,
+      "minicpm": {
+        "temporal_mad_mean": 0.1479,
+        "temporal_mad_max": 0.2374,
+        "per_frame_std": 0.2225,
+        "resolution": "832x464"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.0389,
+        "temporal_mad_max": 0.0506,
+        "per_frame_std": 0.3015,
+        "resolution": "832x464"
+      }
+    },
+    {
+      "scene_id": "outdoor",
+      "seed": 42,
+      "minicpm": {
+        "temporal_mad_mean": 0.1489,
+        "temporal_mad_max": 0.2362,
+        "per_frame_std": 0.2285,
+        "resolution": "768x512"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.0874,
+        "temporal_mad_max": 0.1116,
+        "per_frame_std": 0.2917,
+        "resolution": "768x512"
+      }
+    },
+    {
+      "scene_id": "outdoor",
+      "seed": 123,
+      "minicpm": {
+        "temporal_mad_mean": 0.1486,
+        "temporal_mad_max": 0.236,
+        "per_frame_std": 0.2309,
+        "resolution": "768x512"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.0899,
+        "temporal_mad_max": 0.1092,
+        "per_frame_std": 0.2944,
+        "resolution": "768x512"
+      }
+    },
+    {
+      "scene_id": "outdoor",
+      "seed": 2026,
+      "minicpm": {
+        "temporal_mad_mean": 0.1477,
+        "temporal_mad_max": 0.2364,
+        "per_frame_std": 0.231,
+        "resolution": "768x512"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.0906,
+        "temporal_mad_max": 0.1111,
+        "per_frame_std": 0.2936,
+        "resolution": "768x512"
+      }
+    },
+    {
+      "scene_id": "camera_motion",
+      "seed": 42,
+      "minicpm": {
+        "temporal_mad_mean": 0.1469,
+        "temporal_mad_max": 0.2297,
+        "per_frame_std": 0.2139,
+        "resolution": "832x464"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.0782,
+        "temporal_mad_max": 0.0985,
+        "per_frame_std": 0.272,
+        "resolution": "832x464"
+      }
+    },
+    {
+      "scene_id": "camera_motion",
+      "seed": 123,
+      "minicpm": {
+        "temporal_mad_mean": 0.1465,
+        "temporal_mad_max": 0.2321,
+        "per_frame_std": 0.2183,
+        "resolution": "832x464"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.0814,
+        "temporal_mad_max": 0.1025,
+        "per_frame_std": 0.2729,
+        "resolution": "832x464"
+      }
+    },
+    {
+      "scene_id": "camera_motion",
+      "seed": 2026,
+      "minicpm": {
+        "temporal_mad_mean": 0.1467,
+        "temporal_mad_max": 0.2313,
+        "per_frame_std": 0.2156,
+        "resolution": "832x464"
+      },
+      "umt5": {
+        "temporal_mad_mean": 0.0717,
+        "temporal_mad_max": 0.1012,
+        "per_frame_std": 0.2724,
+        "resolution": "832x464"
+      }
+    }
+  ]
+}
