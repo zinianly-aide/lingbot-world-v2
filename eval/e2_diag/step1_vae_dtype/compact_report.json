@@ -1,0 +1,23 @@
+{
+  "e2_bf16": {
+    "global_mean": 0.4208422899246216,
+    "global_std": 0.18233457207679749,
+    "temporal_mad_mean": 0.1515631228685379,
+    "frame_count": 13
+  },
+  "g07_umt5_fp16": {
+    "global_mean": 0.6781076788902283,
+    "global_std": 0.21102307736873627,
+    "temporal_mad_mean": 0.04800520837306976,
+    "frame_count": 13
+  },
+  "e2_fp16": {
+    "global_mean": 0.4213489592075348,
+    "global_std": 0.1820659041404724,
+    "temporal_mad_mean": 0.15116465091705322,
+    "frame_count": 13
+  },
+  "fp16_vs_bf16_on_e2": {
+    "note": "same latent decoded twice, numerical diff only"
+  }
+}

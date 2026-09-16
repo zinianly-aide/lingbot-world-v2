@@ -73,3 +73,13 @@ eval/e2_diag/**/*.png
 eval/e2_diag/**/*.mp4
 eval/e1.2/student_contexts/*.safetensors
 eval/e1.2/vae_decode/*.png
+
+# E1.2: cached MiniCPM hidden states + trained adapter weights are large (regenerable)
+eval/e1.2/cache/*.safetensors
+eval/e1.2/adapter_best.safetensors
+eval/e1.2/adapter_final/adapter.safetensors
+eval/e1.2/embeddings/*.safetensors
+eval/e1.2/smoke/work/
+eval/e1.2/smoke/*.mp4
+eval/e1.2/smoke/*.png
+*.log

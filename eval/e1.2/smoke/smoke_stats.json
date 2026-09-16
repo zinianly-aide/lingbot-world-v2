@@ -1,0 +1,26 @@
+{
+  "stage1": {
+    "status": "PASS",
+    "error": null,
+    "elapsed_seconds": 65.15,
+    "peak_mps_allocated_bytes": 0,
+    "peak_driver_allocated_bytes": 8976547840,
+    "wall_s": 66.1
+  },
+  "stage2": {
+    "status": "PASS",
+    "error": null,
+    "elapsed_seconds": 72.9,
+    "peak_mps_allocated_bytes": 0,
+    "peak_driver_allocated_bytes": 8155512832,
+    "wall_s": 74.7
+  },
+  "video": "/Users/anshi/clawd/lingbot-world-v2/eval/e1.2/smoke/single_subject_seed42_e12.mp4",
+  "exists": true,
+  "frame_count": 13,
+  "h": 464,
+  "w": 832,
+  "global_mean": 0.6977195739746094,
+  "global_std": 0.21483851969242096,
+  "temporal_mad": 0.042637284845113754
+}
