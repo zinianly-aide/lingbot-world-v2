@@ -1,0 +1,35 @@
+{
+  "prompt_sha256": "174fb55738c1e016a694b473ec892a76179b1c5e0aa8e217e3a3efb12059a3bf",
+  "dtype": "bfloat16",
+  "shape": [
+    64,
+    4096
+  ],
+  "hidden_dim": 4096,
+  "text_len": 512,
+  "model_id": "minicpm5-2b+adapter-v1",
+  "format_version": "1.0",
+  "encoder": "minicpm5-2b+adapter-v1",
+  "adapter_arch": "v1",
+  "adapter_weights": "eval/e1.2/adapter_best.safetensors",
+  "adapter_contract": "fixed 64 queries; trained with real Wan K/V distillation (validated)",
+  "distribution": {
+    "shape": [
+      64,
+      4096
+    ],
+    "dtype": "bfloat16",
+    "ctx4096": {
+      "mean": 2e-05,
+      "std": 1.00024,
+      "per_token_l2_mean": 64.015,
+      "absmax": 4.438
+    },
+    "ctx1536": {
+      "mean": 0.00185,
+      "std": 0.13437,
+      "per_token_l2_mean": 4.55,
+      "absmax": 0.833
+    }
+  }
+}

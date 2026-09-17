@@ -88,3 +88,9 @@ eval/e1.2/smoke/work/
 eval/e1.2/smoke/*.mp4
 eval/e1.2/smoke/*.png
 *.log
+
+# E1.2 gate3: videos + frame samples + latents are large/regenerable
+eval/e1.2/gate3/videos/*.mp4
+eval/e1.2/gate3/frames/*.png
+eval/e1.2/gate3/work/
+eval/e1.2/cache/

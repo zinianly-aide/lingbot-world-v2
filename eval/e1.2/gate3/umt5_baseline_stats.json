@@ -1,0 +1,20 @@
+{
+  "spatial": {
+    "frames": 13,
+    "mean": 0.5267,
+    "std": 0.2795,
+    "temporal_mad": 0.023
+  },
+  "camera_motion": {
+    "frames": 13,
+    "mean": 0.3921,
+    "std": 0.2681,
+    "temporal_mad": 0.0782
+  },
+  "indoor": {
+    "frames": 13,
+    "mean": 0.3638,
+    "std": 0.2943,
+    "temporal_mad": 0.041
+  }
+}

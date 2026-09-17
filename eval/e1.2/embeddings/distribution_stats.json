@@ -1,0 +1,59 @@
+{
+  "spatial": {
+    "shape": [
+      64,
+      4096
+    ],
+    "dtype": "bfloat16",
+    "ctx4096": {
+      "mean": 2e-05,
+      "std": 1.00023,
+      "per_token_l2_mean": 64.015,
+      "absmax": 4.375
+    },
+    "ctx1536": {
+      "mean": 0.00173,
+      "std": 0.13658,
+      "per_token_l2_mean": 4.63,
+      "absmax": 0.802
+    }
+  },
+  "camera_motion": {
+    "shape": [
+      64,
+      4096
+    ],
+    "dtype": "bfloat16",
+    "ctx4096": {
+      "mean": 2e-05,
+      "std": 1.00024,
+      "per_token_l2_mean": 64.015,
+      "absmax": 4.438
+    },
+    "ctx1536": {
+      "mean": 0.00185,
+      "std": 0.13437,
+      "per_token_l2_mean": 4.55,
+      "absmax": 0.833
+    }
+  },
+  "indoor": {
+    "shape": [
+      64,
+      4096
+    ],
+    "dtype": "bfloat16",
+    "ctx4096": {
+      "mean": 1e-05,
+      "std": 1.00024,
+      "per_token_l2_mean": 64.015,
+      "absmax": 4.406
+    },
+    "ctx1536": {
+      "mean": 0.00172,
+      "std": 0.12841,
+      "per_token_l2_mean": 4.373,
+      "absmax": 0.787
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "gate": "PASS",
+  "criteria": "3/3 scenes recognizable, no flicker/structure collapse (temporal_mad << noise threshold 0.15)",
+  "adapter": "eval/e1.2/adapter_best.safetensors",
+  "adapter_sha256": "bd73963affe1cb6aa9df5f46b0043bfab77228cba86fc3022988b707b1f6e184",
+  "scenes": {
+    "spatial": {
+      "video": "/Users/anshi/clawd/lingbot-world-v2/eval/e1.2/gate3/videos/spatial_seed42_e12.mp4",
+      "e12": {
+        "mean": 0.538,
+        "std": 0.2878,
+        "temporal_mad": 0.0231
+      },
+      "umt5_baseline": {
+        "frames": 13,
+        "mean": 0.5267,
+        "std": 0.2795,
+        "temporal_mad": 0.023
+      },
+      "ctx1536_per_token_l2": 4.63,
+      "ctx1536_std": 0.13658,
+      "recognizable": true,
+      "notes": "Stonehenge, pan-right, stones shift correctly",
+      "gen_time_s": 129.1,
+      "peak_driver_bytes": 9229254656
+    },
+    "camera_motion": {
+      "video": "/Users/anshi/clawd/lingbot-world-v2/eval/e1.2/gate3/videos/camera_motion_seed42_e12.mp4",
+      "e12": {
+        "mean": 0.3619,
+        "std": 0.2817,
+        "temporal_mad": 0.0694
+      },
+      "umt5_baseline": {
+        "frames": 13,
+        "mean": 0.3921,
+        "std": 0.2681,
+        "temporal_mad": 0.0782
+      },
+      "ctx1536_per_token_l2": 4.55,
+      "ctx1536_std": 0.13437,
+      "recognizable": true,
+      "notes": "dragon 1st-person, dragon neck/reins stable, fly to castle, mild forward motion blur (matches baseline mad)",
+      "gen_time_s": 158.6,
+      "peak_driver_bytes": 8976547840
+    },
+    "indoor": {
+      "video": "/Users/anshi/clawd/lingbot-world-v2/eval/e1.2/gate3/videos/indoor_seed42_e12.mp4",
+      "e12": {
+        "mean": 0.3688,
+        "std": 0.3093,
+        "temporal_mad": 0.0397
+      },
+      "umt5_baseline": {
+        "frames": 13,
+        "mean": 0.3638,
+        "std": 0.2943,
+        "temporal_mad": 0.041
+      },
+      "ctx1536_per_token_l2": 4.373,
+      "ctx1536_std": 0.12841,
+      "recognizable": true,
+      "notes": "living room, sofa/coffee table/bookshelf stable, slow forward",
+      "gen_time_s": 159.3,
+      "peak_driver_bytes": 8976547840
+    }
+  },
+  "decision": "PASS - may expand to full 5 scenes x 3 seeds E2 paired eval"
+}
