@@ -94,3 +94,9 @@ eval/e1.2/gate3/videos/*.mp4
 eval/e1.2/gate3/frames/*.png
 eval/e1.2/gate3/work/
 eval/e1.2/cache/
+
+# E2-new paired eval: videos, frames, blind copies, latents are large/regenerable
+eval/e2_new/videos/*.mp4
+eval/e2_new/blind/videos/*.mp4
+eval/e2_new/frames/*.png
+eval/e2_new/work/
