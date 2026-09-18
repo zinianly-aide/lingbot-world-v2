@@ -1,7 +1,7 @@
 """Small, model-agnostic contracts for progressive video generation.
 
 The streaming path deliberately lives outside the DiT/VAE implementation so the
-model math stays unchanged.  The causal generator can emit these events at the
+model math stays unchanged. The causal generator can emit these events at the
 existing latent-chunk boundary and a downstream worker can decide whether to
 persist, decode, or stream the chunk.
 """
@@ -35,7 +35,7 @@ class GenerationEvent:
 class LatentChunkEvent:
     """Metadata for one completed causal latent chunk.
 
-    ``latent_start`` and ``latent_count`` are latent-time indices.  They are
+    ``latent_start`` and ``latent_count`` are latent-time indices. They are
     intentionally *not* converted to RGB-frame indices here because Wan's VAE
     temporal decoder has context requirements that must be validated before we
     claim arbitrary chunks are independently decodable.
@@ -58,7 +58,20 @@ class LatentChunkEvent:
 
 
 class GenerationEventSink(Protocol):
-    """Non-blocking sink contract for the causal generation hot path."""
+    """Metadata-only, non-blocking event sink."""
 
     def on_event(self, event: GenerationEvent | LatentChunkEvent) -> None:
+        ...
+
+
+class LatentChunkSink(Protocol):
+    """Optional data sink called only when progressive output is enabled.
+
+    ``latent`` is the live device tensor for the completed chunk. Implementors
+    that need to retain it after this method returns must explicitly detach/copy
+    it. The default generator path has no sink, so it pays no CPU-copy or I/O
+    cost.
+    """
+
+    def on_latent_chunk(self, event: LatentChunkEvent, latent: Any) -> None:
         ...
