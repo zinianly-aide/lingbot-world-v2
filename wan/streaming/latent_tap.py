@@ -8,7 +8,8 @@ post-chunk KV-cache update call by temporarily wrapping two bound methods:
    that receives that exact x0 object.
 
 The sink is called *after* that context update succeeds, once per completed
-chunk. Original methods are restored on exit, even when generation fails.
+chunk. Original methods are restored on exit, even when generation unloads the
+DiT model before the context manager exits.
 """
 from __future__ import annotations
 
@@ -55,7 +56,8 @@ def tap_causal_latent_chunks(
     owns and stores its normal x0 tensors; the tap only passes the live tensor
     reference to ``sink``.
     """
-    if getattr(pipe, "model", None) is None:
+    model = getattr(pipe, "model", None)
+    if model is None:
         raise ValueError("pipe.model must be loaded before installing the latent tap")
     if getattr(pipe, "infer_mode", None) != "causal_fast":
         raise ValueError("latent tap currently supports infer_mode='causal_fast' only")
@@ -65,7 +67,7 @@ def tap_causal_latent_chunks(
     started = time.monotonic()
 
     original_convert = pipe._convert_flow_pred_to_x0
-    original_forward = pipe.model.forward
+    original_forward = model.forward
 
     def wrapped_convert(_pipe_self, *args, **kwargs):
         x0 = original_convert(*args, **kwargs)
@@ -116,9 +118,12 @@ def tap_causal_latent_chunks(
         return result
 
     pipe._convert_flow_pred_to_x0 = types.MethodType(wrapped_convert, pipe)
-    pipe.model.forward = types.MethodType(wrapped_forward, pipe.model)
+    model.forward = types.MethodType(wrapped_forward, model)
     try:
         yield generation_id
     finally:
         pipe._convert_flow_pred_to_x0 = original_convert
-        pipe.model.forward = original_forward
+        # ``generate-latents`` may have called pipe.unload_dit(), setting
+        # ``pipe.model`` to None. Restore the exact model object we wrapped so
+        # teardown never depends on pipe.model still being attached.
+        model.forward = original_forward
