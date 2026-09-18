@@ -21,6 +21,7 @@ import torch
 
 from wan.modules.vae2_1 import Wan2_1_VAE
 from wan.streaming.vae_progressive import ProgressiveWanVaeDecoder
+from wan.utils.device import set_autocast_device_type
 from wan.utils.staged_cache import load_generated_latents
 
 
@@ -72,6 +73,7 @@ def main() -> int:
         raise SystemExit("--chunk-size must be > 0")
 
     device = torch.device(args.device)
+    set_autocast_device_type(device.type)
     dtype = resolve_dtype(args.dtype)
     latents, metadata = load_generated_latents(args.latents)
     latents = latents.to(device=device)
@@ -110,13 +112,14 @@ def main() -> int:
             f"shape mismatch: full={tuple(full.shape)} progressive={tuple(progressive.shape)}"
         )
 
-    diff = (full.float() - progressive.float()).abs()
-    mse = torch.mean((full.float() - progressive.float()) ** 2).item()
+    full_f = full.float()
+    progressive_f = progressive.float()
+    diff = (full_f - progressive_f).abs()
+    mse = torch.mean((full_f - progressive_f) ** 2).item()
     psnr = float("inf") if mse == 0 else 20.0 * math.log10(2.0 / math.sqrt(mse))
 
     boundaries = []
     cursor = 0
-    per_frame_max = diff.flatten(0, 0).flatten(1).amax(dim=1) if diff.ndim == 4 else None
     # RGB video layout is [C,T,H,W]; evaluate errors around chunk output seams.
     frame_max = diff.permute(1, 0, 2, 3).reshape(diff.shape[1], -1).amax(dim=1)
     for output in chunk_outputs[:-1]:
@@ -128,11 +131,13 @@ def main() -> int:
             "neighborMaxAbs": float(frame_max[lo:hi].max().item()) if hi > lo else 0.0,
         })
 
+    max_abs = float(diff.max().item())
+    mean_abs = float(diff.mean().item())
     report = {
         "gate": "Q1.5_PROGRESSIVE_VAE_EQUIVALENCE",
         "pass": bool(
-            diff.max().item() <= args.max_abs_tol
-            and diff.mean().item() <= args.mean_abs_tol
+            max_abs <= args.max_abs_tol
+            and mean_abs <= args.mean_abs_tol
         ),
         "latents": str(args.latents),
         "metadata": metadata.to_dict(),
@@ -144,8 +149,8 @@ def main() -> int:
         "numChunks": len(chunks),
         "fullDecodeSec": full_sec,
         "progressiveDecodeSec": progressive_sec,
-        "maxAbs": float(diff.max().item()),
-        "meanAbs": float(diff.mean().item()),
+        "maxAbs": max_abs,
+        "meanAbs": mean_abs,
         "mse": float(mse),
         "psnrDb": psnr,
         "maxAbsTolerance": args.max_abs_tol,
