@@ -1,0 +1,491 @@
+{
+  "overall_wlt": {
+    "umt5": 4,
+    "e12": 4,
+    "tie": 7
+  },
+  "per_scene": {
+    "single_subject": {
+      "umt5": 0,
+      "e12": 1,
+      "tie": 2
+    },
+    "spatial": {
+      "umt5": 1,
+      "e12": 0,
+      "tie": 2
+    },
+    "camera_motion": {
+      "umt5": 1,
+      "e12": 2,
+      "tie": 0
+    },
+    "indoor": {
+      "umt5": 0,
+      "e12": 0,
+      "tie": 3
+    },
+    "outdoor": {
+      "umt5": 2,
+      "e12": 1,
+      "tie": 0
+    }
+  },
+  "per_seed": {
+    "42": {
+      "umt5": 2,
+      "e12": 0,
+      "tie": 3
+    },
+    "123": {
+      "umt5": 1,
+      "e12": 3,
+      "tie": 1
+    },
+    "2026": {
+      "umt5": 1,
+      "e12": 1,
+      "tie": 3
+    }
+  },
+  "dimension_means": {
+    "umt5": {
+      "semantic_fidelity": 3.8666666666666667,
+      "spatial_consistency": 3.8666666666666667,
+      "camera_motion": 3.8666666666666667,
+      "temporal_stability": 3.7333333333333334,
+      "hallucination": 1.6,
+      "overall_preference": 3.2666666666666666
+    },
+    "e12": {
+      "semantic_fidelity": 3.8666666666666667,
+      "spatial_consistency": 3.8666666666666667,
+      "camera_motion": 3.933333333333333,
+      "temporal_stability": 3.8,
+      "hallucination": 1.7333333333333334,
+      "overall_preference": 3.2666666666666666
+    }
+  },
+  "pairs": [
+    {
+      "pair_id": "pair_01",
+      "scene": "single_subject",
+      "seed": 42,
+      "left_video": "video_007",
+      "right_video": "video_024",
+      "left_encoder": "e12",
+      "right_encoder": "umt5",
+      "verdict": "tie",
+      "winner_encoder": "tie",
+      "reason": "两者均保持孤树主体，质量接近",
+      "scores_X": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 2,
+        "overall_preference": 3
+      },
+      "scores_Y": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 2,
+        "overall_preference": 3
+      }
+    },
+    {
+      "pair_id": "pair_02",
+      "scene": "single_subject",
+      "seed": 123,
+      "left_video": "video_006",
+      "right_video": "video_026",
+      "left_encoder": "umt5",
+      "right_encoder": "e12",
+      "verdict": "y_win",
+      "winner_encoder": "e12",
+      "reason": "Y 树形更稳，X 末帧枝干略形变",
+      "scores_X": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 3,
+        "hallucination": 2,
+        "overall_preference": 3
+      },
+      "scores_Y": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 2,
+        "overall_preference": 4
+      }
+    },
+    {
+      "pair_id": "pair_03",
+      "scene": "single_subject",
+      "seed": 2026,
+      "left_video": "video_030",
+      "right_video": "video_018",
+      "left_encoder": "umt5",
+      "right_encoder": "e12",
+      "verdict": "tie",
+      "winner_encoder": "tie",
+      "reason": "两者质量相当",
+      "scores_X": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 2,
+        "overall_preference": 4
+      },
+      "scores_Y": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 2,
+        "overall_preference": 4
+      }
+    },
+    {
+      "pair_id": "pair_04",
+      "scene": "spatial",
+      "seed": 42,
+      "left_video": "video_012",
+      "right_video": "video_013",
+      "left_encoder": "e12",
+      "right_encoder": "umt5",
+      "verdict": "tie",
+      "winner_encoder": "tie",
+      "reason": "石阵布局均稳定",
+      "scores_X": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 3
+      },
+      "scores_Y": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 3
+      }
+    },
+    {
+      "pair_id": "pair_05",
+      "scene": "spatial",
+      "seed": 123,
+      "left_video": "video_025",
+      "right_video": "video_016",
+      "left_encoder": "e12",
+      "right_encoder": "umt5",
+      "verdict": "y_win",
+      "winner_encoder": "umt5",
+      "reason": "X 中段草地幻觉物体，Y 更干净",
+      "scores_X": {
+        "semantic_fidelity": 3,
+        "spatial_consistency": 3,
+        "camera_motion": 4,
+        "temporal_stability": 3,
+        "hallucination": 4,
+        "overall_preference": 2
+      },
+      "scores_Y": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 2,
+        "overall_preference": 4
+      }
+    },
+    {
+      "pair_id": "pair_06",
+      "scene": "spatial",
+      "seed": 2026,
+      "left_video": "video_017",
+      "right_video": "video_008",
+      "left_encoder": "e12",
+      "right_encoder": "umt5",
+      "verdict": "tie",
+      "winner_encoder": "tie",
+      "reason": "石阵两者均稳定，差异不显著",
+      "scores_X": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 3
+      },
+      "scores_Y": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 3
+      }
+    },
+    {
+      "pair_id": "pair_07",
+      "scene": "camera_motion",
+      "seed": 42,
+      "left_video": "video_009",
+      "right_video": "video_011",
+      "left_encoder": "umt5",
+      "right_encoder": "e12",
+      "verdict": "x_win",
+      "winner_encoder": "umt5",
+      "reason": "X 龙颈/缰绳更稳，Y 环境漂移更明显",
+      "scores_X": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 2,
+        "overall_preference": 4
+      },
+      "scores_Y": {
+        "semantic_fidelity": 3,
+        "spatial_consistency": 3,
+        "camera_motion": 3,
+        "temporal_stability": 3,
+        "hallucination": 3,
+        "overall_preference": 3
+      }
+    },
+    {
+      "pair_id": "pair_08",
+      "scene": "camera_motion",
+      "seed": 123,
+      "left_video": "video_014",
+      "right_video": "video_023",
+      "left_encoder": "umt5",
+      "right_encoder": "e12",
+      "verdict": "y_win",
+      "winner_encoder": "e12",
+      "reason": "X 中帧伪影明显，Y 飞向城堡更连贯",
+      "scores_X": {
+        "semantic_fidelity": 3,
+        "spatial_consistency": 3,
+        "camera_motion": 3,
+        "temporal_stability": 2,
+        "hallucination": 3,
+        "overall_preference": 2
+      },
+      "scores_Y": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 2,
+        "overall_preference": 4
+      }
+    },
+    {
+      "pair_id": "pair_09",
+      "scene": "camera_motion",
+      "seed": 2026,
+      "left_video": "video_004",
+      "right_video": "video_019",
+      "left_encoder": "e12",
+      "right_encoder": "umt5",
+      "verdict": "x_win",
+      "winner_encoder": "e12",
+      "reason": "Y 城堡/场景漂移更明显",
+      "scores_X": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 2,
+        "overall_preference": 4
+      },
+      "scores_Y": {
+        "semantic_fidelity": 3,
+        "spatial_consistency": 3,
+        "camera_motion": 3,
+        "temporal_stability": 3,
+        "hallucination": 3,
+        "overall_preference": 3
+      }
+    },
+    {
+      "pair_id": "pair_10",
+      "scene": "indoor",
+      "seed": 42,
+      "left_video": "video_020",
+      "right_video": "video_028",
+      "left_encoder": "e12",
+      "right_encoder": "umt5",
+      "verdict": "tie",
+      "winner_encoder": "tie",
+      "reason": "室内两者均稳定前推",
+      "scores_X": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 3
+      },
+      "scores_Y": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 3
+      }
+    },
+    {
+      "pair_id": "pair_11",
+      "scene": "indoor",
+      "seed": 123,
+      "left_video": "video_001",
+      "right_video": "video_010",
+      "left_encoder": "umt5",
+      "right_encoder": "e12",
+      "verdict": "tie",
+      "winner_encoder": "tie",
+      "reason": "室内质量接近",
+      "scores_X": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 3
+      },
+      "scores_Y": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 3
+      }
+    },
+    {
+      "pair_id": "pair_12",
+      "scene": "indoor",
+      "seed": 2026,
+      "left_video": "video_021",
+      "right_video": "video_022",
+      "left_encoder": "umt5",
+      "right_encoder": "e12",
+      "verdict": "tie",
+      "winner_encoder": "tie",
+      "reason": "室内两者均干净",
+      "scores_X": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 3
+      },
+      "scores_Y": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 3
+      }
+    },
+    {
+      "pair_id": "pair_13",
+      "scene": "outdoor",
+      "seed": 42,
+      "left_video": "video_015",
+      "right_video": "video_027",
+      "left_encoder": "e12",
+      "right_encoder": "umt5",
+      "verdict": "y_win",
+      "winner_encoder": "umt5",
+      "reason": "Y 末帧长城/敌楼结构略稳",
+      "scores_X": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 3
+      },
+      "scores_Y": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 4
+      }
+    },
+    {
+      "pair_id": "pair_14",
+      "scene": "outdoor",
+      "seed": 123,
+      "left_video": "video_029",
+      "right_video": "video_003",
+      "left_encoder": "umt5",
+      "right_encoder": "e12",
+      "verdict": "y_win",
+      "winner_encoder": "e12",
+      "reason": "Y 末帧敌楼更清晰",
+      "scores_X": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 3
+      },
+      "scores_Y": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 4
+      }
+    },
+    {
+      "pair_id": "pair_15",
+      "scene": "outdoor",
+      "seed": 2026,
+      "left_video": "video_005",
+      "right_video": "video_002",
+      "left_encoder": "e12",
+      "right_encoder": "umt5",
+      "verdict": "y_win",
+      "winner_encoder": "umt5",
+      "reason": "X 末帧略糊，Y 更干净",
+      "scores_X": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 3,
+        "hallucination": 2,
+        "overall_preference": 3
+      },
+      "scores_Y": {
+        "semantic_fidelity": 4,
+        "spatial_consistency": 4,
+        "camera_motion": 4,
+        "temporal_stability": 4,
+        "hallucination": 1,
+        "overall_preference": 4
+      }
+    }
+  ]
+}

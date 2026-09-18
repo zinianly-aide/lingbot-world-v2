@@ -99,4 +99,9 @@ eval/e1.2/cache/
 eval/e2_new/videos/*.mp4
 eval/e2_new/blind/videos/*.mp4
 eval/e2_new/frames/*.png
+eval/e2_new/blind/frames_xy/
 eval/e2_new/work/
+
+# G0.7 blind contact sheets / extracted frames are large and regenerable
+eval/g0.7/blind/frames_xy/
+eval/g0.7/blind/videos/

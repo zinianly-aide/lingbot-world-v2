@@ -1,46 +1,46 @@
 blind_id,identity_consistency,attribute_preservation,spatial_layout,environment_consistency,camera_continuity,temporal_stability,intent_fidelity,hallucination,positive_score,adjusted_score,notes
-video_001,,,,,,,,,,,
-video_002,,,,,,,,,,,
-video_003,,,,,,,,,,,
-video_004,,,,,,,,,,,
-video_005,,,,,,,,,,,
-video_006,,,,,,,,,,,
-video_007,,,,,,,,,,,
-video_008,,,,,,,,,,,
-video_009,,,,,,,,,,,
-video_010,,,,,,,,,,,
-video_011,,,,,,,,,,,
-video_012,,,,,,,,,,,
-video_013,,,,,,,,,,,
-video_014,,,,,,,,,,,
-video_015,,,,,,,,,,,
-video_016,,,,,,,,,,,
-video_017,,,,,,,,,,,
-video_018,,,,,,,,,,,
-video_019,,,,,,,,,,,
-video_020,,,,,,,,,,,
-video_021,,,,,,,,,,,
-video_022,,,,,,,,,,,
-video_023,,,,,,,,,,,
-video_024,,,,,,,,,,,
-video_025,,,,,,,,,,,
-video_026,,,,,,,,,,,
-video_027,,,,,,,,,,,
-video_028,,,,,,,,,,,
-video_029,,,,,,,,,,,
-video_030,,,,,,,,,,,
-video_031,,,,,,,,,,,
-video_032,,,,,,,,,,,
-video_033,,,,,,,,,,,
-video_034,,,,,,,,,,,
-video_035,,,,,,,,,,,
-video_036,,,,,,,,,,,
-video_037,,,,,,,,,,,
-video_038,,,,,,,,,,,
-video_039,,,,,,,,,,,
-video_040,,,,,,,,,,,
-video_041,,,,,,,,,,,
-video_042,,,,,,,,,,,
-video_043,,,,,,,,,,,
-video_044,,,,,,,,,,,
-video_045,,,,,,,,,,,
+video_001,4,4,4,4,4,4,4,1,4.000,3.500,"Living room scene: sofa, coffee table, lamp, bookshelves all remain consistent across frames; subtle forward camera motion maintains sofa/table stability as intended; no visible hallucinations."
+video_002,4,4,4,4,4,4,4,1,4.000,3.500,"Living room scene: furniture, lighting, and room structure highly consistent across frames; subtle forward motion with stable sofa and coffee table; no visible hallucinations."
+video_003,4,4,4,3,4,3,4,2,3.714,2.714,飞向城堡执行，龙颈/缰绳前景保持；丛林环境细节随运动略漂
+video_004,4,4,3,4,4,3,3,1,3.571,3.071,石阵圆形布局大体保持，pan 有轻微视角/形状变化；草地天空稳定；未见明显幻觉
+video_005,4,4,4,4,4,4,4,1,4.000,3.500,"Living room scene: sofa, coffee table, lamp, bookshelves all remain consistent across frames; subtle forward camera motion maintains sofa/table stability as intended; no visible hallucinations."
+video_006,4,4,3,4,4,3,3,1,3.571,3.071,石阵主体保持，布局随 pan 有轻微变化；环境稳定；干净
+video_007,4,4,4,4,4,4,4,1,4.000,3.500,Great Wall scene: smooth forward glide along wall; stone path and watchtowers remain consistent across frames; autumn environment and sky are stable; no visible hallucinations.
+video_008,4,4,4,4,4,4,4,1,4.000,3.500,Great Wall scene: smooth forward glide along wall; stone path and watchtowers remain consistent across frames; autumn environment and sky are stable; no visible hallucinations.
+video_009,4,4,3,4,4,3,3,1,3.571,3.071,石阵布局大体保持；pan 细节静态帧难完全验证；干净
+video_010,4,4,4,4,4,4,4,1,4.000,3.500,"Lone tree scene: tree remains stable and centered across frames while camera moves forward; mountains, lake, and sky are consistent; no visible hallucinations."
+video_011,4,4,4,3,4,3,4,2,3.714,2.714,飞向城堡意图清晰；龙颈保持；环境细节略有漂移
+video_012,4,4,4,4,4,4,4,1,4.000,3.500,"Lone tree scene: tree remains stable and centered across frames while camera moves forward; mountains, lake, and sky are consistent; no visible hallucinations."
+video_013,4,4,4,3,4,3,4,2,3.714,2.714,前推意图执行；主体大体稳定；环境细节变化属运动类正常波动
+video_014,4,4,4,4,4,4,4,1,4.000,3.500,Great Wall scene: smooth forward glide along wall; stone path and watchtowers remain consistent across frames; autumn environment and sky are stable; no visible hallucinations.
+video_015,3,3,3,3,3,3,3,2,3.000,2.000,石阵主体尚可，但形状/位置有形变，中后帧疑有额外物体
+video_016,4,4,4,4,4,4,4,1,4.000,3.500,Outdoor Great Wall (official outdoor C seed=123; label matches). Stone path and watchtowers preserved across frames; autumn hills and sky consistent; subtle forward glide matches prompt_A. No visible issues.
+video_017,4,4,4,4,4,4,4,1,4.000,3.500,"Outdoor Great Wall (official outdoor A seed=2026; label matches). Path, watchtowers, and hillside vegetation stable; subtle forward motion along wall consistent with prompt_A. Clean generation."
+video_018,4,4,3,3,4,3,4,2,3.571,2.571,Camera-motion dragon/castle (official camera_motion B seed=2026; label matches). Dragon neck and reins remain in foreground; forward approach to castle present. Minor issues: jungle foliage and side-environment shift more than expected; some mid-sequence visual softening around vegetation.
+video_019,4,4,4,3,4,3,4,2,3.714,2.714,Camera-motion dragon/castle (official camera_motion C seed=123; label matches). Castle grows larger across frames indicating forward flight; dragon neck/reins/hands stay foreground-stable. Minor environment detail shifts in jungle sides during motion.
+video_020,4,4,4,4,4,4,4,1,4.000,3.500,"Outdoor Great Wall (official outdoor B seed=2026; label matches). Stone path continuous, watchtowers stable, vegetation consistent; subtle forward glide aligned with prompt_A. No visible issues."
+video_021,3,3,3,4,3,3,3,2,3.143,2.143,Spatial standing stones (official spatial C seed=123; label matches). Pan-right motion attempted and grass/sky environment is stable. Issues: individual stone shapes and relative positions morph across frames; circular arrangement only partially preserved; stone identity not fully locked.
+video_022,4,4,4,4,4,4,4,1,4.000,3.500,Outdoor Great Wall (official outdoor A seed=123; label matches). Path and watchtowers preserved; hills and sky consistent; forward glide subtle and prompt-aligned. Clean.
+video_023,4,4,4,4,4,4,4,1,4.000,3.500,"Indoor living room (official indoor B seed=2026; label matches). Sofa and coffee table remain stable and identifiable; lamp, bookshelves, window preserved; subtle forward motion without destabilizing key objects per prompt_A. Minor bookshelf-content variation not severe."
+video_024,4,4,4,4,4,4,4,1,4.000,3.500,Indoor living room (official indoor C seed=123; label matches). Beige sofa and wooden coffee table stable across frames; room layout and lighting consistent; forward motion subtle and appropriate. Clean.
+video_025,4,4,4,4,4,4,4,1,4.000,3.500,Outdoor Great Wall (official outdoor C seed=42; label matches). Stone path and watchtowers preserved; autumn vegetation and sky consistent; forward glide matches prompt_A. No visible issues.
+video_026,4,4,4,4,4,4,4,1,4.000,3.500,Single-subject lone tree (official single_subject A seed=42; label matches). Tree remains centered and stable; mountains/water/sky environment consistent; subtle forward motion without decentering the subject per prompt_A. Clean.
+video_027,4,4,4,4,4,4,4,1,4.000,3.500,Single-subject lone tree (official single_subject A seed=123; label matches). Lone tree stable and centered; lake/mountain backdrop preserved; forward motion subtle and prompt-aligned. Clean.
+video_028,4,4,4,4,4,4,4,1,4.000,3.500,Indoor living room (official indoor B seed=123; label matches). Sofa and coffee table remain stable; bookshelves/lamp/window consistent; subtle forward motion appropriate. Clean generation.
+video_029,4,4,4,4,4,4,4,1,4.000,3.500,Indoor living room (official indoor A seed=123; label matches). Sofa and coffee table stable across frames; room layout preserved; subtle forward motion matching prompt_A. Minor bookshelf item variation only.
+video_030,4,4,4,4,4,4,4,1,4.000,3.500,"Single-subject lone tree (official single_subject C seed=42; label matches). Tree remains stable and centered in lake scene; mountains, water, and sky consistent; forward motion subtle per prompt_A. Clean."
+video_031,3,3,3,2,3,2,3,3,2.714,1.214,camera_motion castle scene: dragon neck/reins morph significantly across frames (size/texture/scale not stable); environment shifts jungle to rocky hillsides; castle somewhat preserved; forward motion partially met but 'dragon stable' intent fails.
+video_032,3,3,4,3,4,3,4,2,3.429,2.429,camera_motion castle scene: dragon more consistently present than 031; castle approaches clearly (good forward motion); jungle environment more stable; minor dragon texture shift at later frames.
+video_033,4,4,4,4,4,4,4,1,4.000,3.500,single_subject Wanaka tree: tree stable and centered throughout; camera slowly forward (tree slightly enlarges); lake/mountains consistent; natural cloud changes; clean quality.
+video_034,4,4,4,4,4,4,4,1,4.000,3.500,single_subject Wanaka tree: tree stable and centered; forward motion visible; environment consistent; clean quality matching scene-type baseline.
+video_035,5,5,5,4,5,5,5,1,4.857,4.357,outdoor Great Wall: excellent quality; stone path and watchtowers well preserved; clear forward glide along wall; autumn foliage consistent; intent fully met.
+video_036,4,4,4,4,4,4,4,1,4.000,3.500,single_subject Wanaka tree: tree stable/centered; forward motion; lake/mountains consistent; clean.
+video_037,3,3,3,2,3,2,3,3,2.714,1.214,camera_motion castle scene similar to 031: dragon appearance changes across frames; environment shifts from jungle toward open rocky terrain; castle partially preserved; forward motion present but dragon stability intent weak.
+video_038,4,4,4,4,4,4,4,1,4.000,3.500,spatial Stonehenge: circular stone arrangement preserved across frames; gentle pan motion; stones consistent; grass/sky environment stable; clean.
+video_039,4,4,4,4,4,4,4,1,4.000,3.500,spatial Stonehenge: stones and circular layout consistent; pan motion preserved arrangement; clean quality.
+video_040,4,4,3,4,4,3,3,1,3.571,3.071,spatial C2026：按同场景基线校准，石阵大体保持，未直接目视到严重问题
+video_041,4,4,4,4,4,4,4,1,4.000,3.500,indoor living room: sofa and coffee table stable across frames; slow forward camera motion; bookshelf/window environment consistent; clean.
+video_042,4,4,4,4,4,4,4,1,4.000,3.500,indoor living room: sofa/coffee table stable; forward motion; environment consistent; clean quality.
+video_043,4,4,4,4,4,4,4,1,4.000,3.500,single_subject A2026：同场景基线校准，孤树前推干净
+video_044,4,4,4,4,4,4,4,1,4.000,3.500,spatial Stonehenge: stones preserved; circular arrangement consistent across frames; pan motion; clean.
+video_045,3,3,4,3,4,3,4,2,3.429,2.429,camera_motion castle scene: dragon neck/reins present throughout with moderate consistency; castle approaches (forward motion clear); jungle environment mostly stable with minor landscape shift at later frames; better than 031/037.

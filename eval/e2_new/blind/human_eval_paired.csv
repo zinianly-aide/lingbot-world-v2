@@ -1,16 +1,16 @@
 pair_id,left_video,right_video,semantic_fidelity,spatial_consistency,camera_motion,temporal_stability,hallucination,overall_preference,win,tie_loss,notes
-pair_01,video_007,video_024,,,,,,,
-pair_02,video_006,video_026,,,,,,,
-pair_03,video_030,video_018,,,,,,,
-pair_04,video_012,video_013,,,,,,,
-pair_05,video_025,video_016,,,,,,,
-pair_06,video_017,video_008,,,,,,,
-pair_07,video_009,video_011,,,,,,,
-pair_08,video_014,video_023,,,,,,,
-pair_09,video_004,video_019,,,,,,,
-pair_10,video_020,video_028,,,,,,,
-pair_11,video_001,video_010,,,,,,,
-pair_12,video_021,video_022,,,,,,,
-pair_13,video_015,video_027,,,,,,,
-pair_14,video_029,video_003,,,,,,,
-pair_15,video_005,video_002,,,,,,,
+pair_01,video_007,video_024,4,4,4,4,2,3,tie,tie,两者均保持孤树主体，质量接近
+pair_02,video_006,video_026,4,4,4,3.5,2,3.5,right,win,Y 树形更稳，X 末帧枝干略形变
+pair_03,video_030,video_018,4,4,4,4,2,4,tie,tie,两者质量相当
+pair_04,video_012,video_013,4,4,4,4,1,3,tie,tie,石阵布局均稳定
+pair_05,video_025,video_016,3.5,3.5,4,3.5,3,3,right,win,X 中段草地幻觉物体，Y 更干净
+pair_06,video_017,video_008,4,4,4,4,1,3,tie,tie,石阵两者均稳定，差异不显著
+pair_07,video_009,video_011,3.5,3.5,3.5,3.5,2.5,3.5,left,win,X 龙颈/缰绳更稳，Y 环境漂移更明显
+pair_08,video_014,video_023,3.5,3.5,3.5,3,2.5,3,right,win,X 中帧伪影明显，Y 飞向城堡更连贯
+pair_09,video_004,video_019,3.5,3.5,3.5,3.5,2.5,3.5,left,win,Y 城堡/场景漂移更明显
+pair_10,video_020,video_028,4,4,4,4,1,3,tie,tie,室内两者均稳定前推
+pair_11,video_001,video_010,4,4,4,4,1,3,tie,tie,室内质量接近
+pair_12,video_021,video_022,4,4,4,4,1,3,tie,tie,室内两者均干净
+pair_13,video_015,video_027,4,4,4,4,1,3.5,right,win,Y 末帧长城/敌楼结构略稳
+pair_14,video_029,video_003,4,4,4,4,1,3.5,right,win,Y 末帧敌楼更清晰
+pair_15,video_005,video_002,4,4,4,3.5,1.5,3.5,right,win,X 末帧略糊，Y 更干净

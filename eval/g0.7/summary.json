@@ -1,0 +1,2052 @@
+{
+  "eval_name": "g0.7-real-abc-eval",
+  "total_records": 45,
+  "status_counts": {
+    "PASS": 45
+  },
+  "human_scores_available": 45,
+  "variant_stats": {
+    "A": {
+      "dimensions": {
+        "identity_consistency": {
+          "mean": 3.867,
+          "median": 4.0,
+          "std": 0.352,
+          "count": 15
+        },
+        "attribute_preservation": {
+          "mean": 3.867,
+          "median": 4.0,
+          "std": 0.352,
+          "count": 15
+        },
+        "spatial_layout": {
+          "mean": 3.933,
+          "median": 4.0,
+          "std": 0.258,
+          "count": 15
+        },
+        "environment_consistency": {
+          "mean": 3.733,
+          "median": 4.0,
+          "std": 0.594,
+          "count": 15
+        },
+        "camera_continuity": {
+          "mean": 3.933,
+          "median": 4.0,
+          "std": 0.258,
+          "count": 15
+        },
+        "temporal_stability": {
+          "mean": 3.733,
+          "median": 4.0,
+          "std": 0.594,
+          "count": 15
+        },
+        "intent_fidelity": {
+          "mean": 3.933,
+          "median": 4.0,
+          "std": 0.258,
+          "count": 15
+        },
+        "hallucination": {
+          "mean": 1.267,
+          "median": 1.0,
+          "std": 0.594,
+          "count": 15
+        }
+      },
+      "adjusted_score": {
+        "mean": 3.224,
+        "median": 3.5,
+        "std": 0.646,
+        "count": 15
+      },
+      "sanity_temporal_mad_mean": {
+        "mean": 0.058,
+        "median": 0.051,
+        "std": 0.024,
+        "count": 15
+      }
+    },
+    "B": {
+      "dimensions": {
+        "identity_consistency": {
+          "mean": 3.933,
+          "median": 4.0,
+          "std": 0.458,
+          "count": 15
+        },
+        "attribute_preservation": {
+          "mean": 3.933,
+          "median": 4.0,
+          "std": 0.458,
+          "count": 15
+        },
+        "spatial_layout": {
+          "mean": 3.733,
+          "median": 4.0,
+          "std": 0.594,
+          "count": 15
+        },
+        "environment_consistency": {
+          "mean": 3.667,
+          "median": 4.0,
+          "std": 0.617,
+          "count": 15
+        },
+        "camera_continuity": {
+          "mean": 3.933,
+          "median": 4.0,
+          "std": 0.458,
+          "count": 15
+        },
+        "temporal_stability": {
+          "mean": 3.6,
+          "median": 4.0,
+          "std": 0.737,
+          "count": 15
+        },
+        "intent_fidelity": {
+          "mean": 3.8,
+          "median": 4.0,
+          "std": 0.561,
+          "count": 15
+        },
+        "hallucination": {
+          "mean": 1.333,
+          "median": 1.0,
+          "std": 0.617,
+          "count": 15
+        }
+      },
+      "adjusted_score": {
+        "mean": 3.133,
+        "median": 3.5,
+        "std": 0.758,
+        "count": 15
+      },
+      "sanity_temporal_mad_mean": {
+        "mean": 0.058,
+        "median": 0.051,
+        "std": 0.022,
+        "count": 15
+      }
+    },
+    "C": {
+      "dimensions": {
+        "identity_consistency": {
+          "mean": 3.867,
+          "median": 4.0,
+          "std": 0.352,
+          "count": 15
+        },
+        "attribute_preservation": {
+          "mean": 3.867,
+          "median": 4.0,
+          "std": 0.352,
+          "count": 15
+        },
+        "spatial_layout": {
+          "mean": 3.8,
+          "median": 4.0,
+          "std": 0.414,
+          "count": 15
+        },
+        "environment_consistency": {
+          "mean": 3.8,
+          "median": 4.0,
+          "std": 0.414,
+          "count": 15
+        },
+        "camera_continuity": {
+          "mean": 3.933,
+          "median": 4.0,
+          "std": 0.258,
+          "count": 15
+        },
+        "temporal_stability": {
+          "mean": 3.6,
+          "median": 4.0,
+          "std": 0.507,
+          "count": 15
+        },
+        "intent_fidelity": {
+          "mean": 3.8,
+          "median": 4.0,
+          "std": 0.414,
+          "count": 15
+        },
+        "hallucination": {
+          "mean": 1.267,
+          "median": 1.0,
+          "std": 0.458,
+          "count": 15
+        }
+      },
+      "adjusted_score": {
+        "mean": 3.176,
+        "median": 3.5,
+        "std": 0.464,
+        "count": 15
+      },
+      "sanity_temporal_mad_mean": {
+        "mean": 0.058,
+        "median": 0.051,
+        "std": 0.024,
+        "count": 15
+      }
+    }
+  },
+  "pairwise_differences": {
+    "B-A": {
+      "identity_consistency": 0.066,
+      "attribute_preservation": 0.066,
+      "spatial_layout": -0.2,
+      "environment_consistency": -0.066,
+      "camera_continuity": 0.0,
+      "temporal_stability": -0.133,
+      "intent_fidelity": -0.133,
+      "hallucination": 0.066,
+      "adjusted_score": -0.091
+    },
+    "C-A": {
+      "identity_consistency": 0.0,
+      "attribute_preservation": 0.0,
+      "spatial_layout": -0.133,
+      "environment_consistency": 0.067,
+      "camera_continuity": 0.0,
+      "temporal_stability": -0.133,
+      "intent_fidelity": -0.133,
+      "hallucination": 0.0,
+      "adjusted_score": -0.048
+    },
+    "C-B": {
+      "identity_consistency": -0.066,
+      "attribute_preservation": -0.066,
+      "spatial_layout": 0.067,
+      "environment_consistency": 0.133,
+      "camera_continuity": 0.0,
+      "temporal_stability": 0.0,
+      "intent_fidelity": 0.0,
+      "hallucination": -0.066,
+      "adjusted_score": 0.043
+    }
+  },
+  "paired_deltas": {
+    "paired_deltas": {
+      "B-A": [
+        {
+          "scene": "camera_motion",
+          "seed": 42,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "camera_motion",
+          "seed": 123,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "camera_motion",
+          "seed": 2026,
+          "adjusted_delta": 0.143,
+          "dimension_deltas": {
+            "identity_consistency": 1.0,
+            "attribute_preservation": 1.0,
+            "spatial_layout": -1.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "indoor",
+          "seed": 42,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "indoor",
+          "seed": 123,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "indoor",
+          "seed": 2026,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "outdoor",
+          "seed": 42,
+          "adjusted_delta": 0.857,
+          "dimension_deltas": {
+            "identity_consistency": 1.0,
+            "attribute_preservation": 1.0,
+            "spatial_layout": 1.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 1.0,
+            "temporal_stability": 1.0,
+            "intent_fidelity": 1.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "outdoor",
+          "seed": 123,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "outdoor",
+          "seed": 2026,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "single_subject",
+          "seed": 42,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "single_subject",
+          "seed": 123,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "single_subject",
+          "seed": 2026,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "spatial",
+          "seed": 42,
+          "adjusted_delta": -0.429,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": -1.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": -1.0,
+            "intent_fidelity": -1.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "spatial",
+          "seed": 123,
+          "adjusted_delta": -0.429,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": -1.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": -1.0,
+            "intent_fidelity": -1.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "spatial",
+          "seed": 2026,
+          "adjusted_delta": -1.5,
+          "dimension_deltas": {
+            "identity_consistency": -1.0,
+            "attribute_preservation": -1.0,
+            "spatial_layout": -1.0,
+            "environment_consistency": -1.0,
+            "camera_continuity": -1.0,
+            "temporal_stability": -1.0,
+            "intent_fidelity": -1.0,
+            "hallucination": 1.0
+          }
+        }
+      ],
+      "C-A": [
+        {
+          "scene": "camera_motion",
+          "seed": 42,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "camera_motion",
+          "seed": 123,
+          "adjusted_delta": 1.5,
+          "dimension_deltas": {
+            "identity_consistency": 1.0,
+            "attribute_preservation": 1.0,
+            "spatial_layout": 1.0,
+            "environment_consistency": 1.0,
+            "camera_continuity": 1.0,
+            "temporal_stability": 1.0,
+            "intent_fidelity": 1.0,
+            "hallucination": -1.0
+          }
+        },
+        {
+          "scene": "camera_motion",
+          "seed": 2026,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "indoor",
+          "seed": 42,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "indoor",
+          "seed": 123,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "indoor",
+          "seed": 2026,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "outdoor",
+          "seed": 42,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "outdoor",
+          "seed": 123,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "outdoor",
+          "seed": 2026,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "single_subject",
+          "seed": 42,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "single_subject",
+          "seed": 123,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "single_subject",
+          "seed": 2026,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "spatial",
+          "seed": 42,
+          "adjusted_delta": -0.429,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": -1.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": -1.0,
+            "intent_fidelity": -1.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "spatial",
+          "seed": 123,
+          "adjusted_delta": -1.357,
+          "dimension_deltas": {
+            "identity_consistency": -1.0,
+            "attribute_preservation": -1.0,
+            "spatial_layout": -1.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": -1.0,
+            "temporal_stability": -1.0,
+            "intent_fidelity": -1.0,
+            "hallucination": 1.0
+          }
+        },
+        {
+          "scene": "spatial",
+          "seed": 2026,
+          "adjusted_delta": -0.429,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": -1.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": -1.0,
+            "intent_fidelity": -1.0,
+            "hallucination": 0.0
+          }
+        }
+      ],
+      "C-B": [
+        {
+          "scene": "camera_motion",
+          "seed": 42,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "camera_motion",
+          "seed": 123,
+          "adjusted_delta": 1.5,
+          "dimension_deltas": {
+            "identity_consistency": 1.0,
+            "attribute_preservation": 1.0,
+            "spatial_layout": 1.0,
+            "environment_consistency": 1.0,
+            "camera_continuity": 1.0,
+            "temporal_stability": 1.0,
+            "intent_fidelity": 1.0,
+            "hallucination": -1.0
+          }
+        },
+        {
+          "scene": "camera_motion",
+          "seed": 2026,
+          "adjusted_delta": -0.143,
+          "dimension_deltas": {
+            "identity_consistency": -1.0,
+            "attribute_preservation": -1.0,
+            "spatial_layout": 1.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "indoor",
+          "seed": 42,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "indoor",
+          "seed": 123,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "indoor",
+          "seed": 2026,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "outdoor",
+          "seed": 42,
+          "adjusted_delta": -0.857,
+          "dimension_deltas": {
+            "identity_consistency": -1.0,
+            "attribute_preservation": -1.0,
+            "spatial_layout": -1.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": -1.0,
+            "temporal_stability": -1.0,
+            "intent_fidelity": -1.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "outdoor",
+          "seed": 123,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "outdoor",
+          "seed": 2026,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "single_subject",
+          "seed": 42,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "single_subject",
+          "seed": 123,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "single_subject",
+          "seed": 2026,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "spatial",
+          "seed": 42,
+          "adjusted_delta": 0.0,
+          "dimension_deltas": {
+            "identity_consistency": 0.0,
+            "attribute_preservation": 0.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": 0.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 0.0
+          }
+        },
+        {
+          "scene": "spatial",
+          "seed": 123,
+          "adjusted_delta": -0.929,
+          "dimension_deltas": {
+            "identity_consistency": -1.0,
+            "attribute_preservation": -1.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 0.0,
+            "camera_continuity": -1.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": 1.0
+          }
+        },
+        {
+          "scene": "spatial",
+          "seed": 2026,
+          "adjusted_delta": 1.071,
+          "dimension_deltas": {
+            "identity_consistency": 1.0,
+            "attribute_preservation": 1.0,
+            "spatial_layout": 0.0,
+            "environment_consistency": 1.0,
+            "camera_continuity": 1.0,
+            "temporal_stability": 0.0,
+            "intent_fidelity": 0.0,
+            "hallucination": -1.0
+          }
+        }
+      ]
+    },
+    "wins_overall": {
+      "B-A": {
+        "win": 2,
+        "tie": 10,
+        "loss": 3
+      },
+      "C-A": {
+        "win": 1,
+        "tie": 11,
+        "loss": 3
+      },
+      "C-B": {
+        "win": 2,
+        "tie": 10,
+        "loss": 3
+      }
+    },
+    "wins_per_scene": {
+      "camera_motion": {
+        "B-A": {
+          "win": 1,
+          "tie": 2,
+          "loss": 0
+        },
+        "C-A": {
+          "win": 1,
+          "tie": 2,
+          "loss": 0
+        },
+        "C-B": {
+          "win": 1,
+          "tie": 1,
+          "loss": 1
+        }
+      },
+      "indoor": {
+        "B-A": {
+          "win": 0,
+          "tie": 3,
+          "loss": 0
+        },
+        "C-A": {
+          "win": 0,
+          "tie": 3,
+          "loss": 0
+        },
+        "C-B": {
+          "win": 0,
+          "tie": 3,
+          "loss": 0
+        }
+      },
+      "outdoor": {
+        "B-A": {
+          "win": 1,
+          "tie": 2,
+          "loss": 0
+        },
+        "C-A": {
+          "win": 0,
+          "tie": 3,
+          "loss": 0
+        },
+        "C-B": {
+          "win": 0,
+          "tie": 2,
+          "loss": 1
+        }
+      },
+      "single_subject": {
+        "B-A": {
+          "win": 0,
+          "tie": 3,
+          "loss": 0
+        },
+        "C-A": {
+          "win": 0,
+          "tie": 3,
+          "loss": 0
+        },
+        "C-B": {
+          "win": 0,
+          "tie": 3,
+          "loss": 0
+        }
+      },
+      "spatial": {
+        "B-A": {
+          "win": 0,
+          "tie": 0,
+          "loss": 3
+        },
+        "C-A": {
+          "win": 0,
+          "tie": 0,
+          "loss": 3
+        },
+        "C-B": {
+          "win": 1,
+          "tie": 1,
+          "loss": 1
+        }
+      }
+    },
+    "total_pairs": {
+      "B-A": 15,
+      "C-A": 15,
+      "C-B": 15
+    }
+  },
+  "per_scene": {
+    "camera_motion": {
+      "A": {
+        "adjusted_score": {
+          "mean": 2.119,
+          "median": 2.429,
+          "std": 0.796,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 3.333,
+            "median": 3.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 3.333,
+            "median": 3.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 2.667,
+            "median": 3.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 2.667,
+            "median": 3.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 2.333,
+            "median": 2.0,
+            "std": 0.577,
+            "count": 3
+          }
+        }
+      },
+      "B": {
+        "adjusted_score": {
+          "mean": 2.167,
+          "median": 2.571,
+          "std": 0.828,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 3.333,
+            "median": 3.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 2.667,
+            "median": 3.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 2.667,
+            "median": 3.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 2.333,
+            "median": 2.0,
+            "std": 0.577,
+            "count": 3
+          }
+        }
+      },
+      "C": {
+        "adjusted_score": {
+          "mean": 2.619,
+          "median": 2.714,
+          "std": 0.165,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 3.0,
+            "median": 3.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 3.0,
+            "median": 3.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 2.0,
+            "median": 2.0,
+            "std": 0.0,
+            "count": 3
+          }
+        }
+      }
+    },
+    "indoor": {
+      "A": {
+        "adjusted_score": {
+          "mean": 3.5,
+          "median": 3.5,
+          "std": 0.0,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 1.0,
+            "median": 1.0,
+            "std": 0.0,
+            "count": 3
+          }
+        }
+      },
+      "B": {
+        "adjusted_score": {
+          "mean": 3.5,
+          "median": 3.5,
+          "std": 0.0,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 1.0,
+            "median": 1.0,
+            "std": 0.0,
+            "count": 3
+          }
+        }
+      },
+      "C": {
+        "adjusted_score": {
+          "mean": 3.5,
+          "median": 3.5,
+          "std": 0.0,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 1.0,
+            "median": 1.0,
+            "std": 0.0,
+            "count": 3
+          }
+        }
+      }
+    },
+    "outdoor": {
+      "A": {
+        "adjusted_score": {
+          "mean": 3.5,
+          "median": 3.5,
+          "std": 0.0,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 1.0,
+            "median": 1.0,
+            "std": 0.0,
+            "count": 3
+          }
+        }
+      },
+      "B": {
+        "adjusted_score": {
+          "mean": 3.786,
+          "median": 3.5,
+          "std": 0.495,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 4.333,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 4.333,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 4.333,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 4.333,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 4.333,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 4.333,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 1.0,
+            "median": 1.0,
+            "std": 0.0,
+            "count": 3
+          }
+        }
+      },
+      "C": {
+        "adjusted_score": {
+          "mean": 3.5,
+          "median": 3.5,
+          "std": 0.0,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 1.0,
+            "median": 1.0,
+            "std": 0.0,
+            "count": 3
+          }
+        }
+      }
+    },
+    "single_subject": {
+      "A": {
+        "adjusted_score": {
+          "mean": 3.5,
+          "median": 3.5,
+          "std": 0.0,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 1.0,
+            "median": 1.0,
+            "std": 0.0,
+            "count": 3
+          }
+        }
+      },
+      "B": {
+        "adjusted_score": {
+          "mean": 3.5,
+          "median": 3.5,
+          "std": 0.0,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 1.0,
+            "median": 1.0,
+            "std": 0.0,
+            "count": 3
+          }
+        }
+      },
+      "C": {
+        "adjusted_score": {
+          "mean": 3.5,
+          "median": 3.5,
+          "std": 0.0,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 1.0,
+            "median": 1.0,
+            "std": 0.0,
+            "count": 3
+          }
+        }
+      }
+    },
+    "spatial": {
+      "A": {
+        "adjusted_score": {
+          "mean": 3.5,
+          "median": 3.5,
+          "std": 0.0,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 1.0,
+            "median": 1.0,
+            "std": 0.0,
+            "count": 3
+          }
+        }
+      },
+      "B": {
+        "adjusted_score": {
+          "mean": 2.714,
+          "median": 3.071,
+          "std": 0.619,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 3.0,
+            "median": 3.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 3.0,
+            "median": 3.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 3.0,
+            "median": 3.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 1.333,
+            "median": 1.0,
+            "std": 0.577,
+            "count": 3
+          }
+        }
+      },
+      "C": {
+        "adjusted_score": {
+          "mean": 2.762,
+          "median": 3.071,
+          "std": 0.536,
+          "count": 3
+        },
+        "dimensions": {
+          "identity_consistency": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "attribute_preservation": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "spatial_layout": {
+            "mean": 3.0,
+            "median": 3.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "environment_consistency": {
+            "mean": 4.0,
+            "median": 4.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "camera_continuity": {
+            "mean": 3.667,
+            "median": 4.0,
+            "std": 0.577,
+            "count": 3
+          },
+          "temporal_stability": {
+            "mean": 3.0,
+            "median": 3.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "intent_fidelity": {
+            "mean": 3.0,
+            "median": 3.0,
+            "std": 0.0,
+            "count": 3
+          },
+          "hallucination": {
+            "mean": 1.333,
+            "median": 1.0,
+            "std": 0.577,
+            "count": 3
+          }
+        }
+      }
+    }
+  },
+  "per_seed": {
+    "42": {
+      "A": {
+        "mean": 3.343,
+        "median": 3.5,
+        "std": 0.351,
+        "count": 5
+      },
+      "B": {
+        "mean": 3.429,
+        "median": 3.5,
+        "std": 0.614,
+        "count": 5
+      },
+      "C": {
+        "mean": 3.257,
+        "median": 3.5,
+        "std": 0.356,
+        "count": 5
+      }
+    },
+    "123": {
+      "A": {
+        "mean": 3.043,
+        "median": 3.5,
+        "std": 1.022,
+        "count": 5
+      },
+      "B": {
+        "mean": 2.957,
+        "median": 3.5,
+        "std": 0.992,
+        "count": 5
+      },
+      "C": {
+        "mean": 3.071,
+        "median": 3.5,
+        "std": 0.621,
+        "count": 5
+      }
+    },
+    "2026": {
+      "A": {
+        "mean": 3.286,
+        "median": 3.5,
+        "std": 0.479,
+        "count": 5
+      },
+      "B": {
+        "mean": 3.014,
+        "median": 3.5,
+        "std": 0.695,
+        "count": 5
+      },
+      "C": {
+        "mean": 3.2,
+        "median": 3.5,
+        "std": 0.469,
+        "count": 5
+      }
+    }
+  },
+  "prompt_token_stats": {
+    "A": {
+      "mean_tokens": 19.8,
+      "max_tokens": 24,
+      "truncated_count": 0,
+      "mean_chars": 89.6
+    },
+    "B": {
+      "mean_tokens": 227.8,
+      "max_tokens": 265,
+      "truncated_count": 0,
+      "mean_chars": 1083.4
+    },
+    "C": {
+      "mean_tokens": 173,
+      "max_tokens": 215,
+      "truncated_count": 0,
+      "mean_chars": 804.6
+    }
+  },
+  "g1_entry_gate": {
+    "decision": "G1 NOT JUSTIFIED",
+    "reason": "Neither B nor C shows stable improvement over A. Optimize World JSON schema / VLM prompt / compact composition before G1.",
+    "checks": {
+      "C_improves_in_4of5_scenes": {
+        "pass": false,
+        "detail": "1/5 scenes improved"
+      },
+      "identity_not_decreased": {
+        "pass": true,
+        "detail": "C=3.8666666666666667, A=3.8666666666666667"
+      },
+      "intent_fidelity_not_decreased": {
+        "pass": false,
+        "detail": "C=3.8, A=3.933333333333333"
+      },
+      "hallucination_not_significantly_increased": {
+        "pass": true,
+        "detail": "C=1.2666666666666666, A=1.2666666666666666"
+      },
+      "trend_consistent_in_2of3_seeds": {
+        "pass": false,
+        "detail": "1/3 seeds improved"
+      },
+      "C_token_budget_better_than_B": {
+        "pass": true,
+        "detail": "B trunc=0, max=265; C trunc=0, max=215"
+      }
+    },
+    "scene_details": {
+      "camera_motion": {
+        "C": 2.619,
+        "A": 2.119,
+        "improved": true
+      },
+      "indoor": {
+        "C": 3.5,
+        "A": 3.5,
+        "improved": false
+      },
+      "outdoor": {
+        "C": 3.5,
+        "A": 3.5,
+        "improved": false
+      },
+      "single_subject": {
+        "C": 3.5,
+        "A": 3.5,
+        "improved": false
+      },
+      "spatial": {
+        "C": 2.762,
+        "A": 3.5,
+        "improved": false
+      }
+    }
+  }
+}
