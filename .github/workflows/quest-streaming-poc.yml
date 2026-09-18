@@ -5,6 +5,7 @@ on:
     paths:
       - "wan/streaming/**"
       - "scripts/quest_*.py"
+      - "scripts/q1_validate_latent_tap.py"
       - "scripts/q1_5_validate_progressive_vae.py"
       - "tests/test_streaming_contract.py"
       - "tests/test_quest_streaming.py"
@@ -15,6 +16,7 @@ on:
     paths:
       - "wan/streaming/**"
       - "scripts/quest_*.py"
+      - "scripts/q1_validate_latent_tap.py"
       - "scripts/q1_5_validate_progressive_vae.py"
       - "tests/test_streaming_contract.py"
       - "tests/test_quest_streaming.py"
@@ -31,7 +33,7 @@ concurrency:
 jobs:
   contract-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -40,11 +42,15 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install minimal test dependencies
+      - name: Install streaming test dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch
-          python -m pip install pillow
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
+          python -m pip install \
+            "numpy>=1.23.5,<2" \
+            pillow easydict einops tqdm safetensors ftfy regex \
+            "transformers>=4.49.0,<=4.51.3" \
+            "diffusers>=0.31.0"
 
       - name: Compile streaming modules
         run: |
@@ -57,6 +63,7 @@ jobs:
             wan/streaming/vae_progressive.py \
             scripts/quest_frame_bridge.py \
             scripts/quest_stream_replay.py \
+            scripts/q1_validate_latent_tap.py \
             scripts/q1_5_validate_progressive_vae.py
 
       - name: Run streaming unit tests
