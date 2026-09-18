@@ -157,7 +157,8 @@ def _full_fake_decode(vae, latent):
             feat_cache=model._feat_map,
             feat_idx=model._conv_idx,
         ))
-    out = torch.cat(outputs, dim=2).squeeze(0)
+    # Match WanVAE_.decode exactly: concatenate, cast to float and clamp output.
+    out = torch.cat(outputs, dim=2).squeeze(0).float().clamp_(-1, 1)
     model.clear_cache()
     return out
 
