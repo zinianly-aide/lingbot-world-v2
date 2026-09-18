@@ -10,7 +10,8 @@ Make LingBot on Apple Silicon publish generated video to QuestPhoneStream with l
 LingBot causal DiT
   -> completed x0 latent chunk
   -> stateful Wan VAE progressive decoder
-  -> JPEG/RGB frame bridge (POC only)
+  -> bounded paced frame buffer
+  -> localhost JPEG frame bridge (POC only)
   -> QuestPhoneStream macOS Canvas MediaStream
   -> existing RTCPeerConnection video track
   -> QuestWebRtcReceiver / SpatialPanel
@@ -45,7 +46,7 @@ Acceptance:
 - bridge sequence increases monotonically.
 - no signaling/schema changes.
 
-### Q1 latent seam — code complete, generation regression pending
+### Q1 latent seam — code complete, M4 evidence pending
 
 `wan/streaming/latent_tap.py` installs an opt-in `tap_causal_latent_chunks(...)` context manager around one existing causal-fast generation.
 
@@ -55,15 +56,16 @@ Properties:
 - no tap by default: zero behavior change.
 - no implicit `.cpu()` or disk write.
 - sink failure can be fail-open.
-- original bound methods are restored on exit/failure.
-- unit tests cover one-event-per-chunk semantics and restoration.
+- original bound methods are restored even if `generate-latents` unloads the DiT before the context exits.
+- unit tests cover event semantics, fail-open and teardown.
 
-Required real-model gate:
-- same prompt/image/action/seed with tap absent vs tap + no-op sink.
-- final latent/video hashes or numeric output must match.
-- cross-KV init count remains 1.
-- self-KV remains persistent across chunks.
-- sink-disabled performance regression <1%.
+Real-model gate is automated by:
+
+```bash
+python scripts/q1_validate_latent_tap.py
+```
+
+It re-runs the frozen E1.2 smoke with a metadata-only tap and requires exact latent equality / identical SHA256 against the existing baseline. The current 13-frame, chunk-size-4 smoke contains one real DiT chunk, so this proves non-interference; true multi-chunk cadence is exercised by Q2.
 
 ### Q1.5 progressive VAE semantics — implementation complete, M4 evidence pending
 
@@ -84,32 +86,31 @@ It records:
 - full vs progressive decode time,
 - MPS/CUDA memory.
 
-Gate example:
-```bash
-LINGBOT_VAE_DTYPE=bf16 python scripts/q1_5_validate_progressive_vae.py \
-  --latents <generated_latents.safetensors> \
-  --vae-pth <Wan2.1_VAE.pth> \
-  --device mps --chunk-size 3
-```
+For the frozen 4-latent-step smoke, run both chunk size 1 and 2 so cache continuity is actually exercised. Do not claim Q1.5 PASS until both real M4 reports pass.
 
-Do not claim Q1.5 PASS until this runs on a real E1.2 latent file.
+### Q2 live progressive frames — code complete, M4/Quest gate pending
 
-### Q2 live progressive frames — wiring complete, memory gate pending
+A VAE chunk yields several RGB frames at once. Publishing them directly to a latest-frame slot would overwrite intermediate frames before Electron can poll them. `wan/streaming/buffered_publisher.py` therefore JPEG-encodes into a bounded queue and publishes one frame per playback interval. When generation is slower than playback, the last frame remains visible until the next generated chunk arrives; generated frames are not silently burst/dropped.
 
-`wan/streaming/pipeline.py` provides `ProgressiveVaeFrameSink`:
+`scripts/q2_live_quest_poc.py` wires the full POC:
 
 ```text
 live x0 chunk
   -> ProgressiveWanVaeDecoder
-  -> FrameBridgePublisher
+  -> BufferedFrameBridgePublisher
   -> LatestFrameStore
   -> localhost bridge
   -> QuestPhoneStream AI MediaStream
+  -> existing WebRTC / Quest receiver
 ```
 
-This sink is intentionally synchronous and opt-in. Do **not** enable it on M4 16GB until Q1.5 passes and a DiT+VAE coexistence memory check proves it is safe.
+The script uses `frame_num=33, chunk_size=4` by default, which aligns to two real DiT chunks / 29 output frames. It:
+- creates a matching image-condition cache,
+- explicitly tests DiT+VAE coexistence without changing the MPS watermark guard,
+- records TTFF, per-chunk VAE/JPEG times, queue depth and MPS memory,
+- requires the first published frame to occur before generation finishes.
 
-The current M4 path intentionally unloads DiT before full VAE decode. That protection must not be removed just to claim streaming.
+A DiT+VAE OOM on M4 16GB is a valid Q2 memory-blocked result. Do not use `PYTORCH_MPS_HIGH_WATERMARK_RATIO=0` to force the gate.
 
 ### Q2.5 overlap — not started
 
@@ -123,7 +124,7 @@ VAE decode chunk N
 WebRTC encode/send chunk N-1
 ```
 
-Measure separately with MPS VAE and MLX VAE. Keep `PYTORCH_MPS_HIGH_WATERMARK_RATIO=0` out of the design.
+Measure separately with MPS VAE and MLX VAE. Do not start overlap work if Q2 proves co-residency is not viable.
 
 ## Metrics
 
@@ -131,6 +132,7 @@ Record for every real run:
 - TTFF,
 - DiT chunk cadence,
 - progressive VAE latency/chunk,
+- JPEG enqueue/playback queue depth,
 - bridge-to-canvas latency,
 - WebRTC sender/receiver latency,
 - received frame sequence/drop count,
@@ -153,16 +155,17 @@ Record for every real run:
 | Gate | Code | Evidence still required |
 |---|---|---|
 | Q0 | DONE | Quest real-device replay |
-| Q1 | DONE | real generation no-op equivalence |
-| Q1.5 | DONE | M4 full-vs-progressive VAE report |
-| Q2 | DONE | M4 DiT+VAE coexistence + first frame before generation end |
-| Q2.5 | NOT STARTED | overlap profiling |
+| Q1 | DONE | M4 exact latent-tap equivalence report |
+| Q1.5 | DONE | M4 chunk1 + chunk2 full-vs-progressive reports |
+| Q2 | DONE | M4 coexistence + first-frame-before-finish + Quest observation |
+| Q2.5 | NOT STARTED | overlap profiling only if Q2 permits it |
 | Q3 | NOT STARTED | replace polling/canvas only if profiling justifies it |
 | Q4 | NOT STARTED | Quest → Mac generation controls |
 
-## Branches
+## Branches / runbook
 
 - LingBot: `feat/quest-streaming-poc`
 - QuestPhoneStream: `feat/ai-video-streaming-poc`
+- Execution-only instructions: `docs/quest-streaming-runbook.md`
 
-Do not merge either branch until Q0/Q1/Q1.5 evidence is attached.
+Do not merge either branch until Q0/Q1/Q1.5 evidence is attached and Q2 has an explicit PASS or memory-blocked result.
