@@ -1,5 +1,8 @@
 from .events import GenerationEvent, GenerationEventSink, LatentChunkEvent, LatentChunkSink
 from .frame_bridge import FrameBridgeServer, FrameSnapshot, LatestFrameStore
+from .frame_publisher import FrameBridgePublisher
+from .latent_tap import tap_causal_latent_chunks
+from .vae_progressive import ProgressiveDecodeStats, ProgressiveWanVaeDecoder
 
 __all__ = [
     "GenerationEvent",
@@ -9,4 +12,8 @@ __all__ = [
     "FrameBridgeServer",
     "FrameSnapshot",
     "LatestFrameStore",
+    "FrameBridgePublisher",
+    "tap_causal_latent_chunks",
+    "ProgressiveDecodeStats",
+    "ProgressiveWanVaeDecoder",
 ]
