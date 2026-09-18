@@ -58,6 +58,10 @@ class StreamingContractTests(unittest.TestCase):
 
             with urllib.request.urlopen(f"{base}/v1/frame.jpg", timeout=2) as resp:
                 self.assertEqual(resp.headers["X-QPS-Frame-Seq"], "7")
+                self.assertEqual(resp.headers["X-QPS-PTS-Ms"], "42.500")
+                exposed = resp.headers["Access-Control-Expose-Headers"]
+                self.assertIn("X-QPS-Frame-Seq", exposed)
+                self.assertIn("X-QPS-PTS-Ms", exposed)
                 self.assertEqual(resp.read(), frame)
         finally:
             server.shutdown()
