@@ -8,127 +8,112 @@ Make LingBot on Apple Silicon publish generated video to QuestPhoneStream with l
 
 ```text
 LingBot causal DiT
-  -> latent chunk boundary (already exists)
-  -> VAE decode worker
+  -> completed x0 latent chunk
+  -> stateful Wan VAE progressive decoder
   -> JPEG/RGB frame bridge (POC only)
-  -> QuestPhoneStream macOS sender Canvas MediaStream
+  -> QuestPhoneStream macOS Canvas MediaStream
   -> existing RTCPeerConnection video track
   -> QuestWebRtcReceiver / SpatialPanel
 ```
 
 The localhost frame bridge is deliberately temporary. It gives us a measurable end-to-end seam before committing to VideoToolbox/zero-copy plumbing.
 
-## Current code facts
+## Implemented critical path
 
-- `WanI2VCausal._generate_causal_fast()` already loops over latent chunks.
-- The completed chunk is available as `x0` immediately before `pred_latent_chunks.append(x0)`.
-- Today all chunks are concatenated and VAE-decoded only after DiT generation finishes.
-- On M4 sequential-load mode unloads DiT before loading VAE. That memory behavior must not be removed just to claim streaming.
-- QuestPhoneStream macOS sender already publishes any `MediaStream` video track through the existing WebRTC negotiation. Screen capture is only the current source.
+### Q0 transport seam — code complete, device verification pending
 
-## Gates
+LingBot:
+- `scripts/quest_frame_bridge.py` — localhost bridge server.
+- `scripts/quest_stream_replay.py` — replay any existing MP4 as JPEG frames.
+- `wan/streaming/frame_bridge.py` — latest-frame store, status, sequence/PTS headers, CORS expose headers.
 
-### Q0 — transport path, no model changes
+QuestPhoneStream:
+- `src/aiVideoSource.ts` converts bridge JPEGs to a Canvas `MediaStream`.
+- `src/aiVideoBootstrap.ts` injects `qps-ai-video` as a pseudo capture source and intercepts only that `getUserMedia()` request.
+- Existing `renderer.ts`, signaling, `createPeer()`, offer/answer, data channels, Quest receiver and SpatialPanel stay unchanged.
 
-Purpose: prove `LingBot output -> macOS sender -> Quest` independently from progressive generation.
-
-1. Start bridge:
-   ```bash
-   python scripts/quest_frame_bridge.py
-   ```
-2. Replay any existing generated MP4:
-   ```bash
-   python scripts/quest_stream_replay.py eval/e1.2/smoke/single_subject_seed42_e12.mp4 --fps 12
-   ```
-3. In QuestPhoneStream macOS sender, use `createAiVideoSource()` from `apps/macos-sender/src/aiVideoSource.ts` instead of desktop capture and pass its `MediaStream` to the existing `createPeer()` path.
-
-Acceptance:
-- Quest displays the replayed video.
-- Existing signaling/session/data-channel behavior is unchanged.
-- Stop/reconnect does not leak tracks.
-- Record WebRTC latency and bridge duplicate/error counters.
-
-### Q1 — expose causal latent chunks
-
-Add an optional `latent_chunk_sink=None` to `WanI2VCausal.generate()` and `_generate_causal_fast()`.
-
-Hook location (do not move model math):
-
-```python
-pred_latent_chunks.append(x0)
-
-if latent_chunk_sink is not None:
-    from wan.streaming.events import LatentChunkEvent
-    event = LatentChunkEvent(
-        generation_id=generation_id,
-        chunk_index=chunk_id,
-        total_chunks=num_inference_chunk,
-        latent_start=chunk_id * chunk_size,
-        latent_count=int(x0.shape[1]),
-        shape=tuple(int(v) for v in x0.shape),
-        dtype=str(x0.dtype),
-        seed=seed,
-        elapsed_ms=(time.perf_counter() - stream_started) * 1000.0,
-    )
-    latent_chunk_sink.on_latent_chunk(event, x0)
+Manual gate:
+```bash
+python scripts/quest_frame_bridge.py
+python scripts/quest_stream_replay.py eval/e1.2/smoke/single_subject_seed42_e12.mp4 --fps 12
 ```
-
-Rules:
-- Default sink is `None`: no CPU copy, no file I/O, no output change.
-- Sink owns any detach/copy needed after callback return.
-- Causal KV update remains exactly where it is today.
-- Start with `causal_fast` only; do not change pretrain behavior for the POC.
+Then select `LingBot AI video · localhost bridge` in the macOS sender and start the normal Quest session.
 
 Acceptance:
-- Existing generation remains bit-identical with sink disabled.
-- Event order is 0..N-1 and latent shapes match the chunks that are concatenated today.
-- Sink-disabled benchmark regression < 1%.
+- Quest displays replayed video.
+- reconnect/stop does not leak tracks or polling.
+- bridge sequence increases monotonically.
+- no signaling/schema changes.
 
-### Q1.5 — prove VAE chunk-decode semantics
+### Q1 latent seam — code complete, generation regression pending
 
-Do **not** assume each latent chunk can be independently VAE-decoded. Wan's temporal VAE may require history/overlap.
+`wan/streaming/latent_tap.py` installs an opt-in `tap_causal_latent_chunks(...)` context manager around one existing causal-fast generation.
 
-For one fixed E1.2 sample:
-1. Save full latent output.
-2. Decode full latent as reference.
-3. Decode chunk/overlap candidates.
-4. Compare RGB frames at boundaries and record max/mean error plus visual seam evidence.
+It does **not** rewrite `wan/image2video.py`. It recognizes the generator's existing post-chunk zero-timestep KV update by object identity with the final `x0`, and emits that live tensor only after the KV update succeeds.
 
-Only after equivalence is understood should progressive decoded frames be published to the bridge.
+Properties:
+- no tap by default: zero behavior change.
+- no implicit `.cpu()` or disk write.
+- sink failure can be fail-open.
+- original bound methods are restored on exit/failure.
+- unit tests cover one-event-per-chunk semantics and restoration.
 
-### Q2 — progressive frames
+Required real-model gate:
+- same prompt/image/action/seed with tap absent vs tap + no-op sink.
+- final latent/video hashes or numeric output must match.
+- cross-KV init count remains 1.
+- self-KV remains persistent across chunks.
+- sink-disabled performance regression <1%.
 
-Once Q1.5 passes, connect:
+### Q1.5 progressive VAE semantics — implementation complete, M4 evidence pending
+
+Important code fact: Wan's VAE already decodes one latent timestep at a time with causal feature caches. The original `WanVAE_.decode()` clears those caches only at call boundaries.
+
+`wan/streaming/vae_progressive.py` mirrors the original decode order while keeping the same feature cache alive across calls. `scripts/q1_5_validate_progressive_vae.py` compares:
 
 ```text
-latent_chunk_sink
-  -> bounded decode queue
-  -> VAE progressive decoder
-  -> frame publisher
-  -> localhost bridge
-  -> Canvas MediaStream
-  -> existing WebRTC
+full latent -> existing vae.decode()
+vs
+same latent split into chunks -> ProgressiveWanVaeDecoder
 ```
 
-Required backpressure:
-- bounded queue (drop/stop policy explicit),
-- generation/session id on every chunk,
-- cancellation,
-- EOS/completed/failed state,
-- stale generation frames rejected.
+It records:
+- max/mean absolute error,
+- MSE / PSNR,
+- output seam errors,
+- full vs progressive decode time,
+- MPS/CUDA memory.
 
-Primary metrics:
-- TTFF,
-- latent chunk cadence,
-- VAE decode latency/chunk,
-- bridge-to-canvas latency,
-- WebRTC send/receive latency,
-- queue depth,
-- MPS current/driver memory peak.
+Gate example:
+```bash
+LINGBOT_VAE_DTYPE=bf16 python scripts/q1_5_validate_progressive_vae.py \
+  --latents <generated_latents.safetensors> \
+  --vae-pth <Wan2.1_VAE.pth> \
+  --device mps --chunk-size 3
+```
 
-### Q2.5 — overlap only if M4 memory permits
+Do not claim Q1.5 PASS until this runs on a real E1.2 latent file.
 
-Desired pipeline:
+### Q2 live progressive frames — wiring complete, memory gate pending
+
+`wan/streaming/pipeline.py` provides `ProgressiveVaeFrameSink`:
+
+```text
+live x0 chunk
+  -> ProgressiveWanVaeDecoder
+  -> FrameBridgePublisher
+  -> LatestFrameStore
+  -> localhost bridge
+  -> QuestPhoneStream AI MediaStream
+```
+
+This sink is intentionally synchronous and opt-in. Do **not** enable it on M4 16GB until Q1.5 passes and a DiT+VAE coexistence memory check proves it is safe.
+
+The current M4 path intentionally unloads DiT before full VAE decode. That protection must not be removed just to claim streaming.
+
+### Q2.5 overlap — not started
+
+Only after Q2 memory gate:
 
 ```text
 DiT chunk N+1
@@ -138,41 +123,46 @@ VAE decode chunk N
 WebRTC encode/send chunk N-1
 ```
 
-But current M4 path intentionally unloads DiT before VAE. Do not remove that protection without a memory gate. First benchmark overlap with the existing MPS VAE and the MLX VAE POC separately. Keep `PYTORCH_MPS_HIGH_WATERMARK_RATIO=0` out of the design.
+Measure separately with MPS VAE and MLX VAE. Keep `PYTORCH_MPS_HIGH_WATERMARK_RATIO=0` out of the design.
 
-### Q3 — replace POC bridge with production local transport
+## Metrics
 
-After TTFF is proven:
-- prefer decoded-frame zero/low-copy handoff,
-- let Chromium/WebRTC use the platform encoder initially,
-- evaluate direct VideoToolbox only if profiling shows browser/canvas copy is material,
-- retain localhost bridge as a debug/replay tool.
+Record for every real run:
+- TTFF,
+- DiT chunk cadence,
+- progressive VAE latency/chunk,
+- bridge-to-canvas latency,
+- WebRTC sender/receiver latency,
+- received frame sequence/drop count,
+- MPS current/driver peak,
+- RSS,
+- output equivalence hashes/errors.
 
-### Q4 — Quest -> Mac control
+## What the Agent should NOT redesign
 
-Add only after streaming is stable:
-- start/cancel generation,
-- prompt/image/session id,
-- progress and buffer state,
-- camera/action updates.
+- E1.2 adapter / MiniCPM conditioning.
+- G1 / world conditioning.
+- signaling or offer/answer/session semantics.
+- Spatial Protocol schema.
+- Quest receiver/SpatialPanel architecture.
+- DiT math / KV-cache update order.
+- VAE weights.
 
-Do not change Spatial Protocol schema in Q0-Q2.
+## Remaining gates
 
-## Target checkpoints
-
-| Gate | Target |
-|---|---|
-| Q0 | Existing MP4 reaches Quest through AI-video source |
-| Q1 | Latent chunk hook, sink-off output unchanged |
-| Q1.5 | VAE temporal boundary semantics proven |
-| Q2 | First decoded chunk reaches Quest before full generation completes |
-| Q2.5 | TTFF < 15-20s without memory pressure |
-| Q3 | POC polling/canvas bottlenecks profiled and replaced only if needed |
-| Q4 | Quest control closes the interactive loop |
+| Gate | Code | Evidence still required |
+|---|---|---|
+| Q0 | DONE | Quest real-device replay |
+| Q1 | DONE | real generation no-op equivalence |
+| Q1.5 | DONE | M4 full-vs-progressive VAE report |
+| Q2 | DONE | M4 DiT+VAE coexistence + first frame before generation end |
+| Q2.5 | NOT STARTED | overlap profiling |
+| Q3 | NOT STARTED | replace polling/canvas only if profiling justifies it |
+| Q4 | NOT STARTED | Quest → Mac generation controls |
 
 ## Branches
 
 - LingBot: `feat/quest-streaming-poc`
 - QuestPhoneStream: `feat/ai-video-streaming-poc`
 
-Neither branch should merge model-evaluation/G1 work into the streaming experiment.
+Do not merge either branch until Q0/Q1/Q1.5 evidence is attached.
