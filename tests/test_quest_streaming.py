@@ -8,6 +8,7 @@ from unittest.mock import patch
 import torch
 import torch.nn as nn
 
+from wan.streaming.buffered_publisher import BufferedFrameBridgePublisher
 from wan.streaming.frame_bridge import LatestFrameStore
 from wan.streaming.frame_publisher import FrameBridgePublisher
 from wan.streaming.latent_tap import tap_causal_latent_chunks
@@ -58,11 +59,9 @@ class LatentTapTests(unittest.TestCase):
                 torch.tensor([100.0]),
                 object(),
             )
-            # Normal denoising forward: same generator session, not a chunk emit.
             pipe.model(x=[torch.zeros_like(x0)], t=torch.tensor([100.0]))
             self.assertEqual(len(sink.items), 0)
 
-            # Existing generator's post-chunk KV update signature.
             pipe.model(x=[x0], t=torch.tensor([0.0]), cross_attn_first_call=False)
             self.assertEqual(len(sink.items), 1)
             event, emitted = sink.items[0]
@@ -76,6 +75,22 @@ class LatentTapTests(unittest.TestCase):
 
         self.assertIs(pipe._convert_flow_pred_to_x0.__func__, original_convert_func)
         self.assertIs(pipe.model.forward.__func__, original_forward_func)
+
+    def test_teardown_survives_pipe_model_unload(self):
+        pipe = _FakePipe()
+        sink = _CollectSink()
+        model = pipe.model
+        original_forward_func = model.forward.__func__
+        with tap_causal_latent_chunks(pipe, sink, fail_open=False):
+            x0 = pipe._convert_flow_pred_to_x0(
+                torch.ones(1, 1, 1, 1),
+                torch.zeros(1, 1, 1, 1),
+                torch.tensor([1.0]),
+                object(),
+            )
+            model(x=[x0], t=torch.tensor([0.0]))
+            pipe.model = None
+        self.assertIs(model.forward.__func__, original_forward_func)
 
     def test_fail_open_does_not_break_generation(self):
         class BrokenSink:
@@ -183,6 +198,28 @@ class FramePublisherTests(unittest.TestCase):
         self.assertIsNotNone(snap.jpeg)
         self.assertTrue(snap.jpeg.startswith(b"\xff\xd8"))
         self.assertTrue(snap.jpeg.endswith(b"\xff\xd9"))
+
+    def test_buffered_publisher_preserves_chunk_frames_at_playback_cadence(self):
+        store = LatestFrameStore()
+        publisher = BufferedFrameBridgePublisher(
+            store,
+            fps=50.0,
+            jpeg_quality=80,
+            max_frames=4,
+        )
+        try:
+            frames = torch.zeros(3, 3, 4, 4)
+            self.assertEqual(publisher.publish_chunk(frames), 3)
+            self.assertTrue(publisher.wait_empty(timeout=2.0))
+            stats = publisher.stats()
+            snap = store.snapshot()
+            self.assertEqual(stats.enqueued, 3)
+            self.assertEqual(stats.published, 3)
+            self.assertGreaterEqual(stats.max_queue_depth, 1)
+            self.assertEqual(snap.sequence, 2)
+            self.assertAlmostEqual(snap.pts_ms, 40.0)
+        finally:
+            publisher.close(drain=True, timeout=2.0)
 
 
 if __name__ == "__main__":
