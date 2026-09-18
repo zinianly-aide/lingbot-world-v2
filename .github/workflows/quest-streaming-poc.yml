@@ -7,6 +7,7 @@ on:
       - "scripts/quest_*.py"
       - "scripts/q1_validate_latent_tap.py"
       - "scripts/q1_5_validate_progressive_vae.py"
+      - "scripts/q2_live_quest_poc.py"
       - "tests/test_streaming_contract.py"
       - "tests/test_quest_streaming.py"
       - ".github/workflows/quest-streaming-poc.yml"
@@ -18,6 +19,7 @@ on:
       - "scripts/quest_*.py"
       - "scripts/q1_validate_latent_tap.py"
       - "scripts/q1_5_validate_progressive_vae.py"
+      - "scripts/q2_live_quest_poc.py"
       - "tests/test_streaming_contract.py"
       - "tests/test_quest_streaming.py"
       - ".github/workflows/quest-streaming-poc.yml"
@@ -47,7 +49,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
           python -m pip install \
-            "numpy>=1.23.5,<2" \
+            "numpy>=1.23.5,<2" scipy \
             pillow easydict einops tqdm safetensors ftfy regex \
             "transformers>=4.49.0,<=4.51.3" \
             "diffusers>=0.31.0"
@@ -58,13 +60,15 @@ jobs:
             wan/streaming/events.py \
             wan/streaming/frame_bridge.py \
             wan/streaming/frame_publisher.py \
+            wan/streaming/buffered_publisher.py \
             wan/streaming/latent_tap.py \
             wan/streaming/pipeline.py \
             wan/streaming/vae_progressive.py \
             scripts/quest_frame_bridge.py \
             scripts/quest_stream_replay.py \
             scripts/q1_validate_latent_tap.py \
-            scripts/q1_5_validate_progressive_vae.py
+            scripts/q1_5_validate_progressive_vae.py \
+            scripts/q2_live_quest_poc.py
 
       - name: Run streaming unit tests
         run: |
