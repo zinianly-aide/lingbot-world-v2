@@ -1,0 +1,77 @@
+name: Quest Streaming POC
+
+on:
+  pull_request:
+    paths:
+      - "wan/streaming/**"
+      - "scripts/quest_*.py"
+      - "scripts/q1_validate_latent_tap.py"
+      - "scripts/q1_5_validate_progressive_vae.py"
+      - "scripts/q2_live_quest_poc.py"
+      - "tests/test_streaming_contract.py"
+      - "tests/test_quest_streaming.py"
+      - ".github/workflows/quest-streaming-poc.yml"
+  push:
+    branches:
+      - feat/quest-streaming-poc
+    paths:
+      - "wan/streaming/**"
+      - "scripts/quest_*.py"
+      - "scripts/q1_validate_latent_tap.py"
+      - "scripts/q1_5_validate_progressive_vae.py"
+      - "scripts/q2_live_quest_poc.py"
+      - "tests/test_streaming_contract.py"
+      - "tests/test_quest_streaming.py"
+      - ".github/workflows/quest-streaming-poc.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quest-streaming-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install streaming test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
+          python -m pip install \
+            "numpy>=1.23.5,<2" scipy \
+            pillow easydict einops tqdm safetensors ftfy regex \
+            "transformers>=4.49.0,<=4.51.3" \
+            "diffusers>=0.31.0"
+
+      - name: Compile streaming modules
+        run: |
+          python -m py_compile \
+            wan/streaming/events.py \
+            wan/streaming/frame_bridge.py \
+            wan/streaming/frame_publisher.py \
+            wan/streaming/buffered_publisher.py \
+            wan/streaming/latent_tap.py \
+            wan/streaming/pipeline.py \
+            wan/streaming/vae_progressive.py \
+            scripts/quest_frame_bridge.py \
+            scripts/quest_stream_replay.py \
+            scripts/q1_validate_latent_tap.py \
+            scripts/q1_5_validate_progressive_vae.py \
+            scripts/q2_live_quest_poc.py
+
+      - name: Run streaming unit tests
+        run: |
+          python -m unittest -v \
+            tests.test_streaming_contract \
+            tests.test_quest_streaming

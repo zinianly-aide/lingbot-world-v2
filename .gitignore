@@ -105,3 +105,9 @@ eval/e2_new/work/
 # G0.7 blind contact sheets / extracted frames are large and regenerable
 eval/g0.7/blind/frames_xy/
 eval/g0.7/blind/videos/
+
+# Quest streaming POC: keep small JSON gate reports, ignore regenerable model caches.
+eval/quest-streaming/**/*.safetensors
+eval/quest-streaming/**/*.mp4
+eval/quest-streaming/**/*.png
+eval/quest-streaming/**/*.jpg
