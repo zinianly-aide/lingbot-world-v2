@@ -1,10 +1,10 @@
 """Localhost frame bridge used by the Quest streaming POC.
 
-Producer side POSTs JPEG frames.  QuestPhoneStream's macOS sender polls the
+Producer side POSTs JPEG frames. QuestPhoneStream's macOS sender polls the
 latest frame and turns it into a Canvas MediaStream, reusing the existing WebRTC
 session/signaling path.
 
-This is intentionally a localhost-only POC transport.  It is not a replacement
+This is intentionally a localhost-only POC transport. It is not a replacement
 for the existing QuestPhoneStream protocol.
 """
 from __future__ import annotations
@@ -116,6 +116,7 @@ class FrameBridgeServer:
             def _cors(self) -> None:
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.send_header("Access-Control-Allow-Headers", "Content-Type, X-QPS-Frame-Seq, X-QPS-PTS-Ms")
+                self.send_header("Access-Control-Expose-Headers", "X-QPS-Frame-Seq, X-QPS-PTS-Ms")
                 self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 
             def _json(self, status: int, payload: dict[str, Any]) -> None:
