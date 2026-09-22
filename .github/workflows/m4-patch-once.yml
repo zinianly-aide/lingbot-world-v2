@@ -1,0 +1,116 @@
+name: M4 one-time core patch
+
+on:
+  push:
+    branches:
+      - bot/m4-fix-20260923
+
+permissions:
+  contents: write
+
+jobs:
+  patch-core:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: bot/m4-fix-20260923
+          fetch-depth: 0
+
+      - name: Apply focused M4 full/staged patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('wan/image2video.py')
+          text = path.read_text(encoding='utf-8')
+
+          old_cache = '''        # M3.6: In generate-latents stage, load image condition from cache
+          # and skip VAE encode entirely.
+          if stage == "generate-latents" and image_condition_file is not None:
+          '''
+          new_cache = '''        # M3.6/M4: generate-latents and equivalence full runs may reuse the
+          # exact same image condition so the DiT paths can be compared without
+          # MPS VAE encode run-to-run nondeterminism.
+          if stage in ("generate-latents", "full") and image_condition_file is not None:
+          '''
+          if text.count(old_cache) != 1:
+              raise SystemExit(f'expected one cached-condition block, found {text.count(old_cache)}')
+          text = text.replace(old_cache, new_cache, 1)
+
+          old_tail = '''            # M3.6: In generate-latents stage, save latents and return
+          # M4.8: full stage also saves latents when --output_latents_file given (for staged/full equivalence check)
+          if stage in ("generate-latents", "full"):
+              if output_latents_file:
+                  from wan.utils.staged_cache import save_generated_latents, GeneratedLatentsMetadata
+                  meta = GeneratedLatentsMetadata(
+                      checkpoint_id=str(getattr(self.config, 'fast_checkpoint', '')),
+                      seed=seed,
+                      requested_frame_num=frame_num,
+                      aligned_frame_num=F,
+                      chunk_size=chunk_size,
+                      h=h, w=w,
+                      lat_f=lat_f, lat_h=lat_h, lat_w=lat_w,
+                      dtype=str(pred_latent_chunks.dtype),
+                  )
+                  save_generated_latents(output_latents_file, pred_latent_chunks, meta)
+                  logging.info(f"Generated latents saved to: {output_latents_file}")
+
+              # Unload DiT and return
+              if hasattr(self.model, 'selfattn_cache'):
+                  del self.model.selfattn_cache
+              if hasattr(self.model, 'crossattn_cache'):
+                  del self.model.crossattn_cache
+              if self.sequential_load:
+                  self.unload_dit()
+              logging.info("generate-latents stage complete")
+              return None
+          '''
+          new_tail = '''            # Save generated latents whenever requested.  Full mode must continue
+          # through VAE decode; only the generate-latents stage returns here.
+          if output_latents_file:
+              from wan.utils.staged_cache import save_generated_latents, GeneratedLatentsMetadata
+              meta = GeneratedLatentsMetadata(
+                  checkpoint_id=str(getattr(self.config, 'fast_checkpoint', '')),
+                  seed=seed,
+                  requested_frame_num=frame_num,
+                  aligned_frame_num=F,
+                  chunk_size=chunk_size,
+                  h=h, w=w,
+                  lat_f=lat_f, lat_h=lat_h, lat_w=lat_w,
+                  dtype=str(pred_latent_chunks.dtype),
+              )
+              save_generated_latents(output_latents_file, pred_latent_chunks, meta)
+              logging.info(f"Generated latents saved to: {output_latents_file}")
+
+          if stage == "generate-latents":
+              # Latents-only stage ends before VAE decode.
+              if hasattr(self.model, 'selfattn_cache'):
+                  del self.model.selfattn_cache
+              if hasattr(self.model, 'crossattn_cache'):
+                  del self.model.crossattn_cache
+              if self.sequential_load:
+                  self.unload_dit()
+              logging.info("generate-latents stage complete")
+              return None
+          '''
+          if text.count(old_tail) != 1:
+              raise SystemExit(f'expected one generated-latents tail, found {text.count(old_tail)}')
+          text = text.replace(old_tail, new_tail, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          python -m py_compile wan/image2video.py
+          git diff --check
+
+      - name: Commit patch to staging branch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add wan/image2video.py
+          git commit -m "fix(m4): preserve full decode during latent capture"
+          git push origin HEAD:bot/m4-fix-20260923
