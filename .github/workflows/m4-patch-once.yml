@@ -1,4 +1,4 @@
-name: M4 one-time core patch
+name: M4 temporary validation
 
 on:
   push:
@@ -6,85 +6,31 @@ on:
       - bot/m4-fix-20260923
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch-core:
-    if: github.actor != 'github-actions[bot]'
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: bot/m4-fix-20260923
-          fetch-depth: 0
+          ref: feat/g0.5-real-validation
 
-      - name: Apply focused M4 full/staged patch
-        shell: bash
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install lightweight test dependencies
         run: |
-          python - <<'PY'
-          from pathlib import Path
+          python -m pip install --disable-pip-version-check pytest safetensors
+          python -m pip install --disable-pip-version-check torch --index-url https://download.pytorch.org/whl/cpu
 
-          path = Path('wan/image2video.py')
-          text = path.read_text(encoding='utf-8')
-
-          old_condition = 'if stage == "generate-latents" and image_condition_file is not None:'
-          new_condition = 'if stage in ("generate-latents", "full") and image_condition_file is not None:'
-          if text.count(old_condition) != 1:
-              raise SystemExit(f'expected one cached-condition branch, found {text.count(old_condition)}')
-          text = text.replace(old_condition, new_condition, 1)
-
-          start_marker = '            # M3.6: In generate-latents stage, save latents and return\n'
-          resume_marker = '                return None\n\n            if self.sequential_load:'
-          start = text.find(start_marker)
-          if start < 0:
-              raise SystemExit('generated-latents tail start marker not found')
-          resume = text.find(resume_marker, start)
-          if resume < 0:
-              raise SystemExit('generated-latents tail resume marker not found')
-          resume += len('                return None\n\n')
-
-          lines = [
-              '            # Save generated latents whenever requested. Full mode must continue',
-              '            # through VAE decode; only generate-latents returns before decode.',
-              '            if output_latents_file:',
-              '                from wan.utils.staged_cache import save_generated_latents, GeneratedLatentsMetadata',
-              '                meta = GeneratedLatentsMetadata(',
-              "                    checkpoint_id=str(getattr(self.config, 'fast_checkpoint', '')),",
-              '                    seed=seed,',
-              '                    requested_frame_num=frame_num,',
-              '                    aligned_frame_num=F,',
-              '                    chunk_size=chunk_size,',
-              '                    h=h, w=w,',
-              '                    lat_f=lat_f, lat_h=lat_h, lat_w=lat_w,',
-              '                    dtype=str(pred_latent_chunks.dtype),',
-              '                )',
-              '                save_generated_latents(output_latents_file, pred_latent_chunks, meta)',
-              '                logging.info(f"Generated latents saved to: {output_latents_file}")',
-              '',
-              '            if stage == "generate-latents":',
-              '                # Latents-only stage ends before VAE decode.',
-              "                if hasattr(self.model, 'selfattn_cache'):",
-              '                    del self.model.selfattn_cache',
-              "                if hasattr(self.model, 'crossattn_cache'):",
-              '                    del self.model.crossattn_cache',
-              '                if self.sequential_load:',
-              '                    self.unload_dit()',
-              '                logging.info("generate-latents stage complete")',
-              '                return None',
-              '',
-          ]
-          text = text[:start] + '\n'.join(lines) + text[resume:]
-          path.write_text(text, encoding='utf-8')
-          PY
-
-          python -m py_compile wan/image2video.py
+      - name: Syntax checks
+        run: |
+          python -m py_compile wan/image2video.py scripts/compare_m4_latents.py
+          bash -n scripts/m4_13frame_smoke.sh
           git diff --check
 
-      - name: Commit patch to staging branch
-        shell: bash
+      - name: Run staged/equivalence unit tests
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add wan/image2video.py
-          git commit -m "fix(m4): preserve full decode during latent capture"
-          git push origin HEAD:bot/m4-fix-20260923
+          pytest -q tests/test_m4_equivalence.py tests/test_m36_staged.py
