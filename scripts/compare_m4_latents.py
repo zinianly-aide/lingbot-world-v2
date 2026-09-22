@@ -3,24 +3,43 @@
 
 Exact (bitwise) equality is the default. Tolerances are opt-in and are never
 silently relaxed, so this can be used as the M4 full-vs-staged equivalence gate.
+
+The staged-cache module is loaded directly from its source file instead of
+importing ``wan``.  This keeps the comparator usable in lightweight CI without
+pulling the full inference dependency graph merely to inspect safetensors.
 """
 
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
 from pathlib import Path
 
 import torch
 
-# Allow execution as ``python scripts/compare_m4_latents.py`` from repo root.
 REPO_ROOT = Path(__file__).resolve().parents[1]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+STAGED_CACHE_PATH = REPO_ROOT / "wan" / "utils" / "staged_cache.py"
 
-from wan.utils.staged_cache import load_generated_latents
 
+def _load_staged_cache_module():
+    module_name = "_lingbot_m4_staged_cache"
+    spec = importlib.util.spec_from_file_location(module_name, STAGED_CACHE_PATH)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load staged cache module from {STAGED_CACHE_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    # dataclasses resolves module annotations through sys.modules while the
+    # module is executing, so register it before exec_module().
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_staged_cache = _load_staged_cache_module()
+load_generated_latents = _staged_cache.load_generated_latents
+save_generated_latents = _staged_cache.save_generated_latents
+GeneratedLatentsMetadata = _staged_cache.GeneratedLatentsMetadata
 
 _METADATA_FIELDS = (
     "format_version",
