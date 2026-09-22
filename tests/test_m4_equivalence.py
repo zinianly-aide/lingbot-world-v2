@@ -1,4 +1,11 @@
+import sys
+from pathlib import Path
+
 import torch
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.compare_m4_latents import compare_files
 from wan.utils.staged_cache import GeneratedLatentsMetadata, save_generated_latents
