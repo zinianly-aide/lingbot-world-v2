@@ -1128,7 +1128,7 @@ class WanI2VCausal:
 
         # M3.6: In generate-latents stage, load image condition from cache
         # and skip VAE encode entirely.
-        if stage == "generate-latents" and image_condition_file is not None:
+        if stage in ("generate-latents", "full") and image_condition_file is not None:
             from wan.utils.staged_cache import load_image_condition, ImageConditionMetadata
             logging.info(f"Loading image condition from cache: {image_condition_file}")
             expected_meta = ImageConditionMetadata(
@@ -1399,25 +1399,25 @@ class WanI2VCausal:
             pred_latent_chunks = torch.cat(pred_latent_chunks, dim=1)
             print(f"[M5] cross_kv_init_count={cross_kv_init_count} (must be 1)", flush=True)
 
-            # M3.6: In generate-latents stage, save latents and return
-            # M4.8: full stage also saves latents when --output_latents_file given (for staged/full equivalence check)
-            if stage in ("generate-latents", "full"):
-                if output_latents_file:
-                    from wan.utils.staged_cache import save_generated_latents, GeneratedLatentsMetadata
-                    meta = GeneratedLatentsMetadata(
-                        checkpoint_id=str(getattr(self.config, 'fast_checkpoint', '')),
-                        seed=seed,
-                        requested_frame_num=frame_num,
-                        aligned_frame_num=F,
-                        chunk_size=chunk_size,
-                        h=h, w=w,
-                        lat_f=lat_f, lat_h=lat_h, lat_w=lat_w,
-                        dtype=str(pred_latent_chunks.dtype),
-                    )
-                    save_generated_latents(output_latents_file, pred_latent_chunks, meta)
-                    logging.info(f"Generated latents saved to: {output_latents_file}")
+            # Save generated latents whenever requested. Full mode must continue
+            # through VAE decode; only generate-latents returns before decode.
+            if output_latents_file:
+                from wan.utils.staged_cache import save_generated_latents, GeneratedLatentsMetadata
+                meta = GeneratedLatentsMetadata(
+                    checkpoint_id=str(getattr(self.config, 'fast_checkpoint', '')),
+                    seed=seed,
+                    requested_frame_num=frame_num,
+                    aligned_frame_num=F,
+                    chunk_size=chunk_size,
+                    h=h, w=w,
+                    lat_f=lat_f, lat_h=lat_h, lat_w=lat_w,
+                    dtype=str(pred_latent_chunks.dtype),
+                )
+                save_generated_latents(output_latents_file, pred_latent_chunks, meta)
+                logging.info(f"Generated latents saved to: {output_latents_file}")
 
-                # Unload DiT and return
+            if stage == "generate-latents":
+                # Latents-only stage ends before VAE decode.
                 if hasattr(self.model, 'selfattn_cache'):
                     del self.model.selfattn_cache
                 if hasattr(self.model, 'crossattn_cache'):
@@ -1426,7 +1426,6 @@ class WanI2VCausal:
                     self.unload_dit()
                 logging.info("generate-latents stage complete")
                 return None
-
             if self.sequential_load:
                 # M3.5: Fully unload DiT (not just .cpu()) to free ~3.4GB
                 # before VAE decode. Also release KV caches.
