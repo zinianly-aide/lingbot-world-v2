@@ -22,7 +22,7 @@ jobs:
 
       - name: Install lightweight test dependencies
         run: |
-          python -m pip install --disable-pip-version-check pytest safetensors
+          python -m pip install --disable-pip-version-check pytest safetensors numpy
           python -m pip install --disable-pip-version-check torch --index-url https://download.pytorch.org/whl/cpu
 
       - name: Syntax checks
