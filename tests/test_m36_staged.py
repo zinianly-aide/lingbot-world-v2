@@ -288,7 +288,9 @@ class TestFullStageControlFlow(unittest.TestCase):
 
         source = inspect.getsource(WanI2VCausal._generate_causal_fast)
         block_start = source.index('if stage in ("generate-latents", "full"):')
-        decode_pos = source.index("videos = self.vae.decode([pred_latent_chunks])")
+        decode_pos = source.index(
+            "videos = self.vae.decode([pred_latent_chunks])", block_start
+        )
         segment = source[block_start:decode_pos]
         guard = 'if stage == "generate-latents":'
         self.assertIn(guard, segment)
