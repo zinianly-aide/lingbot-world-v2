@@ -75,10 +75,12 @@ jobs:
             scripts/q1_validate_latent_tap.py \
             scripts/q1_5_validate_progressive_vae.py \
             scripts/q2_live_quest_poc.py
+          bash -n scripts/cloud_cuda_validate.sh
 
       - name: Run streaming unit tests
         run: |
           python -m unittest -v \
             tests.test_m36_staged \
             tests.test_streaming_contract \
-            tests.test_quest_streaming
+            tests.test_quest_streaming \
+            tests.test_replay_loop
