@@ -284,15 +284,24 @@ class TestFullStageControlFlow(unittest.TestCase):
     def test_full_stage_does_not_share_generate_latents_early_return(self):
         """full may save latents, but only generate-latents may return before VAE decode."""
         import inspect
+        from wan.image2video import WanI2VCausal
+
         source = inspect.getsource(WanI2VCausal._generate_causal_fast)
-        marker = 'if stage == "generate-latents":'
-        self.assertIn(marker, source)
-        guarded = source[source.index(marker):]
-        return_pos = guarded.index("return None")
+        block_start = source.index('if stage in ("generate-latents", "full"):')
         decode_pos = source.index("videos = self.vae.decode([pred_latent_chunks])")
-        marker_pos = source.index(marker)
-        self.assertLess(marker_pos, return_pos + marker_pos)
-        self.assertLess(return_pos + marker_pos, decode_pos)
+        segment = source[block_start:decode_pos]
+        guard = 'if stage == "generate-latents":'
+        self.assertIn(guard, segment)
+        guard_pos = segment.index(guard)
+        return_pos = segment.index("return None")
+        self.assertLess(guard_pos, return_pos)
+
+        lines = segment.splitlines()
+        guard_line = next(line for line in lines if guard in line)
+        return_line = next(line for line in lines if "return None" in line)
+        guard_indent = len(guard_line) - len(guard_line.lstrip())
+        return_indent = len(return_line) - len(return_line.lstrip())
+        self.assertGreater(return_indent, guard_indent)
 
 
 if __name__ == "__main__":
