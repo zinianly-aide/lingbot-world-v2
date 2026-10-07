@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Q2 live POC: causal DiT chunks -> progressive VAE -> paced bridge -> Quest.
 
-This is intentionally a gated POC for M4 16GB. It does not alter model code,
+This is a gated POC for Apple MPS and single-GPU CUDA validation. It does not alter model code,
 signaling, or the Quest receiver. It first creates a matching image-condition
 cache, then explicitly co-resides DiT + VAE only for the progressive run.
 
@@ -365,9 +365,9 @@ def main() -> int:
         drained = downstream_publisher.wait_empty(timeout=60.0)
         playback_stats = downstream_publisher.stats()
         report["streamingProfile"] = args.streaming_profile
-    report["chunkSize"] = args.chunk_size
-    report["maxArea"] = args.max_area
-    report["totalReadbacks"] = sink.total_readbacks
+        report["chunkSize"] = args.chunk_size
+        report["maxArea"] = args.max_area
+        report["totalReadbacks"] = sink.total_readbacks
         report["flushReadbackSec"] = sink._flush_sec
         report["flushJpegSec"] = sink._flush_jpeg_sec
         report["uint8ConvertSec"] = sink._uint8_convert_sec

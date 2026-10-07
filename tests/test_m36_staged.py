@@ -277,5 +277,23 @@ class TestCameraNotInImageCondition(unittest.TestCase):
         self.assertTrue(hasattr(meta, "lat_f"))
 
 
+
+class TestFullStageControlFlow(unittest.TestCase):
+    """Regression coverage for the full-stage CUDA/MPS continuation."""
+
+    def test_full_stage_does_not_share_generate_latents_early_return(self):
+        """full may save latents, but only generate-latents may return before VAE decode."""
+        import inspect
+        source = inspect.getsource(WanI2VCausal._generate_causal_fast)
+        marker = 'if stage == "generate-latents":'
+        self.assertIn(marker, source)
+        guarded = source[source.index(marker):]
+        return_pos = guarded.index("return None")
+        decode_pos = source.index("videos = self.vae.decode([pred_latent_chunks])")
+        marker_pos = source.index(marker)
+        self.assertLess(marker_pos, return_pos + marker_pos)
+        self.assertLess(return_pos + marker_pos, decode_pos)
+
+
 if __name__ == "__main__":
     unittest.main()

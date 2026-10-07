@@ -1465,15 +1465,16 @@ class WanI2VCausal:
                     save_generated_latents(output_latents_file, pred_latent_chunks, meta)
                     logging.info(f"Generated latents saved to: {output_latents_file}")
 
-                # Unload DiT and return
-                if hasattr(self.model, 'selfattn_cache'):
-                    del self.model.selfattn_cache
-                if hasattr(self.model, 'crossattn_cache'):
-                    del self.model.crossattn_cache
-                if self.sequential_load:
-                    self.unload_dit()
-                logging.info("generate-latents stage complete")
-                return None
+                # generate-latents stops here; full continues into VAE decode.
+                if stage == "generate-latents":
+                    if hasattr(self.model, 'selfattn_cache'):
+                        del self.model.selfattn_cache
+                    if hasattr(self.model, 'crossattn_cache'):
+                        del self.model.crossattn_cache
+                    if self.sequential_load:
+                        self.unload_dit()
+                    logging.info("generate-latents stage complete")
+                    return None
 
             if self.sequential_load:
                 # M3.5: Fully unload DiT (not just .cpu()) to free ~3.4GB
