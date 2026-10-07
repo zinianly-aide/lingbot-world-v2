@@ -101,6 +101,23 @@ class BufferedFrameBridgePublisher:
         )
         return output.getvalue()
 
+    def publish_jpeg_bytes(self, jpeg: bytes, sequence: int) -> None:
+        """Encode already-encoded JPEG bytes (used by external async encoder)."""
+        if self._closed:
+            raise RuntimeError("publisher is closed")
+        item = _EncodedFrame(
+            sequence=sequence,
+            pts_ms=sequence * 1000.0 / self.fps,
+            jpeg=jpeg,
+        )
+        try:
+            self._queue.put(item, timeout=self.enqueue_timeout)
+        except queue.Full as exc:
+            raise TimeoutError("frame playback buffer is full") from exc
+        with self._lock:
+            self._enqueued += 1
+            self._max_queue_depth = max(self._max_queue_depth, self._queue.qsize())
+
     def publish_chunk(self, frames: torch.Tensor) -> int:
         """Encode and enqueue ``[3,T,H,W]`` frames in temporal order.
 

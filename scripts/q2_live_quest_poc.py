@@ -13,9 +13,12 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 import threading
 import time
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import torch
 from PIL import Image
@@ -27,7 +30,6 @@ from wan.streaming import (
     FrameBridgeServer,
     LatestFrameStore,
     ProgressiveWanVaeDecoder,
-    tap_causal_latent_chunks,
 )
 from wan.utils.device import set_autocast_device_type
 from wan.utils.staged_cache import load_image_condition
@@ -58,6 +60,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--buffer-frames", type=int, default=120)
     p.add_argument("--tail-seconds", type=float, default=1.0)
     p.add_argument("--work-dir", default=str(REPO_ROOT / "eval/quest-streaming/q2_live"))
+    p.add_argument("--max-area", type=int, default=480*832, help="H*W budget for spatial resolution")
+    p.add_argument("--streaming-profile", choices=["performance", "interactive", "none"],
+                    default="none", help="preset defaults: performance=chunk4 (C3), interactive=chunk2 (C5)")
     return p.parse_args()
 
 
@@ -83,31 +88,149 @@ def memory_stats(device: torch.device) -> dict[str, float]:
 
 
 class TrackingSink:
-    def __init__(self, decoder, publisher, device: torch.device) -> None:
+    """Q2.5-C3: first frame immediate, tail staged as MPS uint8 tensors."""
+
+    def __init__(self, decoder, downstream_publisher, device: torch.device, fps: float = 16.0, jpeg_quality: int = 90) -> None:
         self.decoder = decoder
-        self.publisher = publisher
+        self.downstream = downstream_publisher
         self.device = device
+        self.fps = float(fps)
+        self.jpeg_quality = int(jpeg_quality)
+        self.sequence = 0
         self.chunks: list[dict] = []
+        self.total_readbacks = 0
+        self._pending_tail_u8: list = []
+        self._flush_sec = 0.0
+        self._flush_jpeg_sec = 0.0
+        self._uint8_convert_sec = 0.0
+        self._deferred_bytes = 0
+        self._deferred_count = 0
+        self._preview_times: list[float] = []
+        self._generation_start: float | None = None
+
+    def _frame_to_jpeg(self, frame_hwc_u8) -> bytes:
+        from io import BytesIO
+        from PIL import Image
+        out = BytesIO()
+        Image.fromarray(frame_hwc_u8, mode="RGB").save(
+            out, format="JPEG", quality=self.jpeg_quality, optimize=False
+        )
+        return out.getvalue()
+
+    def _publish_numpy_frames(self, frames_hwc_u8):
+        import numpy as np
+        n = frames_hwc_u8.shape[0]
+        for i in range(n):
+            seq = self.sequence
+            self.sequence += 1
+            pts_ms = seq * 1000.0 / self.fps
+            jpeg = self._frame_to_jpeg(np.ascontiguousarray(frames_hwc_u8[i]))
+            self.downstream.publish_jpeg_bytes(jpeg, seq)
 
     def on_latent_chunk(self, event, latent) -> None:
-        t0 = time.monotonic()
-        frames = self.decoder.decode_chunk(latent)
-        decode_sec = time.monotonic() - t0
-        enqueue_t0 = time.monotonic()
-        enqueued = self.publisher.publish_chunk(frames)
-        enqueue_sec = time.monotonic() - enqueue_t0
+        if self._generation_start is None:
+            self._generation_start = time.monotonic()
+        before_cleanup = memory_stats(self.device)
+        if self.device.type == "mps":
+            import gc
+            torch.mps.synchronize()
+            gc.collect()
+            torch.mps.empty_cache()
+            torch.mps.synchronize()
+        after_cleanup = memory_stats(self.device)
+
+        chunk_t0 = time.monotonic()
+        first_slice_t = None
+        first_frame_readback_sec = 0.0
+        first_frame_jpeg_sec = 0.0
+        total_frames = 0
+
+        for idx, frame_slice in enumerate(self.decoder.decode_chunk_iter(latent)):
+            if first_slice_t is None:
+                first_slice_t = time.monotonic()
+            if idx == 0:
+                n_frames = int(frame_slice.shape[1])
+                t0 = time.monotonic()
+                frame_u8 = (
+                    frame_slice.detach()
+                    .clamp(-1, 1).add(1.0).mul(127.5).round()
+                    .to(torch.uint8).permute(1, 2, 3, 0).cpu().numpy()
+                )
+                first_frame_readback_sec = time.monotonic() - t0
+                self.total_readbacks += 1
+                t0 = time.monotonic()
+                self._publish_numpy_frames(frame_u8)
+                first_frame_jpeg_sec = time.monotonic() - t0
+                self._preview_times.append(time.monotonic())
+                total_frames += n_frames
+                del frame_slice, frame_u8
+            else:
+                # Convert to uint8 ON MPS immediately, release float ref
+                n_frames = int(frame_slice.shape[1])
+                t0 = time.monotonic()
+                # [3,N,H,W] -> [N,H,W,3] uint8 contiguous on MPS
+                u8 = (
+                    frame_slice.detach()
+                    .clamp(-1, 1).add(1.0).mul(127.5).round()
+                    .to(torch.uint8).permute(1, 2, 3, 0).contiguous()
+                )
+                self._uint8_convert_sec += time.monotonic() - t0
+                self._pending_tail_u8.append(u8)
+                self._deferred_bytes += u8.numel()
+                self._deferred_count += n_frames
+                total_frames += n_frames
+                del frame_slice, u8
+
+        decode_sec = time.monotonic() - chunk_t0
+        after_decode = memory_stats(self.device)
         self.chunks.append({
             "event": event.to_dict(),
-            "rgbShape": [int(v) for v in frames.shape],
             "decodeSec": decode_sec,
-            "jpegEnqueueSec": enqueue_sec,
-            "enqueuedFrames": enqueued,
+            "firstSliceMs": (first_slice_t - chunk_t0) * 1000.0 if first_slice_t else None,
+            "firstFrameReadbackSec": first_frame_readback_sec,
+            "firstFrameJpegSec": first_frame_jpeg_sec,
+            "deferredTailFrames": total_frames - 1 if first_slice_t else total_frames,
+            "readbacksThisChunk": 1,
+            "enqueuedFrames": total_frames,
+            "beforeDecodeCleanup": before_cleanup,
+            "afterDecodeCleanup": after_cleanup,
+            "afterDecode": after_decode,
             "memoryAfterChunk": memory_stats(self.device),
         })
 
+    def flush(self) -> None:
+        if not self._pending_tail_u8:
+            return
+        t0 = time.monotonic()
+        tail_cat = torch.cat(self._pending_tail_u8, dim=0)  # [N,H,W,3] uint8 MPS
+        del self._pending_tail_u8
+        self._pending_tail_u8 = []
+        tail_u8 = tail_cat.cpu().numpy()
+        del tail_cat
+        self._flush_sec = time.monotonic() - t0
+        self.total_readbacks += 1
+        t0 = time.monotonic()
+        self._publish_numpy_frames(tail_u8)
+        self._flush_jpeg_sec = time.monotonic() - t0
+        del tail_u8
+
+
+PROFILE_DEFAULTS = {
+    "performance": {"chunk_size": 4, "max_area": 384*672},
+    "interactive": {"chunk_size": 2, "max_area": 384*672},
+}
 
 def main() -> int:
     args = parse_args()
+    if args.streaming_profile in PROFILE_DEFAULTS:
+        prof = PROFILE_DEFAULTS[args.streaming_profile]
+        # CLI explicit values only override if user passed them; since argparse
+        # uses defaults, we apply profile defaults only when the arg equals its
+        # default. Simple approach: profile sets defaults, CLI wins.
+        if args.chunk_size == 4 and args.streaming_profile == "interactive":
+            args.chunk_size = prof["chunk_size"]
+        if args.max_area == 480*832 and args.streaming_profile in ("performance", "interactive"):
+            args.max_area = prof["max_area"]
     if args.chunk_size <= 0 or args.frame_num <= 0:
         raise SystemExit("frame-num and chunk-size must be > 0")
 
@@ -178,7 +301,7 @@ def main() -> int:
             image,
             action_path=args.action_path,
             chunk_size=args.chunk_size,
-            max_area=480 * 832,
+            max_area=args.max_area,
             frame_num=args.frame_num,
             seed=args.seed,
             offload_model=True,
@@ -204,46 +327,57 @@ def main() -> int:
         report["memoryAfterDitPlusVae"] = memory_stats(device)
 
         decoder = ProgressiveWanVaeDecoder(pipe.vae).start()
-        publisher = BufferedFrameBridgePublisher(
+        downstream_publisher = BufferedFrameBridgePublisher(
             store,
             fps=float(cfg.sample_fps),
             jpeg_quality=args.jpeg_quality,
             max_frames=args.buffer_frames,
         )
-        sink = TrackingSink(decoder, publisher, device)
+        sink = TrackingSink(
+            decoder, downstream_publisher, device,
+            fps=float(cfg.sample_fps), jpeg_quality=args.jpeg_quality,
+        )
 
         # generate-latents normally asserts VAE is absent in sequential mode.
-        # For this isolated Q2 experiment both models are intentionally loaded,
-        # so temporarily disable automatic stage load/unload. Model math is not
-        # changed; the flag is restored in finally.
+        # For this isolated Q2 experiment both models are intentionally loaded.
         pipe.sequential_load = False
+        # Direct seam: set sink on the pipe instead of wrapping model.forward.
+        pipe.latent_chunk_sink = sink
         generation_started = time.monotonic()
-        with tap_causal_latent_chunks(
-            pipe,
-            sink,
-            generation_id=f"q2-seed{args.seed}",
+        pipe.generate(
+            args.prompt,
+            image,
+            action_path=args.action_path,
+            chunk_size=args.chunk_size,
+            max_area=args.max_area,
+            frame_num=args.frame_num,
             seed=args.seed,
-            total_chunks=total_chunks,
-            fail_open=False,
-        ):
-            pipe.generate(
-                args.prompt,
-                image,
-                action_path=args.action_path,
-                chunk_size=args.chunk_size,
-                max_area=480 * 832,
-                frame_num=args.frame_num,
-                seed=args.seed,
-                offload_model=True,
-                stage="generate-latents",
-                image_condition_file=str(image_condition),
-                output_latents_file=str(output_latents),
-            )
+            offload_model=True,
+            stage="generate-latents",
+            image_condition_file=str(image_condition),
+            output_latents_file=str(output_latents),
+        )
+        pipe.latent_chunk_sink = None
+        sink.flush()
         generation_finished = time.monotonic()
         pipe.sequential_load = True
 
-        drained = publisher.wait_empty(timeout=60.0)
-        playback_stats = publisher.stats()
+        drained = downstream_publisher.wait_empty(timeout=60.0)
+        playback_stats = downstream_publisher.stats()
+        report["streamingProfile"] = args.streaming_profile
+    report["chunkSize"] = args.chunk_size
+    report["maxArea"] = args.max_area
+    report["totalReadbacks"] = sink.total_readbacks
+        report["flushReadbackSec"] = sink._flush_sec
+        report["flushJpegSec"] = sink._flush_jpeg_sec
+        report["uint8ConvertSec"] = sink._uint8_convert_sec
+        report["deferredUint8MB"] = round(sink._deferred_bytes / 1e6, 1)
+        report["deferredFrameCount"] = sink._deferred_count
+        report["previewCount"] = len(sink._preview_times)
+        if sink._generation_start is not None:
+            report["previewTimestampsRel"] = [round(t - sink._generation_start, 1) for t in sink._preview_times]
+        if len(sink._preview_times) >= 2:
+            report["previewIntervalSec"] = round(sink._preview_times[1] - sink._preview_times[0], 1)
         store.set_state("completed")
         if args.tail_seconds > 0:
             time.sleep(args.tail_seconds)
@@ -294,7 +428,7 @@ def main() -> int:
         if decoder is not None:
             decoder.close()
         if publisher is not None:
-            publisher.close(drain=False, timeout=2.0)
+            downstream_publisher.close(drain=False, timeout=2.0)
         if pipe is not None:
             try:
                 if getattr(pipe, "vae", None) is not None:
