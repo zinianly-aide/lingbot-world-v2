@@ -9,6 +9,8 @@ on:
       - "scripts/q1_5_validate_progressive_vae.py"
       - "scripts/q2_live_quest_poc.py"
       - "scripts/quest_continuous_world.py"
+      - "scripts/quest_world_buffered.py"
+      - "scripts/quest_world_reuse.py"
       - "scripts/quest_http_bridge.py"
       - "scripts/cloud_cuda_validate.sh"
       - "wan/image2video.py"
@@ -17,6 +19,8 @@ on:
       - "tests/test_quest_streaming.py"
       - "tests/test_c6_continuous_stream.py"
       - "tests/test_quest_continuous_world.py"
+      - "tests/test_quest_world_buffered.py"
+      - "tests/test_quest_world_reuse.py"
       - ".github/workflows/quest-streaming-poc.yml"
   push:
     branches:
@@ -29,6 +33,8 @@ on:
       - "scripts/q1_5_validate_progressive_vae.py"
       - "scripts/q2_live_quest_poc.py"
       - "scripts/quest_continuous_world.py"
+      - "scripts/quest_world_buffered.py"
+      - "scripts/quest_world_reuse.py"
       - "scripts/quest_http_bridge.py"
       - "scripts/cloud_cuda_validate.sh"
       - "wan/image2video.py"
@@ -37,6 +43,8 @@ on:
       - "tests/test_quest_streaming.py"
       - "tests/test_c6_continuous_stream.py"
       - "tests/test_quest_continuous_world.py"
+      - "tests/test_quest_world_buffered.py"
+      - "tests/test_quest_world_reuse.py"
       - ".github/workflows/quest-streaming-poc.yml"
   workflow_dispatch:
 
@@ -91,7 +99,9 @@ jobs:
             scripts/q1_5_validate_progressive_vae.py \
             scripts/q2_live_quest_poc.py \
             scripts/quest_continuous_world.py \
-            scripts/quest_http_bridge.py
+            scripts/quest_http_bridge.py \
+            scripts/quest_world_buffered.py \
+            scripts/quest_world_reuse.py
           bash -n scripts/cloud_cuda_validate.sh
 
       - name: Run streaming unit tests
@@ -102,4 +112,6 @@ jobs:
             tests.test_quest_streaming \
             tests.test_c6_continuous_stream \
             tests.test_quest_continuous_world \
+            tests.test_quest_world_buffered \
+            tests.test_quest_world_reuse \
             tests.test_replay_loop
