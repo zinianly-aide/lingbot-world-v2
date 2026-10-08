@@ -89,3 +89,42 @@ Quest evidence.
 - `--retain-segments` retains N most recent segment directories (default 3).
 - Bind the HTTP bridge to localhost; SSH tunnel stays local-only.
 - Stop AutoDL when no longer testing to avoid charges.
+
+## 2026-10-09 RTX 4090 validation results
+
+All runs isolated on `127.0.0.1:8766`; C5 ports untouched.
+
+| Gate | Strategy | Frames | Result |
+| --- | --- | --- | --- |
+| G1 | Process per segment, 125 frames × 2, 8 FPS | 250/250 | PASS, seq 0–249 |
+| G2 | Process per segment, 253 frames × 2, 8 FPS | 506/506 | PASS, seq 0–505; CUDA reserved ~13.3 GB |
+| G3 | Same process, reuse DiT+VAE, 125 frames × 2, 8 FPS | 250/250 | PASS; 6.23s bridge publishing gap across segment boundary |
+| G4 | Same process + overlapping playback, 125 frames × 2, 5 FPS | 250/250 | PASS; one persistent encoder/pacer |
+| G5 | Buffered continuous, 125 frames × 3, 5 FPS | 375/375 | PASS; max actual inter-frame gap 271.24ms, 0 intervals above 300ms; boundary intervals 200.07ms and 200.09ms |
+
+G5 end-of-segment GPU allocated memory ~4.0 GB, reserved ~14–15 GB;
+bounded encoded queue max depth 48 frames. Content aesthetics, headset
+latency, and visual scene continuity still require the physical Quest test.
+Do not conflate the full clip's 5 FPS publish cadence with low-latency 8 FPS
+interactive output. The buffered queue may add seconds of end-to-end latency.
+
+Recommended experimental entrypoint for the Quest continuity gate:
+
+```bash
+cd /root/autodl-tmp/lingbot-c7
+/root/autodl-tmp/venv/bin/python scripts/quest_world_buffered.py \
+  --ckpt-dir /root/autodl-tmp/models/lingbot-world-v2-1.3b-causal-fast \
+  --assets-dir /root/autodl-tmp/models/lingbot-assets \
+  --frame-num 129 --chunk-size 4 --local-attn-size 16 \
+  --output-fps 5 --max-segments 0 --retain-segments 3 \
+  --bridge-port 8766 --work-dir /root/autodl-tmp/bench/c7-live
+```
+
+`--max-segments 0` uses the rented GPU continuously until explicitly
+stopped. Prefer `--max-segments 3` during bounded acceptance. C7 buffered
+mode preserves publisher/Bridge lifetime and starts next generation while
+already generated frames remain queued. It resets causal context per segment,
+so it **does not** establish seamless world-state continuity.
+
+Stop generation with Ctrl+C/SIGTERM before stopping the AutoDL instance.
+Do not start an unbounded GPU run unattended.
