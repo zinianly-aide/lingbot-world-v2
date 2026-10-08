@@ -353,6 +353,9 @@ class WanI2VCausal:
         # Reset per generate()
         self._cross_attn_initialized: bool = False
 
+        # Optional progressive streaming sink (Q2). Default None = original behavior.
+        self.latent_chunk_sink = None
+
         if self.sequential_load:
             # Lazy mode: don't load any models yet
             logging.info(
@@ -1404,6 +1407,36 @@ class WanI2VCausal:
                            cross_attn_first_call=False,
                            **kwargs)
 
+                # ---- Q2: progressive streaming sink (safe seam) ----
+                # Called AFTER context update completes, BEFORE next chunk.
+                # Free transient step tensors so VAE decode has maximum headroom.
+                if self.latent_chunk_sink is not None:
+                    _chunk_latent = x0
+                    del noise_pred
+                    del latent_model_input
+                    del timestep
+                    del current_timestep
+                    if self.device.type == "mps":
+                        import gc as _gc
+                        torch.mps.synchronize()
+                        _gc.collect()
+                        torch.mps.empty_cache()
+                        torch.mps.synchronize()
+                    from wan.streaming.events import LatentChunkEvent
+                    _event = LatentChunkEvent(
+                        generation_id="q2",
+                        chunk_index=chunk_id,
+                        total_chunks=num_inference_chunk,
+                        latent_start=chunk_id * chunk_size,
+                        latent_count=int(_chunk_latent.shape[1]),
+                        shape=tuple(int(v) for v in _chunk_latent.shape),
+                        dtype=str(_chunk_latent.dtype),
+                        seed=int(seed),
+                        elapsed_ms=0.0,
+                    )
+                    self.latent_chunk_sink.on_latent_chunk(_event, _chunk_latent)
+                    del _chunk_latent
+
                 # ---- M5: post-chunk causal state ----
                 g0 = self_kv_cache[0]
                 k0 = self_kv_cache[0]["k"]
@@ -1432,15 +1465,16 @@ class WanI2VCausal:
                     save_generated_latents(output_latents_file, pred_latent_chunks, meta)
                     logging.info(f"Generated latents saved to: {output_latents_file}")
 
-                # Unload DiT and return
-                if hasattr(self.model, 'selfattn_cache'):
-                    del self.model.selfattn_cache
-                if hasattr(self.model, 'crossattn_cache'):
-                    del self.model.crossattn_cache
-                if self.sequential_load:
-                    self.unload_dit()
-                logging.info("generate-latents stage complete")
-                return None
+                # generate-latents stops here; full continues into VAE decode.
+                if stage == "generate-latents":
+                    if hasattr(self.model, 'selfattn_cache'):
+                        del self.model.selfattn_cache
+                    if hasattr(self.model, 'crossattn_cache'):
+                        del self.model.crossattn_cache
+                    if self.sequential_load:
+                        self.unload_dit()
+                    logging.info("generate-latents stage complete")
+                    return None
 
             if self.sequential_load:
                 # M3.5: Fully unload DiT (not just .cpu()) to free ~3.4GB

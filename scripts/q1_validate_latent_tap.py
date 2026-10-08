@@ -14,8 +14,12 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import sys
 import time
 from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))
 
 import torch
 from PIL import Image
@@ -26,7 +30,6 @@ from wan.streaming import tap_causal_latent_chunks
 from wan.utils.device import set_autocast_device_type
 from wan.utils.staged_cache import load_generated_latents, sha256_tensor
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CKPT = "/Volumes/ssd/huggingface/hub/models--robbyant--lingbot-world-v2-1.3b-causal-fast/snapshots/7e36a5f919f86cb4255cc9bfc30adb44963fbde1"
 DEFAULT_ASSETS = "/Volumes/ssd/lingbot-assets"
 DEFAULT_PROMPT = "Move the camera slowly forward while keeping the lone tree stable and centered."

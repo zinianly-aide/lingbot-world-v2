@@ -74,42 +74,57 @@ def main() -> None:
     ap.add_argument("input", type=Path)
     ap.add_argument("--bridge", default="http://127.0.0.1:8765")
     ap.add_argument("--fps", type=float, default=12.0)
+    ap.add_argument("--loop", action="store_true",
+                    help="keep replaying the file in-process; sequence and PTS keep "
+                         "monotonically increasing across loops instead of resetting.")
     args = ap.parse_args()
     if not args.input.is_file():
         raise SystemExit(f"video not found: {args.input}")
     if args.fps <= 0:
         raise SystemExit("--fps must be > 0")
 
-    cmd = [
-        "ffmpeg", "-v", "error", "-i", str(args.input),
-        "-vf", f"fps={args.fps}",
-        "-f", "image2pipe", "-vcodec", "mjpeg", "-q:v", "3", "-",
-    ]
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    if proc.stdout is None:
-        raise RuntimeError("ffmpeg stdout unavailable")
-
     period = 1.0 / args.fps
     started = time.monotonic()
+    sequence = 0
     post_state(args.bridge, "streaming")
     try:
-        for sequence, jpeg in enumerate(iter_mjpeg(proc.stdout)):
-            target = started + sequence * period
-            delay = target - time.monotonic()
-            if delay > 0:
-                time.sleep(delay)
-            post_frame(args.bridge, jpeg, sequence, sequence * period * 1000.0)
+        while True:
+            cmd = [
+                "ffmpeg", "-v", "error", "-i", str(args.input),
+                "-vf", f"fps={args.fps}",
+                "-f", "image2pipe", "-vcodec", "mjpeg", "-q:v", "3", "-",
+            ]
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            if proc.stdout is None:
+                raise RuntimeError("ffmpeg stdout unavailable")
+            try:
+                for jpeg in iter_mjpeg(proc.stdout):
+                    # Absolute-time pacing: target wall clock is derived from the global
+                    # sequence counter, so restarting ffmpeg for the next loop does not
+                    # reset cadence. Sequence and PTS also keep monotonic, which the
+                    # bridge relies on to drop out-of-order frames.
+                    target = started + sequence * period
+                    delay = target - time.monotonic()
+                    if delay > 0:
+                        time.sleep(delay)
+                    pts_ms = sequence * period * 1000.0
+                    post_frame(args.bridge, jpeg, sequence, pts_ms)
+                    sequence += 1
+            finally:
+                proc.stdout.close()
+                proc.wait()
+
+            if proc.returncode:
+                post_state(args.bridge, "failed")
+                raise SystemExit(proc.returncode)
+            if not args.loop:
+                break
+    except KeyboardInterrupt:
+        post_state(args.bridge, "stopped")
+        return
     except Exception:
         post_state(args.bridge, "failed")
-        proc.terminate()
         raise
-    finally:
-        proc.stdout.close()
-        proc.wait()
-
-    if proc.returncode:
-        post_state(args.bridge, "failed")
-        raise SystemExit(proc.returncode)
     post_state(args.bridge, "completed")
 
 
