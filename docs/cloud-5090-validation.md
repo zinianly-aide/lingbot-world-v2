@@ -117,7 +117,7 @@ Record generation time, TTFF, chunk decode times, peak VRAM, GPU utilization and
 Do the network/Quest gates in one paid session:
 
 1. Start Q2/bridge on the cloud host.
-2. SSH-forward cloud `127.0.0.1:8765` to Mac `127.0.0.1:8765`.
+2. SSH-forward cloud `127.0.0.1:8765` to any free localhost port on the Mac. Use `127.0.0.1:8765` only when it is free; otherwise choose another localhost port such as `18765`. The macOS sender accepts any localhost HTTP(S) port via its bridge URL input.
 3. Verify Mac `aiVideoSource.ts` sees `/healthz` and monotonically increasing frame sequence.
 4. Start the existing QuestPhoneStream WebRTC session without changing signaling or Spatial Protocol.
 5. Record cloud generation TTFF, cloud-to-Mac bridge latency, Mac sender behavior and Quest-visible continuity/reconnect behavior.
