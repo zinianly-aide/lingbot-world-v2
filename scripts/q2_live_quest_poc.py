@@ -31,6 +31,7 @@ from wan.streaming import (
     LatestFrameStore,
     ProgressiveWanVaeDecoder,
 )
+from wan.streaming.frame_publisher_async import AsyncFrameBridgePublisher
 from wan.utils.device import set_autocast_device_type
 from wan.utils.staged_cache import load_image_condition
 
@@ -63,6 +64,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--max-area", type=int, default=480*832, help="H*W budget for spatial resolution")
     p.add_argument("--streaming-profile", choices=["performance", "interactive", "none"],
                     default="none", help="preset defaults: performance=chunk4 (C3), interactive=chunk2 (C5)")
+    p.add_argument("--continuous-publish", action="store_true",
+                   help="C6: publish every decoded VAE frame during generation instead of deferring tail frames")
+    p.add_argument("--raw-queue-frames", type=int, default=6,
+                   help="C6 raw CUDA/MPS frame queue depth before JPEG encoding")
+    p.add_argument("--output-fps", type=float, default=0.0,
+                   help="Bridge playback FPS; 0 uses the model sample FPS")
     return p.parse_args()
 
 
@@ -215,6 +222,55 @@ class TrackingSink:
         del tail_u8
 
 
+class ContinuousTrackingSink:
+    """C6: decode and enqueue every RGB frame as soon as its latent chunk is ready."""
+
+    def __init__(self, decoder, async_publisher, device: torch.device) -> None:
+        self.decoder = decoder
+        self.publisher = async_publisher
+        self.device = device
+        self.sequence = 0
+        self.chunks: list[dict] = []
+        self.total_readbacks = 0
+        self._generation_start: float | None = None
+        self._preview_times: list[float] = []
+        self._flush_sec = 0.0
+        self._flush_jpeg_sec = 0.0
+        self._uint8_convert_sec = 0.0
+        self._deferred_bytes = 0
+        self._deferred_count = 0
+
+    def on_latent_chunk(self, event, latent) -> None:
+        if self._generation_start is None:
+            self._generation_start = time.monotonic()
+        started = time.monotonic()
+        frame_count = 0
+        first_submit = None
+        for frame_slice in self.decoder.decode_chunk_iter(latent):
+            for i in range(int(frame_slice.shape[1])):
+                if first_submit is None:
+                    first_submit = time.monotonic()
+                    self._preview_times.append(first_submit)
+                self.publisher.submit_frame(frame_slice[:, i])
+                frame_count += 1
+                self.sequence += 1
+        self.chunks.append({
+            "event": event.to_dict(),
+            "decodeSec": time.monotonic() - started,
+            "firstSliceMs": None if first_submit is None else (first_submit - started) * 1000.0,
+            "enqueuedFrames": frame_count,
+            "memoryAfterChunk": memory_stats(self.device),
+        })
+
+    def flush(self) -> None:
+        started = time.monotonic()
+        self.publisher.close()
+        self._flush_sec = time.monotonic() - started
+
+    def async_stats(self) -> dict:
+        return self.publisher.stats()
+
+
 PROFILE_DEFAULTS = {
     "performance": {"chunk_size": 4, "max_area": 384*672},
     "interactive": {"chunk_size": 2, "max_area": 384*672},
@@ -255,6 +311,9 @@ def main() -> int:
     report_path = work_dir / "report.json"
 
     cfg = WAN_CONFIGS["i2v-1.3B"]
+    output_fps = float(args.output_fps) if args.output_fps > 0 else float(cfg.sample_fps)
+    if output_fps <= 0:
+        raise SystemExit("output-fps must be > 0")
     image = Image.open(args.image).convert("RGB")
     store = LatestFrameStore()
     store.set_state("generating")
@@ -329,14 +388,25 @@ def main() -> int:
         decoder = ProgressiveWanVaeDecoder(pipe.vae).start()
         downstream_publisher = BufferedFrameBridgePublisher(
             store,
-            fps=float(cfg.sample_fps),
+            fps=output_fps,
             jpeg_quality=args.jpeg_quality,
             max_frames=args.buffer_frames,
         )
-        sink = TrackingSink(
-            decoder, downstream_publisher, device,
-            fps=float(cfg.sample_fps), jpeg_quality=args.jpeg_quality,
-        )
+        publisher = downstream_publisher
+        async_publisher = None
+        if args.continuous_publish:
+            async_publisher = AsyncFrameBridgePublisher(
+                downstream_publisher,
+                fps=output_fps,
+                jpeg_quality=args.jpeg_quality,
+                raw_queue_frames=args.raw_queue_frames,
+            ).start()
+            sink = ContinuousTrackingSink(decoder, async_publisher, device)
+        else:
+            sink = TrackingSink(
+                decoder, downstream_publisher, device,
+                fps=output_fps, jpeg_quality=args.jpeg_quality,
+            )
 
         # generate-latents normally asserts VAE is absent in sequential mode.
         # For this isolated Q2 experiment both models are intentionally loaded.
@@ -365,6 +435,11 @@ def main() -> int:
         drained = downstream_publisher.wait_empty(timeout=60.0)
         playback_stats = downstream_publisher.stats()
         report["streamingProfile"] = args.streaming_profile
+        report["continuousPublish"] = bool(args.continuous_publish)
+        report["outputFps"] = output_fps
+        report["playbackDurationSec"] = float(condition_meta.aligned_frame_num) / output_fps
+        if args.continuous_publish:
+            report["asyncPublisher"] = sink.async_stats()
         report["chunkSize"] = args.chunk_size
         report["maxArea"] = args.max_area
         report["totalReadbacks"] = sink.total_readbacks
@@ -389,6 +464,7 @@ def main() -> int:
 
         report.update({
             "generationSec": generation_sec,
+            "generatedFps": float(condition_meta.aligned_frame_num) / generation_sec,
             "ttffSec": ttff,
             "firstFrameBeforeGenerationEnd": bool(
                 first_publish is not None and first_publish < generation_finished
