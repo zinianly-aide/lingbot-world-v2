@@ -68,6 +68,8 @@ def parse_args() -> argparse.Namespace:
                    help="C6: publish every decoded VAE frame during generation instead of deferring tail frames")
     p.add_argument("--raw-queue-frames", type=int, default=6,
                    help="C6 raw CUDA/MPS frame queue depth before JPEG encoding")
+    p.add_argument("--output-fps", type=float, default=0.0,
+                   help="Bridge playback FPS; 0 uses the model sample FPS")
     return p.parse_args()
 
 
@@ -309,6 +311,9 @@ def main() -> int:
     report_path = work_dir / "report.json"
 
     cfg = WAN_CONFIGS["i2v-1.3B"]
+    output_fps = float(args.output_fps) if args.output_fps > 0 else float(cfg.sample_fps)
+    if output_fps <= 0:
+        raise SystemExit("output-fps must be > 0")
     image = Image.open(args.image).convert("RGB")
     store = LatestFrameStore()
     store.set_state("generating")
@@ -383,7 +388,7 @@ def main() -> int:
         decoder = ProgressiveWanVaeDecoder(pipe.vae).start()
         downstream_publisher = BufferedFrameBridgePublisher(
             store,
-            fps=float(cfg.sample_fps),
+            fps=output_fps,
             jpeg_quality=args.jpeg_quality,
             max_frames=args.buffer_frames,
         )
@@ -392,7 +397,7 @@ def main() -> int:
         if args.continuous_publish:
             async_publisher = AsyncFrameBridgePublisher(
                 downstream_publisher,
-                fps=float(cfg.sample_fps),
+                fps=output_fps,
                 jpeg_quality=args.jpeg_quality,
                 raw_queue_frames=args.raw_queue_frames,
             ).start()
@@ -400,7 +405,7 @@ def main() -> int:
         else:
             sink = TrackingSink(
                 decoder, downstream_publisher, device,
-                fps=float(cfg.sample_fps), jpeg_quality=args.jpeg_quality,
+                fps=output_fps, jpeg_quality=args.jpeg_quality,
             )
 
         # generate-latents normally asserts VAE is absent in sequential mode.
@@ -431,6 +436,8 @@ def main() -> int:
         playback_stats = downstream_publisher.stats()
         report["streamingProfile"] = args.streaming_profile
         report["continuousPublish"] = bool(args.continuous_publish)
+        report["outputFps"] = output_fps
+        report["playbackDurationSec"] = float(condition_meta.aligned_frame_num) / output_fps
         if args.continuous_publish:
             report["asyncPublisher"] = sink.async_stats()
         report["chunkSize"] = args.chunk_size
@@ -457,6 +464,7 @@ def main() -> int:
 
         report.update({
             "generationSec": generation_sec,
+            "generatedFps": float(condition_meta.aligned_frame_num) / generation_sec,
             "ttffSec": ttff,
             "firstFrameBeforeGenerationEnd": bool(
                 first_publish is not None and first_publish < generation_finished
