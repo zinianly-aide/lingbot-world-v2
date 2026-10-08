@@ -13,6 +13,7 @@ on:
       - "tests/test_m36_staged.py"
       - "tests/test_streaming_contract.py"
       - "tests/test_quest_streaming.py"
+      - "tests/test_c6_continuous_stream.py"
       - ".github/workflows/quest-streaming-poc.yml"
   push:
     branches:
@@ -28,6 +29,7 @@ on:
       - "tests/test_m36_staged.py"
       - "tests/test_streaming_contract.py"
       - "tests/test_quest_streaming.py"
+      - "tests/test_c6_continuous_stream.py"
       - ".github/workflows/quest-streaming-poc.yml"
   workflow_dispatch:
 
@@ -72,6 +74,7 @@ jobs:
             wan/streaming/frame_bridge.py \
             wan/streaming/frame_publisher.py \
             wan/streaming/buffered_publisher.py \
+            wan/streaming/frame_publisher_async.py \
             wan/streaming/latent_tap.py \
             wan/streaming/pipeline.py \
             wan/streaming/vae_progressive.py \
@@ -88,4 +91,5 @@ jobs:
             tests.test_m36_staged \
             tests.test_streaming_contract \
             tests.test_quest_streaming \
+            tests.test_c6_continuous_stream \
             tests.test_replay_loop
