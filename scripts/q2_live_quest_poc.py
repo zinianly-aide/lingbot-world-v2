@@ -32,6 +32,7 @@ from wan.streaming import (
     ProgressiveWanVaeDecoder,
 )
 from wan.streaming.frame_publisher_async import AsyncFrameBridgePublisher
+from scripts.quest_http_bridge import RemoteFrameStore
 from wan.utils.device import set_autocast_device_type
 from wan.utils.staged_cache import load_image_condition
 
@@ -70,6 +71,14 @@ def parse_args() -> argparse.Namespace:
                    help="C6 raw CUDA/MPS frame queue depth before JPEG encoding")
     p.add_argument("--output-fps", type=float, default=0.0,
                    help="Bridge playback FPS; 0 uses the model sample FPS")
+    p.add_argument("--external-bridge-url", default="",
+                   help="Send frames to a persistent bridge owned by quest_continuous_world.py")
+    p.add_argument("--sequence-offset", type=int, default=0,
+                   help="First global session frame index for external bridge mode")
+    p.add_argument("--local-attn-size", type=int, default=-1,
+                   help="Rolling self-KV window size in latent frames (-1=unbounded)")
+    p.add_argument("--sink-size", type=int, default=0,
+                   help="Preserved initial latent frames inside rolling KV window")
     return p.parse_args()
 
 
@@ -289,6 +298,18 @@ def main() -> int:
             args.max_area = prof["max_area"]
     if args.chunk_size <= 0 or args.frame_num <= 0:
         raise SystemExit("frame-num and chunk-size must be > 0")
+    if args.sequence_offset < 0:
+        raise SystemExit("sequence-offset must be >= 0")
+    if args.local_attn_size != -1 and (
+        args.local_attn_size < 2 * args.chunk_size
+        or args.sink_size < 0
+        or args.sink_size + args.chunk_size > args.local_attn_size
+    ):
+        raise SystemExit("local-attn-size must be >= 2*chunk-size and fit sink-size")
+    if args.sink_size > 0 and args.local_attn_size == -1:
+        raise SystemExit("sink-size requires a bounded local-attn-size")
+    if args.external_bridge_url and not args.continuous_publish:
+        raise SystemExit("external-bridge-url requires --continuous-publish")
 
     require(args.ckpt_dir, "checkpoint")
     require(args.assets_dir, "assets")
@@ -315,11 +336,19 @@ def main() -> int:
     if output_fps <= 0:
         raise SystemExit("output-fps must be > 0")
     image = Image.open(args.image).convert("RGB")
-    store = LatestFrameStore()
+    if args.external_bridge_url:
+        store = RemoteFrameStore(
+            args.external_bridge_url, sequence_offset=args.sequence_offset,
+            output_fps=output_fps,
+        )
+        server = None
+        server_thread = None
+    else:
+        store = LatestFrameStore()
+        server = FrameBridgeServer(args.bridge_host, args.bridge_port, store=store)
+        server_thread = threading.Thread(target=server.serve_forever, name="qps-frame-bridge", daemon=True)
+        server_thread.start()
     store.set_state("generating")
-    server = FrameBridgeServer(args.bridge_host, args.bridge_port, store=store)
-    server_thread = threading.Thread(target=server.serve_forever, name="qps-frame-bridge", daemon=True)
-    server_thread.start()
 
     publisher = None
     decoder = None
@@ -327,7 +356,10 @@ def main() -> int:
     report: dict = {
         "gate": "Q2_LIVE_PROGRESSIVE_QUEST",
         "pass": False,
-        "bridge": f"http://{args.bridge_host}:{args.bridge_port}",
+        "bridge": args.external_bridge_url or f"http://{args.bridge_host}:{args.bridge_port}",
+        "sequenceOffset": args.sequence_offset,
+        "localAttnSize": args.local_attn_size,
+        "sinkSize": args.sink_size,
         "frameNumRequested": args.frame_num,
         "chunkSize": args.chunk_size,
         "seed": args.seed,
@@ -345,8 +377,8 @@ def main() -> int:
             use_sp=False,
             t5_cpu=False,
             convert_model_dtype=False,
-            local_attn_size=-1,
-            sink_size=0,
+            local_attn_size=args.local_attn_size,
+            sink_size=args.sink_size,
             infer_mode="causal_fast",
             assets_dir=args.assets_dir,
             prompt_embeds_file=args.prompt_embeds,
@@ -516,8 +548,10 @@ def main() -> int:
                     pipe.unload_dit()
             except Exception:
                 pass
-        server.shutdown()
-        server_thread.join(timeout=2.0)
+        if server is not None:
+            server.shutdown()
+        if server_thread is not None:
+            server_thread.join(timeout=2.0)
         report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
         print(json.dumps(report, indent=2, ensure_ascii=False))
 
