@@ -35,8 +35,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 VAE_DIR = REPO_ROOT / "eval/bench_vae_mlx/vae_mlx"
-LATENT = REPO_ROOT / "eval/e2/.cache/single_subject_42/latents.safetensors"
-REF_MPS_BF16 = REPO_ROOT / "eval/bench_vae_mlx/ref_mps_bf16.npy"
+DEFAULT_LATENT = REPO_ROOT / "eval/e2/.cache/single_subject_42/latents.safetensors"
+DEFAULT_REF = REPO_ROOT / "eval/bench_vae_mlx/ref_mps_bf16.npy"
 
 
 def _rss_mb() -> float:
@@ -48,16 +48,17 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dtype", choices=["fp32", "bf16"], required=True)
     ap.add_argument("--result", required=True)
-    ap.add_argument("--ref", default=str(REF_MPS_BF16))
+    ap.add_argument("--latent", default=str(DEFAULT_LATENT))
+    ap.add_argument("--ref", default=str(DEFAULT_REF))
     args = ap.parse_args()
 
     mx_dtype = {"fp32": mx.float32, "bf16": mx.bfloat16}[args.dtype]
 
     # --- load latent (normalized space, [C,T,H,W] fp32) -> channels-last [B,T,H,W,C] ---
-    with safe_open(str(LATENT), "np") as f:
+    with safe_open(args.latent, "np") as f:
         z = f.get_tensor("latents").astype(np.float32)
     z_cl = np.transpose(z, (1, 2, 3, 0))[None, ...]  # [1,T,H,W,C]
-    print(f"[mlx-bench] dtype={args.dtype} latent channels-last {z_cl.shape}")
+    print(f"[mlx-bench] dtype={args.dtype} latent channels-last {z_cl.shape}", flush=True)
 
     # --- model load ---
     gc.collect()
@@ -101,6 +102,10 @@ def main() -> int:
         print(f"[mlx-bench] run {i}: {dt:.3f}s")
     infer_median = float(np.median(times))
     peak_rss_mb = round(_rss_mb(), 1)
+    try:
+        metal_cache_mb = round(mx.get_cache_memory() / (1024 ** 2), 1)
+    except Exception:
+        metal_cache_mb = None
 
     # output -> [C,T,H,W]
     out_np = np.array(out, copy=True)[0]  # [T,H,W,C]
@@ -133,7 +138,7 @@ def main() -> int:
 
     result = {
         "dtype": args.dtype,
-        "latent_path": str(LATENT),
+        "latent_path": args.latent,
         "latent_channels_last_shape": list(z_cl.shape),
         "output_shape": list(out_chw.shape),
         "load_wall_s": round(load_wall, 3),
@@ -141,6 +146,7 @@ def main() -> int:
         "infer_runs_s": times,
         "infer_median_s": round(infer_median, 3),
         "peak_rss_mb": peak_rss_mb,
+        "metal_cache_mb": metal_cache_mb,
         "error_vs_mps_bf16": error,
         "sanity": sanity,
     }

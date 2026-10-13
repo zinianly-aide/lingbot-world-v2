@@ -1,0 +1,32 @@
+{
+  "backend": "mps",
+  "dtype": "bf16",
+  "latent": "/Users/anshi/clawd/lingbot-world-v2/eval/e2/.cache/single_subject_42/latents.safetensors",
+  "latent_shape": [
+    16,
+    4,
+    58,
+    104
+  ],
+  "output_shape": [
+    3,
+    13,
+    464,
+    832
+  ],
+  "load_wall_s": 0.963,
+  "warmup_wall_s": 55.573,
+  "infer_runs_s": [
+    135.055,
+    123.815,
+    178.003
+  ],
+  "infer_median_s": 135.055,
+  "peak_mps_allocated_mb": 361.1,
+  "peak_driver_mb": 17649.0,
+  "range": [
+    -1.0,
+    1.0
+  ],
+  "temporal_mad": 0.30286553502082825
+}
