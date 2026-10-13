@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "properties": {
+    "environment": {"type": "string"},
+    "scene_layout": {"type": "string"},
+    "main_entities": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "appearance": {"type": "string"},
+          "position": {"type": "string"},
+          "state": {"type": "string"}
+        },
+        "required": ["name", "appearance", "position", "state"],
+        "additionalProperties": false
+      }
+    },
+    "lighting": {"type": "string"},
+    "weather": {"type": "string"},
+    "camera": {"type": "string"},
+    "motion": {"type": "string"},
+    "persistent_constraints": {"type": "array", "items": {"type": "string"}},
+    "user_intent": {"type": "string"}
+  },
+  "required": ["environment", "scene_layout", "main_entities", "lighting", "weather", "camera", "motion", "persistent_constraints", "user_intent"],
+  "additionalProperties": false
+}

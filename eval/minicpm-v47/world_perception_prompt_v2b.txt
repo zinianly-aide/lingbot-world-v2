@@ -1,0 +1,9 @@
+Extract only visually confirmed facts from this SINGLE still image. Output JSON only using the provided schema.
+environment: concise visible setting, never empty. scene_layout: visible foreground/background and left/right relationships, never empty.
+main_entities: 1 to 8 clearly visible objects, each with nonempty names and short appearance, position, state. Include salient architecture and subjects; do not invent hidden objects.
+lighting: visible light only. weather: unknown when indoors or unclear.
+camera: viewpoint/framing, never movement, static or fixed.
+motion: exactly "unknown", because a still frame cannot establish temporal motion.
+persistent_constraints: visible identity and layout facts only, never actions or predictions.
+user_intent: exactly "" (empty, zero characters); no user request is supplied.
+Do not infer future actions or include long paragraphs within fields.
