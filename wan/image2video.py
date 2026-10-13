@@ -353,6 +353,9 @@ class WanI2VCausal:
         # Reset per generate()
         self._cross_attn_initialized: bool = False
 
+        # Optional progressive streaming sink (Q2). Default None = original behavior.
+        self.latent_chunk_sink = None
+
         if self.sequential_load:
             # Lazy mode: don't load any models yet
             logging.info(
@@ -1403,6 +1406,36 @@ class WanI2VCausal:
                 self.model(x=[x0], t=timestep,
                            cross_attn_first_call=False,
                            **kwargs)
+
+                # ---- Q2: progressive streaming sink (safe seam) ----
+                # Called AFTER context update completes, BEFORE next chunk.
+                # Free transient step tensors so VAE decode has maximum headroom.
+                if self.latent_chunk_sink is not None:
+                    _chunk_latent = x0
+                    del noise_pred
+                    del latent_model_input
+                    del timestep
+                    del current_timestep
+                    if self.device.type == "mps":
+                        import gc as _gc
+                        torch.mps.synchronize()
+                        _gc.collect()
+                        torch.mps.empty_cache()
+                        torch.mps.synchronize()
+                    from wan.streaming.events import LatentChunkEvent
+                    _event = LatentChunkEvent(
+                        generation_id="q2",
+                        chunk_index=chunk_id,
+                        total_chunks=num_inference_chunk,
+                        latent_start=chunk_id * chunk_size,
+                        latent_count=int(_chunk_latent.shape[1]),
+                        shape=tuple(int(v) for v in _chunk_latent.shape),
+                        dtype=str(_chunk_latent.dtype),
+                        seed=int(seed),
+                        elapsed_ms=0.0,
+                    )
+                    self.latent_chunk_sink.on_latent_chunk(_event, _chunk_latent)
+                    del _chunk_latent
 
                 # ---- M5: post-chunk causal state ----
                 g0 = self_kv_cache[0]

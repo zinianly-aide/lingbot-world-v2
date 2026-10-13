@@ -95,6 +95,48 @@ class ProgressiveWanVaeDecoder:
         self._chunks += 1
         return result
 
+    def decode_chunk_iter(self, latent: torch.Tensor):
+        """Yield one RGB frame-slice immediately after each temporal slice.
+
+        Yields ``[3, Tout_i, Hout, Wout]`` in ``[-1, 1]``. Concatenating all
+        yielded tensors along dim=1 gives the exact same result as
+        :meth:`decode_chunk`. Causal VAE caches are preserved between slices.
+        """
+        if self._closed:
+            raise RuntimeError("decoder is closed")
+        if latent.ndim != 4:
+            raise ValueError(f"latent must be [C,T,H,W], got {tuple(latent.shape)}")
+        if latent.shape[1] <= 0:
+            raise ValueError("latent chunk must contain at least one time step")
+        self.start()
+
+        with autocast_ctx(dtype=self.vae.dtype):
+            z = latent.unsqueeze(0)
+            scale = self.vae.scale
+            if isinstance(scale[0], torch.Tensor):
+                z = z / scale[1].view(1, self.model.z_dim, 1, 1, 1) + scale[0].view(
+                    1, self.model.z_dim, 1, 1, 1
+                )
+            else:
+                z = z / scale[1] + scale[0]
+
+            x = self.model.conv2(z)
+            yielded = 0
+            for i in range(x.shape[2]):
+                self.model._conv_idx = [0]
+                out = self.model.decoder(
+                    x[:, :, i:i + 1, :, :],
+                    feat_cache=self.model._feat_map,
+                    feat_idx=self.model._conv_idx,
+                )
+                frame = out.float().clamp_(-1, 1).squeeze(0)
+                yielded += int(frame.shape[1])
+                yield frame
+
+        self._latent_frames += int(latent.shape[1])
+        self._output_frames += yielded
+        self._chunks += 1
+
     def decode_chunks(self, chunks: Iterable[torch.Tensor]) -> torch.Tensor:
         outputs = [self.decode_chunk(chunk) for chunk in chunks]
         if not outputs:
