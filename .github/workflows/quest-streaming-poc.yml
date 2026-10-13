@@ -27,9 +27,12 @@ on:
       - "tests/test_quest_world_buffered.py"
       - "tests/test_c72_playback_policy.py"
       - "tests/test_quest_world_reuse.py"
+      - "tests/test_replay_loop.py"
       - ".github/workflows/quest-streaming-poc.yml"
   push:
     branches:
+      - integration/quest-streaming
+      - feat/c7.2-playback-telemetry
       - feat/quest-streaming-poc
       - feat/c7-world-session
     paths:
@@ -57,6 +60,7 @@ on:
       - "tests/test_quest_world_buffered.py"
       - "tests/test_c72_playback_policy.py"
       - "tests/test_quest_world_reuse.py"
+      - "tests/test_replay_loop.py"
       - ".github/workflows/quest-streaming-poc.yml"
   workflow_dispatch:
 
