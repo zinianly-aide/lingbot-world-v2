@@ -1,0 +1,548 @@
+{
+  "summary": {
+    "n": 5,
+    "v47_json": 5,
+    "v47_schema": 5,
+    "v47_nonempty_entities": 5,
+    "v47_empty_intent": 4,
+    "v47_motion_exact_unknown": 4,
+    "v46_json": 1,
+    "v47_wall_avg_s": 7.99,
+    "v47_vision_encode_avg_ms": 3414,
+    "v47_max_rss_bytes": 2197422080,
+    "v47_max_footprint_bytes": 1509509568,
+    "v46_avg_inference_s": 8.36,
+    "v46_avg_decode_tps": 76.8
+  },
+  "comparison_limitations": [
+    "MLX 4.6 has no grammar-constrained JSON decoder here",
+    "4.6 includes schema text in prompt, 4.7 grammar schema",
+    "Tokenizer, sampling implementations and prompt preprocessing differ",
+    "True cold-start, first-token, GPU-unified-memory peaks and repeated stability NOT RUN"
+  ],
+  "rows": [
+    {
+      "scene": "single_subject",
+      "4_7_json": true,
+      "4_7_keys": true,
+      "4_7_environment": "calm lake with mountains in the distance and clouds in the sky",
+      "4_7_layout": "tree on right, mountains left, sky above",
+      "4_7_entities": [
+        "tree",
+        "mountains",
+        "sky"
+      ],
+      "4_7_intent_empty": true,
+      "4_7_motion_exact_unknown": true,
+      "4_7_camera_raw": "static, centered",
+      "4_7_visible_constraints": [
+        "tree is the only tree",
+        "water reflects the tree",
+        "mountains are in the background"
+      ],
+      "4_7_elapsed_s": 11.07,
+      "4_7_vision_ms": 3741,
+      "4_7_max_rss_bytes": 2197422080,
+      "4_7_peak_footprint_bytes": 1509509568,
+      "4_6_json": false,
+      "4_6_load_s": 0.981,
+      "4_6_inference_s": 9.148,
+      "4_6_tokens": 550,
+      "4_6_tokens_per_sec": 76.75635416709171,
+      "visual_hallucination_review": "NOT VERIFIED",
+      "spatial_accuracy_review": "NOT VERIFIED",
+      "raw_world": {
+        "environment": "calm lake with mountains in the distance and clouds in the sky",
+        "scene_layout": "tree on right, mountains left, sky above",
+        "main_entities": [
+          {
+            "name": "tree",
+            "appearance": "green leaves, trunk submerged",
+            "position": "center-right",
+            "state": "standing in water"
+          },
+          {
+            "name": "mountains",
+            "appearance": "brown and white",
+            "position": "background",
+            "state": "visible"
+          },
+          {
+            "name": "sky",
+            "appearance": "blue with white clouds",
+            "position": "top",
+            "state": "clear"
+          }
+        ],
+        "lighting": "bright daylight",
+        "weather": "partly cloudy",
+        "camera": "static, centered",
+        "motion": "unknown",
+        "persistent_constraints": [
+          "tree is the only tree",
+          "water reflects the tree",
+          "mountains are in the background"
+        ],
+        "user_intent": ""
+      },
+      "derived_world_semantic_gate": {
+        "environment": "calm lake with mountains in the distance and clouds in the sky",
+        "scene_layout": "tree on right, mountains left, sky above",
+        "main_entities": [
+          {
+            "name": "tree",
+            "appearance": "green leaves, trunk submerged",
+            "position": "center-right",
+            "state": "standing in water"
+          },
+          {
+            "name": "mountains",
+            "appearance": "brown and white",
+            "position": "background",
+            "state": "visible"
+          },
+          {
+            "name": "sky",
+            "appearance": "blue with white clouds",
+            "position": "top",
+            "state": "clear"
+          }
+        ],
+        "lighting": "bright daylight",
+        "weather": "partly cloudy",
+        "camera": "centered",
+        "motion": "unknown",
+        "persistent_constraints": [
+          "tree is the only tree",
+          "water reflects the tree",
+          "mountains are in the background"
+        ],
+        "user_intent": ""
+      },
+      "authoritative_user_request_separate": "Move the camera slowly forward while keeping the lone tree stable and centered."
+    },
+    {
+      "scene": "spatial",
+      "4_7_json": true,
+      "4_7_keys": true,
+      "4_7_environment": "overcast sky and green grass",
+      "4_7_layout": "foreground has grass and stones; background is open field; left has partial stone cluster, right has isolated stone",
+      "4_7_entities": [
+        "stone circle",
+        "isolated stone",
+        "archway",
+        "people"
+      ],
+      "4_7_intent_empty": true,
+      "4_7_motion_exact_unknown": true,
+      "4_7_camera_raw": "static, centered on stone circle",
+      "4_7_visible_constraints": [
+        "no actions",
+        "no predictions",
+        "identity and layout only"
+      ],
+      "4_7_elapsed_s": 6.56,
+      "4_7_vision_ms": 2915,
+      "4_7_max_rss_bytes": 2116419584,
+      "4_7_peak_footprint_bytes": 1418332512,
+      "4_6_json": true,
+      "4_6_load_s": 0.975,
+      "4_6_inference_s": 5.609,
+      "4_6_tokens": 317,
+      "4_6_tokens_per_sec": 77.81893731021009,
+      "visual_hallucination_review": "NOT VERIFIED",
+      "spatial_accuracy_review": "NOT VERIFIED",
+      "raw_world": {
+        "environment": "overcast sky and green grass",
+        "scene_layout": "foreground has grass and stones; background is open field; left has partial stone cluster, right has isolated stone",
+        "main_entities": [
+          {
+            "name": "stone circle",
+            "appearance": "large gray stones with horizontal lintels",
+            "position": "center",
+            "state": "weathered"
+          },
+          {
+            "name": "isolated stone",
+            "appearance": "single large stone on right",
+            "position": "far right",
+            "state": "standing"
+          },
+          {
+            "name": "archway",
+            "appearance": "stone arch through two stones",
+            "position": "left center",
+            "state": "open"
+          },
+          {
+            "name": "people",
+            "appearance": "small figures in distance",
+            "position": "background right",
+            "state": "present"
+          }
+        ],
+        "lighting": "diffuse, overcast",
+        "weather": "cloudy",
+        "camera": "static, centered on stone circle",
+        "motion": "unknown",
+        "persistent_constraints": [
+          "no actions",
+          "no predictions",
+          "identity and layout only"
+        ],
+        "user_intent": ""
+      },
+      "derived_world_semantic_gate": {
+        "environment": "overcast sky and green grass",
+        "scene_layout": "foreground has grass and stones; background is open field; left has partial stone cluster, right has isolated stone",
+        "main_entities": [
+          {
+            "name": "stone circle",
+            "appearance": "large gray stones with horizontal lintels",
+            "position": "center",
+            "state": "weathered"
+          },
+          {
+            "name": "isolated stone",
+            "appearance": "single large stone on right",
+            "position": "far right",
+            "state": "standing"
+          },
+          {
+            "name": "archway",
+            "appearance": "stone arch through two stones",
+            "position": "left center",
+            "state": "open"
+          },
+          {
+            "name": "people",
+            "appearance": "small figures in distance",
+            "position": "background right",
+            "state": "present"
+          }
+        ],
+        "lighting": "diffuse, overcast",
+        "weather": "cloudy",
+        "camera": "centered on stone circle",
+        "motion": "unknown",
+        "persistent_constraints": [],
+        "user_intent": ""
+      },
+      "authoritative_user_request_separate": "Pan the camera slowly to the right, preserving the circular arrangement of standing stones."
+    },
+    {
+      "scene": "indoor",
+      "4_7_json": true,
+      "4_7_keys": true,
+      "4_7_environment": "living room with bookshelves, sofa, coffee table, and window",
+      "4_7_layout": "sofa centered, coffee table in front, lamp to left, window to right",
+      "4_7_entities": [
+        "sofa",
+        "coffee table",
+        "bookshelf",
+        "lamp",
+        "window"
+      ],
+      "4_7_intent_empty": true,
+      "4_7_motion_exact_unknown": true,
+      "4_7_camera_raw": "static, frontal view",
+      "4_7_visible_constraints": [
+        "no actions",
+        "no predictions",
+        "identity and layout only"
+      ],
+      "4_7_elapsed_s": 8.04,
+      "4_7_vision_ms": 3737,
+      "4_7_max_rss_bytes": 2164621312,
+      "4_7_peak_footprint_bytes": 1467320696,
+      "4_6_json": false,
+      "4_6_load_s": 0.975,
+      "4_6_inference_s": 9.09,
+      "4_6_tokens": 550,
+      "4_6_tokens_per_sec": 76.27105629334376,
+      "visual_hallucination_review": "NOT VERIFIED",
+      "spatial_accuracy_review": "NOT VERIFIED",
+      "raw_world": {
+        "environment": "living room with bookshelves, sofa, coffee table, and window",
+        "scene_layout": "sofa centered, coffee table in front, lamp to left, window to right",
+        "main_entities": [
+          {
+            "name": "sofa",
+            "appearance": "beige fabric",
+            "position": "center-left",
+            "state": "occupied by pillows"
+          },
+          {
+            "name": "coffee table",
+            "appearance": "wooden",
+            "position": "front center",
+            "state": "empty bowl on top"
+          },
+          {
+            "name": "bookshelf",
+            "appearance": "wooden, filled with books and decor",
+            "position": "background left",
+            "state": "organized"
+          },
+          {
+            "name": "lamp",
+            "appearance": "wooden tripod",
+            "position": "left foreground",
+            "state": "lit"
+          },
+          {
+            "name": "window",
+            "appearance": "right side, sheer and curtain",
+            "position": "far right",
+            "state": "open to light"
+          }
+        ],
+        "lighting": "warm sunlight streaming in from window",
+        "weather": "unknown outdoors",
+        "camera": "static, frontal view",
+        "motion": "unknown",
+        "persistent_constraints": [
+          "no actions",
+          "no predictions",
+          "identity and layout only"
+        ],
+        "user_intent": ""
+      },
+      "derived_world_semantic_gate": {
+        "environment": "living room with bookshelves, sofa, coffee table, and window",
+        "scene_layout": "sofa centered, coffee table in front, lamp to left, window to right",
+        "main_entities": [
+          {
+            "name": "sofa",
+            "appearance": "beige fabric",
+            "position": "center-left",
+            "state": "occupied by pillows"
+          },
+          {
+            "name": "coffee table",
+            "appearance": "wooden",
+            "position": "front center",
+            "state": "empty bowl on top"
+          },
+          {
+            "name": "bookshelf",
+            "appearance": "wooden, filled with books and decor",
+            "position": "background left",
+            "state": "organized"
+          },
+          {
+            "name": "lamp",
+            "appearance": "wooden tripod",
+            "position": "left foreground",
+            "state": "lit"
+          },
+          {
+            "name": "window",
+            "appearance": "right side, sheer and curtain",
+            "position": "far right",
+            "state": "open to light"
+          }
+        ],
+        "lighting": "warm sunlight streaming in from window",
+        "weather": "unknown outdoors",
+        "camera": "frontal view",
+        "motion": "unknown",
+        "persistent_constraints": [],
+        "user_intent": ""
+      },
+      "authoritative_user_request_separate": "Move the camera slowly forward through the living room, keeping the sofa and coffee table stable."
+    },
+    {
+      "scene": "outdoor",
+      "4_7_json": true,
+      "4_7_keys": true,
+      "4_7_environment": "A stone Great Wall winds through a hillside covered in green and brown trees under a clear blue sky.",
+      "4_7_layout": "The wall occupies the foreground, middle ground, and extends into the background. Trees cover the hill behind the wall. The sky is above the hill.",
+      "4_7_entities": [
+        "Great Wall",
+        "Watchtower"
+      ],
+      "4_7_intent_empty": false,
+      "4_7_motion_exact_unknown": false,
+      "4_7_camera_raw": "Static, fixed viewpoint.",
+      "4_7_visible_constraints": [
+        "No additional objects or actions."
+      ],
+      "4_7_elapsed_s": 7.67,
+      "4_7_vision_ms": 3763,
+      "4_7_max_rss_bytes": 2195259392,
+      "4_7_peak_footprint_bytes": 1498089896,
+      "4_6_json": false,
+      "4_6_load_s": 0.975,
+      "4_6_inference_s": 9.257,
+      "4_6_tokens": 550,
+      "4_6_tokens_per_sec": 76.4854114385018,
+      "visual_hallucination_review": "NOT VERIFIED",
+      "spatial_accuracy_review": "NOT VERIFIED",
+      "raw_world": {
+        "environment": "A stone Great Wall winds through a hillside covered in green and brown trees under a clear blue sky.",
+        "scene_layout": "The wall occupies the foreground, middle ground, and extends into the background. Trees cover the hill behind the wall. The sky is above the hill.",
+        "main_entities": [
+          {
+            "name": "Great Wall",
+            "appearance": "Stone brick and stone structure with crenellations and watchtowers.",
+            "position": "Winds up the hillside.",
+            "state": "Active and intact."
+          },
+          {
+            "name": "Watchtower",
+            "appearance": "Tall stone structure with arched openings.",
+            "position": "Right side of the wall.",
+            "state": "Stationary."
+          }
+        ],
+        "lighting": "Bright daylight with shadows cast by the wall.",
+        "weather": "Clear blue sky with faint clouds.",
+        "camera": "Static, fixed viewpoint.",
+        "motion": "Unknown, as it is a still image.",
+        "persistent_constraints": [
+          "No additional objects or actions."
+        ],
+        "user_intent": "(empty)"
+      },
+      "derived_world_semantic_gate": {
+        "environment": "A stone Great Wall winds through a hillside covered in green and brown trees under a clear blue sky.",
+        "scene_layout": "The wall occupies the foreground, middle ground, and extends into the background. Trees cover the hill behind the wall. The sky is above the hill.",
+        "main_entities": [
+          {
+            "name": "Great Wall",
+            "appearance": "Stone brick and stone structure with crenellations and watchtowers.",
+            "position": "Winds up the hillside.",
+            "state": "Active and intact."
+          },
+          {
+            "name": "Watchtower",
+            "appearance": "Tall stone structure with arched openings.",
+            "position": "Right side of the wall.",
+            "state": "Stationary."
+          }
+        ],
+        "lighting": "Bright daylight with shadows cast by the wall.",
+        "weather": "Clear blue sky with faint clouds.",
+        "camera": "viewpoint.",
+        "motion": "unknown",
+        "persistent_constraints": [],
+        "user_intent": ""
+      },
+      "authoritative_user_request_separate": "Glide the camera forward along the Great Wall, preserving the stone path and watchtowers."
+    },
+    {
+      "scene": "camera_motion",
+      "4_7_json": true,
+      "4_7_keys": true,
+      "4_7_environment": "lush jungle with a large stone castle in the background",
+      "4_7_layout": "foreground features dragon rider, midground has trees and plants, background contains castle",
+      "4_7_entities": [
+        "dragon rider",
+        "dragon wings",
+        "stone castle",
+        "trees"
+      ],
+      "4_7_intent_empty": true,
+      "4_7_motion_exact_unknown": true,
+      "4_7_camera_raw": "static, first-person view",
+      "4_7_visible_constraints": [
+        "wings are visible",
+        "castle is in the distance",
+        "rider is in front"
+      ],
+      "4_7_elapsed_s": 6.6,
+      "4_7_vision_ms": 2916,
+      "4_7_max_rss_bytes": 2058092544,
+      "4_7_peak_footprint_bytes": 1361037616,
+      "4_6_json": false,
+      "4_6_load_s": 0.988,
+      "4_6_inference_s": 8.717,
+      "4_6_tokens": 550,
+      "4_6_tokens_per_sec": 76.69471929737931,
+      "visual_hallucination_review": "NOT VERIFIED",
+      "spatial_accuracy_review": "NOT VERIFIED",
+      "raw_world": {
+        "environment": "lush jungle with a large stone castle in the background",
+        "scene_layout": "foreground features dragon rider, midground has trees and plants, background contains castle",
+        "main_entities": [
+          {
+            "name": "dragon rider",
+            "appearance": "scaly green skin, leather harness",
+            "position": "center foreground",
+            "state": "riding forward"
+          },
+          {
+            "name": "dragon wings",
+            "appearance": "green and brown pattern",
+            "position": "flanking foreground",
+            "state": "extended"
+          },
+          {
+            "name": "stone castle",
+            "appearance": "tall, stone, spires",
+            "position": "center background",
+            "state": "standing"
+          },
+          {
+            "name": "trees",
+            "appearance": "various green foliage",
+            "position": "surrounding scene",
+            "state": "present"
+          }
+        ],
+        "lighting": "bright daylight with clouds",
+        "weather": "partly cloudy",
+        "camera": "static, first-person view",
+        "motion": "unknown",
+        "persistent_constraints": [
+          "wings are visible",
+          "castle is in the distance",
+          "rider is in front"
+        ],
+        "user_intent": ""
+      },
+      "derived_world_semantic_gate": {
+        "environment": "lush jungle with a large stone castle in the background",
+        "scene_layout": "foreground features dragon rider, midground has trees and plants, background contains castle",
+        "main_entities": [
+          {
+            "name": "dragon rider",
+            "appearance": "scaly green skin, leather harness",
+            "position": "center foreground",
+            "state": "unknown"
+          },
+          {
+            "name": "dragon wings",
+            "appearance": "green and brown pattern",
+            "position": "flanking foreground",
+            "state": "extended"
+          },
+          {
+            "name": "stone castle",
+            "appearance": "tall, stone, spires",
+            "position": "center background",
+            "state": "standing"
+          },
+          {
+            "name": "trees",
+            "appearance": "various green foliage",
+            "position": "surrounding scene",
+            "state": "present"
+          }
+        ],
+        "lighting": "bright daylight with clouds",
+        "weather": "partly cloudy",
+        "camera": "first-person view",
+        "motion": "unknown",
+        "persistent_constraints": [
+          "wings are visible",
+          "castle is in the distance",
+          "rider is in front"
+        ],
+        "user_intent": ""
+      },
+      "authoritative_user_request_separate": "Fly forward toward the castle, keeping the dragon's neck and reins stable in the foreground."
+    }
+  ]
+}
