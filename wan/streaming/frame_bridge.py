@@ -15,7 +15,7 @@ import time
 from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Any
+from typing import Any, Callable
 
 MAX_FRAME_BYTES = 8 * 1024 * 1024
 
@@ -88,9 +88,10 @@ class LatestFrameStore:
 
 
 class FrameBridgeServer:
-    def __init__(self, host: str = "127.0.0.1", port: int = 8765, store: LatestFrameStore | None = None) -> None:
+    def __init__(self, host: str = "127.0.0.1", port: int = 8765, store: LatestFrameStore | None = None,
+                 metrics_provider: Callable[[], dict[str, Any]] | None = None) -> None:
         self.store = store or LatestFrameStore()
-        handler = self._make_handler(self.store)
+        handler = self._make_handler(self.store, metrics_provider)
         self.httpd = ThreadingHTTPServer((host, port), handler)
 
     @property
@@ -106,7 +107,7 @@ class FrameBridgeServer:
         self.httpd.server_close()
 
     @staticmethod
-    def _make_handler(store: LatestFrameStore):
+    def _make_handler(store: LatestFrameStore, metrics_provider: Callable[[], dict[str, Any]] | None = None):
         class Handler(BaseHTTPRequestHandler):
             server_version = "LingBotFrameBridge/1"
 
@@ -140,6 +141,12 @@ class FrameBridgeServer:
                     return
                 if self.path.split("?", 1)[0] == "/v1/status":
                     self._json(HTTPStatus.OK, store.status())
+                    return
+                if self.path.split("?", 1)[0] == "/v1/metrics" and metrics_provider is not None:
+                    try:
+                        self._json(HTTPStatus.OK, metrics_provider())
+                    except Exception:
+                        self._json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": "metrics_unavailable"})
                     return
                 if self.path.split("?", 1)[0] == "/v1/frame.jpg":
                     snap = store.snapshot()

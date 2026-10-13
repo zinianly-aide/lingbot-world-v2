@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 import queue
+from collections import deque
 import threading
 import time
 from dataclasses import dataclass, field
@@ -39,13 +40,19 @@ class PublishTiming:
 
 @dataclass
 class TimingStats:
-    samples: list[PublishTiming] = field(default_factory=list)
+    samples: deque[PublishTiming] = field(default_factory=lambda: deque(maxlen=512))
+    total_samples: int = 0
+    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def add(self, t: PublishTiming) -> None:
-        self.samples.append(t)
+        with self._lock:
+            self.samples.append(t)
+            self.total_samples += 1
 
     def summarize(self) -> dict[str, dict[str, float]]:
-        if not self.samples:
+        with self._lock:
+            values = list(self.samples)
+        if not values:
             return {}
         out: dict[str, dict[str, float]] = {}
         for key in (
@@ -56,7 +63,7 @@ class TimingStats:
             "encodedQueueWaitSec",
             "publishLatencySec",
         ):
-            vals = sorted(getattr(s, key) for s in self.samples)
+            vals = sorted(getattr(s, key) for s in values)
             n = len(vals)
             out[key] = {
                 "p50": vals[n // 2],
@@ -91,6 +98,8 @@ class AsyncFrameBridgePublisher:
         self.fps = float(fps)
         self.jpeg_quality = int(jpeg_quality)
         self.raw_queue_frames = int(raw_queue_frames)
+        if self.raw_queue_frames <= 0:
+            raise ValueError("raw_queue_frames must be positive and bounded")
 
         self.sequence = 0
         self._raw_q: queue.Queue[Any] = queue.Queue(maxsize=self.raw_queue_frames)
@@ -201,20 +210,37 @@ class AsyncFrameBridgePublisher:
         return published
 
     def close(self) -> None:
-        """Stop encoder, drain queues, ensure no tail frames dropped."""
+        """Drain encoder or fail fast if the worker crashed / became stuck."""
         if self._encoder_thread is None:
+            if self._encoder_error is not None:
+                raise RuntimeError("encoder worker failed") from self._encoder_error
             return
-        # signal stop
-        self._raw_q.put(None)
-        self._encoder_thread.join(timeout=60.0)
-        self._encoder_thread = None
+        deadline = time.monotonic() + 60.0
+        while True:
+            if self._encoder_error is not None:
+                raise RuntimeError("encoder worker failed") from self._encoder_error
+            if not self._encoder_thread.is_alive():
+                raise RuntimeError("encoder worker stopped unexpectedly")
+            try:
+                self._raw_q.put(None, timeout=0.25)
+                break
+            except queue.Full:
+                if time.monotonic() > deadline:
+                    raise TimeoutError("timed out stopping encoder")
+        self._encoder_thread.join(timeout=max(0.0, deadline - time.monotonic()))
         if self._encoder_error is not None:
-            raise self._encoder_error
+            raise RuntimeError("encoder worker failed") from self._encoder_error
+        if self._encoder_thread.is_alive():
+            raise TimeoutError("encoder worker did not exit")
+        self._encoder_thread = None
 
     def stats(self) -> dict[str, Any]:
         return {
             "published": self.sequence,
             "rawQueueMaxDepth": self.raw_queue_max_depth,
             "rawQueueBlockedSec": self.raw_queue_blocked_sec,
+            "rawQueueDepth": self._raw_q.qsize(),
+            "timingWindowFrames": len(self.timing.samples),
+            "timingTotalFrames": self.timing.total_samples,
             "timing": self.timing.summarize(),
         }

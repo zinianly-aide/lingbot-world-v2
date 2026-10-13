@@ -25,10 +25,13 @@ from scripts.quest_world_reuse import parse_args, validate
 class TimedStore:
     """Record actual bridge frame cadence without retaining an unbounded trace."""
 
-    def __init__(self, downstream, *, fps: float, segment_frames: int) -> None:
+    def __init__(self, downstream, *, fps: float, segment_frames: int,
+                 allow_sequence_gaps: bool = False) -> None:
         self.downstream = downstream
         self.fps = fps
         self.segment_frames = segment_frames
+        self.allow_sequence_gaps = allow_sequence_gaps
+        self.skipped_sequences = 0
         self.first_sequence = None
         self.last_sequence = None
         self.last_time = None
@@ -44,8 +47,12 @@ class TimedStore:
         now = time.monotonic()
         with self._lock:
             if self.last_sequence is not None:
-                if sequence != self.last_sequence + 1:
-                    raise RuntimeError("non-monotonic or dropped sequence at timed bridge")
+                if sequence <= self.last_sequence:
+                    raise RuntimeError("non-monotonic sequence at timed bridge")
+                gap = sequence - self.last_sequence - 1
+                if gap and not self.allow_sequence_gaps:
+                    raise RuntimeError("unexpected skipped sequence at timed bridge")
+                self.skipped_sequences += gap
                 interval_ms = (now - self.last_time) * 1000.0
                 self.max_gap_ms = max(self.max_gap_ms, interval_ms)
                 if interval_ms > 1500.0 / self.fps:
@@ -64,6 +71,7 @@ class TimedStore:
                 "framesObserved": self.interval_count + (1 if self.first_sequence is not None else 0),
                 "maxInterframeGapMs": round(self.max_gap_ms, 2),
                 "lateIntervals": self.late_intervals,
+                "skippedSequences": self.skipped_sequences,
                 "recentBoundaryGapsMs": list(self.recent_boundary_gaps_ms),
             }
 
@@ -99,12 +107,32 @@ def model_rgb_to_image(frame):
 
 def run(args) -> int:
     expected = validate(args)
+    min_fps = args.min_playback_fps or args.output_fps
+    max_fps = (args.output_fps if args.playback_mode == "fixed" else args.max_playback_fps)
+    if not (0 < min_fps <= args.output_fps <= max_fps <= 120):
+        raise ValueError("invalid playback FPS bounds")
+    if args.max_frame_age_ms <= 0 or args.target_buffer_ms <= 0:
+        raise ValueError("playback buffer/age limits must be positive")
+    encoded_queue_frames = args.encoded_queue_frames or (12 if args.playback_mode == "interactive" else 48)
+    if encoded_queue_frames < 2:
+        raise ValueError("encoded queue must hold at least 2 frames")
+    if args.playback_mode == "interactive" and encoded_queue_frames > 16:
+        raise ValueError("interactive mode requires encoded queue <=16 frames")
     if args.dry_run:
         print(json.dumps({"mode":"C7_BUFFERED_CONTINUOUS",
                           "framesPerSegment":expected,
                           "outputFps":args.output_fps,
-                          "maxSegments":args.max_segments},indent=2))
+                          "maxSegments":args.max_segments,
+                          "playbackPolicy":args.playback_mode,
+                          "encodedQueueFrames":encoded_queue_frames},indent=2))
         return 0
+    from wan.streaming.playback_policy import PlaybackOptions
+    policy = PlaybackOptions(
+        mode=args.playback_mode, fps=args.output_fps,
+        min_fps=min_fps, max_fps=max_fps,
+        target_buffer_ms=args.target_buffer_ms,
+        max_frame_age_ms=args.max_frame_age_ms,
+    )
     import torch
     from PIL import Image
     import wan
@@ -122,14 +150,25 @@ def run(args) -> int:
     args.work_dir.mkdir(parents=True, exist_ok=True)
     cfg = WAN_CONFIGS["i2v-1.3B"]
     store = LatestFrameStore()
-    server = FrameBridgeServer("127.0.0.1", args.bridge_port, store=store)
-    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
-    server_thread.start()
     pipe = None
     pacer = None
     encoder = None
     timed_store = None
     manifest = []
+    def metrics_snapshot():
+        return {
+            "version": 1,
+            "bridge": store.status(),
+            "playback": pacer.metrics() if pacer is not None else {"mode": policy.mode, "state": "loading"},
+            "encoder": encoder.stats() if encoder is not None else {},
+            "completedSegments": len(manifest),
+            "framesPerSegment": expected,
+        }
+
+    server = FrameBridgeServer("127.0.0.1", args.bridge_port, store=store,
+                               metrics_provider=metrics_snapshot)
+    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    server_thread.start()
     image = Image.open(args.image).convert("RGB")
     prev_end = None
     try:
@@ -149,9 +188,15 @@ def run(args) -> int:
         # One single paced queue and encoder across ALL generated segments.
         # Source FrameStore sequence and PTS never reset, and queued old frames
         # can play while the next segment is being prepared.
-        timed_store = TimedStore(store, fps=args.output_fps, segment_frames=expected)
-        pacer = BufferedFrameBridgePublisher(timed_store, fps=args.output_fps,
-                                             jpeg_quality=90, max_frames=48)
+        timed_store = TimedStore(
+            store, fps=(policy.max_fps if policy.mode == "interactive" else args.output_fps),
+            segment_frames=expected,
+            allow_sequence_gaps=policy.mode == "interactive",
+        )
+        pacer = BufferedFrameBridgePublisher(
+            timed_store, fps=args.output_fps, jpeg_quality=90,
+            max_frames=encoded_queue_frames, policy=policy,
+        )
         encoder = AsyncFrameBridgePublisher(pacer, fps=args.output_fps,
                                             jpeg_quality=90, raw_queue_frames=8).start()
         print("C7 buffered persistent bridge + model loaded",flush=True)
@@ -208,6 +253,8 @@ def run(args) -> int:
                 "encoderEnqueued": encoder.sequence,
                 "bridgePublished": store.snapshot().sequence + 1,
                 "queuedFrames": pacer.stats().queue_depth,
+                "playback": pacer.metrics(),
+                "encoder": {k: v for k, v in encoder.stats().items() if k != "timing"},
                 "memory": memory_stats(device),
             }
             manifest.append(rec)
@@ -233,25 +280,37 @@ def run(args) -> int:
         print("C7_BUFFERED_PASS",json.dumps({
             "segments":segment, "frames":segment*expected,
             "lastSeq":final_seq,"queueMaxDepth":pacer.stats().max_queue_depth,
+            "playback": pacer.metrics(),
+            "encoder": {k: v for k, v in encoder.stats().items() if k != "timing"},
             "cadence":timed_store.stats(),
         }),flush=True)
         if args.hold_seconds:
             time.sleep(args.hold_seconds)
         return 0
     finally:
-        if pipe is not None:
-            pipe.latent_chunk_sink = None
-            pipe.sequential_load = True
-            if getattr(pipe, "vae", None) is not None:
-                pipe.unload_vae()
-            if getattr(pipe, "model", None) is not None:
-                pipe.unload_dit()
-        if encoder is not None:
-            encoder.close()
-        if pacer is not None:
-            pacer.close(drain=False, timeout=4)
-        server.shutdown()
-        server_thread.join(timeout=3)
+        # Even if GPU unloading raises, release encoder threads, frame queue,
+        # and the bound HTTP port so a later run can start cleanly.
+        try:
+            if pipe is not None:
+                pipe.latent_chunk_sink = None
+                pipe.sequential_load = True
+                try:
+                    if getattr(pipe, "vae", None) is not None:
+                        pipe.unload_vae()
+                finally:
+                    if getattr(pipe, "model", None) is not None:
+                        pipe.unload_dit()
+        finally:
+            try:
+                if encoder is not None:
+                    encoder.close()
+            finally:
+                try:
+                    if pacer is not None:
+                        pacer.close(drain=False, timeout=4)
+                finally:
+                    server.shutdown()
+                    server_thread.join(timeout=3)
 
 
 if __name__ == "__main__":

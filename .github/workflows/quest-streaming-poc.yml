@@ -10,16 +10,22 @@ on:
       - "scripts/q2_live_quest_poc.py"
       - "scripts/quest_continuous_world.py"
       - "scripts/quest_world_buffered.py"
+      - "scripts/collect_quest_playback_metrics.py"
       - "scripts/quest_world_reuse.py"
       - "scripts/quest_http_bridge.py"
       - "scripts/cloud_cuda_validate.sh"
       - "wan/image2video.py"
+      - "wan/streaming/playback_policy.py"
+      - "wan/streaming/buffered_publisher.py"
+      - "wan/streaming/frame_bridge.py"
+      - "wan/streaming/frame_publisher_async.py"
       - "tests/test_m36_staged.py"
       - "tests/test_streaming_contract.py"
       - "tests/test_quest_streaming.py"
       - "tests/test_c6_continuous_stream.py"
       - "tests/test_quest_continuous_world.py"
       - "tests/test_quest_world_buffered.py"
+      - "tests/test_c72_playback_policy.py"
       - "tests/test_quest_world_reuse.py"
       - ".github/workflows/quest-streaming-poc.yml"
   push:
@@ -34,16 +40,22 @@ on:
       - "scripts/q2_live_quest_poc.py"
       - "scripts/quest_continuous_world.py"
       - "scripts/quest_world_buffered.py"
+      - "scripts/collect_quest_playback_metrics.py"
       - "scripts/quest_world_reuse.py"
       - "scripts/quest_http_bridge.py"
       - "scripts/cloud_cuda_validate.sh"
       - "wan/image2video.py"
+      - "wan/streaming/playback_policy.py"
+      - "wan/streaming/buffered_publisher.py"
+      - "wan/streaming/frame_bridge.py"
+      - "wan/streaming/frame_publisher_async.py"
       - "tests/test_m36_staged.py"
       - "tests/test_streaming_contract.py"
       - "tests/test_quest_streaming.py"
       - "tests/test_c6_continuous_stream.py"
       - "tests/test_quest_continuous_world.py"
       - "tests/test_quest_world_buffered.py"
+      - "tests/test_c72_playback_policy.py"
       - "tests/test_quest_world_reuse.py"
       - ".github/workflows/quest-streaming-poc.yml"
   workflow_dispatch:
@@ -89,6 +101,7 @@ jobs:
             wan/streaming/frame_bridge.py \
             wan/streaming/frame_publisher.py \
             wan/streaming/buffered_publisher.py \
+            wan/streaming/playback_policy.py \
             wan/streaming/frame_publisher_async.py \
             wan/streaming/latent_tap.py \
             wan/streaming/pipeline.py \
@@ -101,6 +114,7 @@ jobs:
             scripts/quest_continuous_world.py \
             scripts/quest_http_bridge.py \
             scripts/quest_world_buffered.py \
+            scripts/collect_quest_playback_metrics.py \
             scripts/quest_world_reuse.py
           bash -n scripts/cloud_cuda_validate.sh
 
@@ -113,5 +127,6 @@ jobs:
             tests.test_c6_continuous_stream \
             tests.test_quest_continuous_world \
             tests.test_quest_world_buffered \
+            tests.test_c72_playback_policy \
             tests.test_quest_world_reuse \
             tests.test_replay_loop

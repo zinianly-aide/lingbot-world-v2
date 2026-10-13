@@ -53,6 +53,14 @@ def parse_args():
     p.add_argument("--sink-size", type=int, default=0)
     p.add_argument("--max-area", type=int, default=258048)
     p.add_argument("--output-fps", type=float, default=8.0)
+    p.add_argument("--playback-mode", choices=("fixed", "smooth", "interactive"), default="fixed")
+    p.add_argument("--min-playback-fps", type=float, default=0.0,
+                   help="Smooth mode floor; 0 uses --output-fps")
+    p.add_argument("--max-playback-fps", type=float, default=8.0)
+    p.add_argument("--target-buffer-ms", type=float, default=700.0)
+    p.add_argument("--max-frame-age-ms", type=float, default=1000.0)
+    p.add_argument("--encoded-queue-frames", type=int, default=0,
+                   help="0=48 for fixed/smooth, 12 for interactive")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--max-segments", type=int, default=2, help="0=unbounded")
     p.add_argument("--bridge-port", type=int, default=8766)
@@ -75,7 +83,7 @@ def validate(a) -> int:
         or a.sink_size + a.chunk_size > a.local_attn_size
     ):
         raise ValueError("rolling attention window too small")
-    if a.output_fps <= 0 or a.max_area <= 0 or a.max_segments < 0 or a.hold_seconds < 0 or a.retain_segments < 2:
+    if a.output_fps <= 0 or a.max_area <= 0 or a.max_segments < 0 or a.hold_seconds < 0 or a.retain_segments < 2 or a.encoded_queue_frames < 0:
         raise ValueError("invalid positive numeric parameter")
     if not a.image.is_file():
         raise ValueError("source image missing")
