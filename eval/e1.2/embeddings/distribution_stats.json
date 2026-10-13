@@ -55,5 +55,41 @@
       "per_token_l2_mean": 4.373,
       "absmax": 0.787
     }
+  },
+  "single_subject": {
+    "shape": [
+      64,
+      4096
+    ],
+    "ctx4096": {
+      "mean": 1e-05,
+      "std": 1.00024,
+      "per_token_l2_mean": 64.015,
+      "absmax": 4.406
+    },
+    "ctx1536": {
+      "mean": 0.0017,
+      "std": 0.1326,
+      "per_token_l2_mean": 4.501,
+      "absmax": 0.795
+    }
+  },
+  "outdoor": {
+    "shape": [
+      64,
+      4096
+    ],
+    "ctx4096": {
+      "mean": 1e-05,
+      "std": 1.00024,
+      "per_token_l2_mean": 64.015,
+      "absmax": 4.406
+    },
+    "ctx1536": {
+      "mean": 0.00175,
+      "std": 0.14462,
+      "per_token_l2_mean": 4.868,
+      "absmax": 0.839
+    }
   }
 }
