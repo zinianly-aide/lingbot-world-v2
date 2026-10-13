@@ -1,0 +1,60 @@
+{
+  "gate": "Q1.5_PROGRESSIVE_VAE_EQUIVALENCE",
+  "pass": true,
+  "latents": "eval/e1.2/smoke/work/latents.safetensors",
+  "metadata": {
+    "format_version": "1.0",
+    "checkpoint_id": "transformers",
+    "seed": 42,
+    "requested_frame_num": 13,
+    "aligned_frame_num": 13,
+    "chunk_size": 4,
+    "h": 464,
+    "w": 832,
+    "lat_f": 4,
+    "lat_h": 58,
+    "lat_w": 104,
+    "dtype": "torch.float32",
+    "prompt_embedding_sha256": "",
+    "image_condition_sha256": ""
+  },
+  "device": "mps",
+  "dtype": "bf16",
+  "chunkSize": 2,
+  "latentShape": [
+    16,
+    4,
+    58,
+    104
+  ],
+  "videoShape": [
+    3,
+    13,
+    464,
+    832
+  ],
+  "numChunks": 2,
+  "fullDecodeSec": 46.834743124985835,
+  "progressiveDecodeSec": 36.24281624998548,
+  "maxAbs": 0.0,
+  "meanAbs": 0.0,
+  "mse": 0.0,
+  "psnrDb": Infinity,
+  "maxAbsTolerance": 0.0005,
+  "meanAbsTolerance": 5e-05,
+  "boundaries": [
+    {
+      "outputFrame": 5,
+      "neighborMaxAbs": 0.0
+    }
+  ],
+  "progressiveStats": {
+    "latentFrames": 4,
+    "outputFrames": 13,
+    "chunks": 2
+  },
+  "memory": {
+    "mpsAllocatedGB": 0.50172288,
+    "mpsDriverGB": 11.95589632
+  }
+}

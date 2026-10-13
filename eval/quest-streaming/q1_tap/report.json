@@ -1,0 +1,82 @@
+{
+  "gate": "Q1_LATENT_TAP_EQUIVALENCE",
+  "pass": true,
+  "note": "13-frame/chunk_size=4 smoke contains one DiT chunk; use a longer generation before claiming multi-chunk real-model cadence.",
+  "seed": 42,
+  "frameNum": 13,
+  "chunkSize": 4,
+  "expectedChunks": 1,
+  "eventCount": 1,
+  "events": [
+    {
+      "generation_id": "q1-e12-seed42",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "latent_start": 0,
+      "latent_count": 4,
+      "shape": [
+        16,
+        4,
+        58,
+        104
+      ],
+      "dtype": "torch.float32",
+      "seed": 42,
+      "elapsed_ms": 52968.21370802354,
+      "device": "mps:0",
+      "requiresGrad": false
+    }
+  ],
+  "eventIndicesOk": true,
+  "eventStartsOk": true,
+  "baselineShape": [
+    16,
+    4,
+    58,
+    104
+  ],
+  "tappedShape": [
+    16,
+    4,
+    58,
+    104
+  ],
+  "baselineSha256": "908aa5963b55f9c786aecdcbaad52e1e287943bbdc56dde2b1ef83b7aa678da8",
+  "tappedSha256": "908aa5963b55f9c786aecdcbaad52e1e287943bbdc56dde2b1ef83b7aa678da8",
+  "exactTensorEqual": true,
+  "maxAbs": 0.0,
+  "meanAbs": 0.0,
+  "elapsedSec": 53.18628679198446,
+  "baselineMetadata": {
+    "format_version": "1.0",
+    "checkpoint_id": "transformers",
+    "seed": 42,
+    "requested_frame_num": 13,
+    "aligned_frame_num": 13,
+    "chunk_size": 4,
+    "h": 464,
+    "w": 832,
+    "lat_f": 4,
+    "lat_h": 58,
+    "lat_w": 104,
+    "dtype": "torch.float32",
+    "prompt_embedding_sha256": "",
+    "image_condition_sha256": ""
+  },
+  "tappedMetadata": {
+    "format_version": "1.0",
+    "checkpoint_id": "transformers",
+    "seed": 42,
+    "requested_frame_num": 13,
+    "aligned_frame_num": 13,
+    "chunk_size": 4,
+    "h": 464,
+    "w": 832,
+    "lat_f": 4,
+    "lat_h": 58,
+    "lat_w": 104,
+    "dtype": "torch.float32",
+    "prompt_embedding_sha256": "",
+    "image_condition_sha256": ""
+  }
+}

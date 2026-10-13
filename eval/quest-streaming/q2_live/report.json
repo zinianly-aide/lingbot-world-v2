@@ -1,0 +1,229 @@
+{
+  "gate": "Q2_LIVE_PROGRESSIVE_QUEST",
+  "pass": true,
+  "bridge": "http://127.0.0.1:8765",
+  "frameNumRequested": 33,
+  "chunkSize": 2,
+  "seed": 123,
+  "vaeDtype": "bf16",
+  "prepareImageConditionSec": 16.140658833028283,
+  "alignedFrameNum": 29,
+  "latentFrames": 8,
+  "totalChunks": 4,
+  "memoryAfterDit": {
+    "allocatedGB": 6.872414464,
+    "driverGB": 7.978303488
+  },
+  "memoryAfterDitPlusVae": {
+    "allocatedGB": 7.133488896,
+    "driverGB": 7.986692096
+  },
+  "totalReadbacks": 5,
+  "flushReadbackSec": 0.0024770830059424043,
+  "flushJpegSec": 0.025633875018684193,
+  "uint8ConvertSec": 0.017228748969500884,
+  "deferredUint8MB": 11.9,
+  "deferredFrameCount": 16,
+  "previewCount": 4,
+  "previewTimestampsRel": [
+    1.3,
+    55.7,
+    190.7,
+    272.5
+  ],
+  "previewIntervalSec": 54.5,
+  "generationSec": 364.04390529202647,
+  "ttffSec": 16.18233875001897,
+  "firstFrameBeforeGenerationEnd": true,
+  "chunks": [
+    {
+      "event": {
+        "generation_id": "q2",
+        "chunk_index": 0,
+        "total_chunks": 4,
+        "latent_start": 0,
+        "latent_count": 2,
+        "shape": [
+          16,
+          2,
+          46,
+          84
+        ],
+        "dtype": "torch.float32",
+        "seed": 123,
+        "elapsed_ms": 0.0
+      },
+      "decodeSec": 1.8106056660180911,
+      "firstSliceMs": 60.09570800233632,
+      "firstFrameReadbackSec": 1.0836204579973128,
+      "firstFrameJpegSec": 0.0765852089971304,
+      "deferredTailFrames": 4,
+      "readbacksThisChunk": 1,
+      "enqueuedFrames": 5,
+      "beforeDecodeCleanup": {
+        "allocatedGB": 8.89644032,
+        "driverGB": 9.061482496
+      },
+      "afterDecodeCleanup": {
+        "allocatedGB": 8.89644032,
+        "driverGB": 9.061482496
+      },
+      "afterDecode": {
+        "allocatedGB": 10.088525312,
+        "driverGB": 19.176292352
+      },
+      "memoryAfterChunk": {
+        "allocatedGB": 10.088525312,
+        "driverGB": 19.176292352
+      }
+    },
+    {
+      "event": {
+        "generation_id": "q2",
+        "chunk_index": 1,
+        "total_chunks": 4,
+        "latent_start": 2,
+        "latent_count": 2,
+        "shape": [
+          16,
+          2,
+          46,
+          84
+        ],
+        "dtype": "torch.float32",
+        "seed": 123,
+        "elapsed_ms": 0.0
+      },
+      "decodeSec": 11.812116292014252,
+      "firstSliceMs": 134.48179201805033,
+      "firstFrameReadbackSec": 11.240536665980471,
+      "firstFrameJpegSec": 0.10253241698956117,
+      "deferredTailFrames": 7,
+      "readbacksThisChunk": 1,
+      "enqueuedFrames": 8,
+      "beforeDecodeCleanup": {
+        "allocatedGB": 10.089019904,
+        "driverGB": 12.572114944
+      },
+      "afterDecodeCleanup": {
+        "allocatedGB": 10.089019904,
+        "driverGB": 12.572114944
+      },
+      "afterDecode": {
+        "allocatedGB": 10.090985984,
+        "driverGB": 19.419430912
+      },
+      "memoryAfterChunk": {
+        "allocatedGB": 10.090985984,
+        "driverGB": 19.419430912
+      }
+    },
+    {
+      "event": {
+        "generation_id": "q2",
+        "chunk_index": 2,
+        "total_chunks": 4,
+        "latent_start": 4,
+        "latent_count": 2,
+        "shape": [
+          16,
+          2,
+          46,
+          84
+        ],
+        "dtype": "torch.float32",
+        "seed": 123,
+        "elapsed_ms": 0.0
+      },
+      "decodeSec": 13.900170334003633,
+      "firstSliceMs": 123.29854199197143,
+      "firstFrameReadbackSec": 13.218581666995306,
+      "firstFrameJpegSec": 0.194526292005321,
+      "deferredTailFrames": 7,
+      "readbacksThisChunk": 1,
+      "enqueuedFrames": 8,
+      "beforeDecodeCleanup": {
+        "allocatedGB": 10.091480576,
+        "driverGB": 12.475645952
+      },
+      "afterDecodeCleanup": {
+        "allocatedGB": 10.091480576,
+        "driverGB": 12.475645952
+      },
+      "afterDecode": {
+        "allocatedGB": 10.094495232,
+        "driverGB": 19.465568256
+      },
+      "memoryAfterChunk": {
+        "allocatedGB": 10.094495232,
+        "driverGB": 19.465568256
+      }
+    },
+    {
+      "event": {
+        "generation_id": "q2",
+        "chunk_index": 3,
+        "total_chunks": 4,
+        "latent_start": 6,
+        "latent_count": 2,
+        "shape": [
+          16,
+          2,
+          46,
+          84
+        ],
+        "dtype": "torch.float32",
+        "seed": 123,
+        "elapsed_ms": 0.0
+      },
+      "decodeSec": 14.403009916975861,
+      "firstSliceMs": 209.65516698197462,
+      "firstFrameReadbackSec": 13.43778987499536,
+      "firstFrameJpegSec": 0.23571974999504164,
+      "deferredTailFrames": 7,
+      "readbacksThisChunk": 1,
+      "enqueuedFrames": 8,
+      "beforeDecodeCleanup": {
+        "allocatedGB": 10.094989824,
+        "driverGB": 12.475645952
+      },
+      "afterDecodeCleanup": {
+        "allocatedGB": 10.094989824,
+        "driverGB": 12.475645952
+      },
+      "afterDecode": {
+        "allocatedGB": 10.09800448,
+        "driverGB": 19.180355584
+      },
+      "memoryAfterChunk": {
+        "allocatedGB": 10.09800448,
+        "driverGB": 19.180355584
+      }
+    }
+  ],
+  "chunkEvents": 4,
+  "progressiveDecoder": {
+    "latentFrames": 8,
+    "outputFrames": 29,
+    "chunks": 4
+  },
+  "playback": {
+    "enqueued": 29,
+    "published": 29,
+    "queueDepth": 0,
+    "maxQueueDepth": 14,
+    "drained": true
+  },
+  "memoryAfterGeneration": {
+    "allocatedGB": 8.322559232,
+    "driverGB": 19.180355584
+  },
+  "bridgeStatus": {
+    "version": 1,
+    "state": "completed",
+    "sequence": 28,
+    "ptsMs": 1750.0,
+    "frameAvailable": true,
+    "ageMs": 1011.3978330045938
+  }
+}

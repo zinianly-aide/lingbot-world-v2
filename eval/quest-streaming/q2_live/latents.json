@@ -1,0 +1,16 @@
+{
+  "format_version": "1.0",
+  "checkpoint_id": "transformers",
+  "seed": 123,
+  "requested_frame_num": 33,
+  "aligned_frame_num": 29,
+  "chunk_size": 2,
+  "h": 368,
+  "w": 672,
+  "lat_f": 8,
+  "lat_h": 46,
+  "lat_w": 84,
+  "dtype": "torch.float32",
+  "prompt_embedding_sha256": "",
+  "image_condition_sha256": ""
+}

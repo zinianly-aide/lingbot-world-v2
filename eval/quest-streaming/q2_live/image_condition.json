@@ -1,0 +1,23 @@
+{
+  "format_version": "1.0",
+  "source_image_sha256": "",
+  "requested_frame_num": 33,
+  "aligned_frame_num": 29,
+  "chunk_size": 2,
+  "h": 368,
+  "w": 672,
+  "lat_f": 8,
+  "lat_h": 46,
+  "lat_w": 84,
+  "vae_stride": [
+    4,
+    8,
+    8
+  ],
+  "patch_size": [
+    1,
+    2,
+    2
+  ],
+  "dtype": "torch.float32"
+}
