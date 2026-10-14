@@ -39,18 +39,18 @@ main
 
 ### 需要消除的独立分叉
 
-- `feat/quest-streaming-q26-reviewed`：从 POC 派生，含 Q2.6 已修语法错误；它**不是** C7.2 的祖先。
+- `feat/quest-streaming-q26-reviewed`：从 POC 派生，含 Q2.6 修复；**已完成代码级核对，无需整体移植**。详见 [Q26_C72_RECONCILIATION.md](Q26_C72_RECONCILIATION.md)。它不是 C7.2 的祖先，后续只作为历史参考。
 - `feat/quest-q2-evidence-20261013`：进一步归档 Q1/Q2 结果，不等于代码已入 C7.2。
 - `feat/minicpm-v47-world-perception-ab` 与 `feat/g07-blind-preliminary-20261013`：从 G0.7 分叉，实验用途不同。
 - `feat/e12-evidence-20261013` 与 `feat/vae-mlx-reverify-20261013`：从 E1.2 分叉，分别保留元数据与 VAE 复验。
 
-将来需逐文件比较 Q2.6 与集成入口，只取**尚未存在且独立验证过**的修复；不要整体 cherry-pick 或直接合并，因为两条历史在 POC 后分叉。
+Q2.6 与 C7.2 的十文件比较已完成：六文件内容一致，另四文件在 C7.2 有后续增强；**没有发现需要直接移植的 Q2.6 文件**。不得整体 cherry-pick 或倒退替换 C7.2 的连续推流实现。
 
 ## 3. CI 与发布门槛
 
 `integration/quest-streaming` 的 Quest workflow 支持 push 自动测试、PR 测试和手动 workflow_dispatch。Python compile、streaming contract、C6/C7/C7.2、replay 单测必须成功，且 CI 不能被标记为 NOT RUN。C7.2 上的历史 workflow 不因本分支的修改而自动改变。
 
-当前环境仅运行过**本地 49 项 CPU/contract/unittest**；新远端集成分支自身的 Actions、云端实际生成与 Quest 真机仍需确认。
+本地 **49/49 项 CPU/contract/unittest PASS**；集成分支最初提交 `77d1543` 的 [GitHub Actions CI 已成功](https://github.com/zinianly-aide/lingbot-world-v2/actions/runs/38430479444)。本轮对账报告提交是文档更新；云端 LingBot 生成、真机 Quest、长时间吞吐及内存压力仍是 **NOT RUN**，不可写 PASS。
 
 发布或合入 `main` 前至少要求：相关 CI 全绿、review、明确功能兼容性说明、云 GPU 真正连续分块播放实测、Quest 面板/方向/断线恢复实测、回滚方案，以及用户批准。
 
@@ -58,7 +58,7 @@ main
 
 1. 保留全部历史分支和其 Draft PR，先给用途贴上 `active` / `legacy` / `experiment` / `evidence` 分类。
 2. 把新增 Quest 工作切到 `integration/quest-streaming`；不要再向早期 C6/C7 等节点直接追加业务代码。
-3. Q2.6 对照审查完毕、测试通过后再有选择地移植。
+3. Q2.6 与 C7.2 已完成逐文件差异对账（见 reconciliation 报告），确认无需额外 cherry-pick；后续新功能在集成入口开发。
 4. G0.7 盲评数据只能标识 preliminary；未经人工/视觉验收不可发布 G1 PASS。
 5. 拟删除旧分支前需确认无活动 PR、无独有提交、已有 tag/归档以及远端备份，**再次取得明确授权**。
 

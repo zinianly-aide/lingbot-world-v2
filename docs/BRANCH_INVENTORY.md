@@ -11,7 +11,7 @@
 | `feat/c6-continuous-stream` | legacy | Cloud → C6 | C6 连续分块流；Draft PR #3 |
 | `feat/cloud-5090-validation` | legacy | POC → Cloud | 云 GPU 验证；Draft PR #2 |
 | `feat/quest-streaming-poc` | legacy | E1.2 → Q1/Q2 | 早期 POC；Draft PR #1；本机工作树含未提交内容 |
-| `feat/quest-streaming-q26-reviewed` | reconcile | 从 POC 独立分叉 | 修复语法并整理 Q2.6；需与 C7.2 按文件差异比对 |
+| `feat/quest-streaming-q26-reviewed` | legacy / reconciled | 从 POC 独立分叉 | 已与 C7.2 对照：6 文件相同、4 文件已向前演进、0 个文件需要移植；保留历史 |
 | `feat/quest-q2-evidence-20261013` | evidence | Q2.6 Reviewed → reports | Q1/Q2 旧实测 JSON；非新回归 |
 | `feat/e0-text-adapter` | legacy | G0.7 → E0 | 文本编码器基线 |
 | `feat/e1-adapter-train` | legacy | E0 → E1 | 模型训练/蒸馏阶段 |
